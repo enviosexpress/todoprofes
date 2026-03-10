@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>TodoProfes - Creación de Boletines con IA</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            overflow-x: hidden;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field, .form-select {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .input-field:focus, .form-select:focus {
+            border-color: #14B8A6;
+            box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.2);
+            outline: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #14B8A6, #0D9488);
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #14B8A6;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #1E293B;
+            border: 1px solid #334155;
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+        }
+        
+        .btn-secondary:hover {
+            background: #2D3A4F;
+            border-color: #475569;
+        }
+        
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #14B8A6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fullscreen-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .loader-spinner {
+            border: 4px solid rgba(20, 184, 166, 0.3);
+            border-top: 4px solid #14B8A6;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        .boletin-document {
+            background: white;
+            color: #1E293B;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (min-width: 768px) {
+            .boletin-document {
+                padding: 2rem;
+            }
+        }
+        
+        .boletin-document.theme-teal {
+            background: linear-gradient(135deg, #ffffff, #f0fdfa);
+            border-left: 4px solid #14B8A6;
+        }
+        .boletin-document.theme-purple {
+            background: linear-gradient(135deg, #ffffff, #faf5ff);
+            border-left: 4px solid #A855F7;
+        }
+        .boletin-document.theme-blue {
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+            border-left: 4px solid #3B82F6;
+        }
+        .boletin-document.theme-green {
+            background: linear-gradient(135deg, #ffffff, #f0fdf4);
+            border-left: 4px solid #22C55E;
+        }
+        .boletin-document.theme-amber {
+            background: linear-gradient(135deg, #ffffff, #fffbeb);
+            border-left: 4px solid #F59E0B;
+        }
+        
+        .theme-teal .section-title { color: #14B8A6; }
+        .theme-teal .boletin-header { border-bottom-color: #14B8A6; }
+        .theme-purple .section-title { color: #A855F7; }
+        .theme-purple .boletin-header { border-bottom-color: #A855F7; }
+        .theme-blue .section-title { color: #3B82F6; }
+        .theme-blue .boletin-header { border-bottom-color: #3B82F6; }
+        .theme-green .section-title { color: #22C55E; }
+        .theme-green .boletin-header { border-bottom-color: #22C55E; }
+        .theme-amber .section-title { color: #F59E0B; }
+        .theme-amber .boletin-header { border-bottom-color: #F59E0B; }
+        
+        .boletin-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid currentColor;
+        }
+        
+        .boletin-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, currentColor, #14B8A6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .boletin-title {
+                font-size: 2rem;
+            }
+        }
+        
+        .boletin-subtitle {
+            color: #64748B;
+            font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .boletin-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        
+        .alumnos-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        @media (min-width: 640px) {
+            .alumnos-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .alumnos-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .alumno-card {
+            background: #F8FAFC;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .alumno-card h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #14B8A6;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed #E2E8F0;
+        }
+        
+        .alumno-card p {
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+        
+        .alumno-card .label {
+            font-size: 0.75rem;
+            color: #64748B;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .lista-alumnos-item {
+            background: #0F172A;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .lista-alumnos-item button {
+            background: #EF4444;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        .color-swatch.selected {
+            border-color: white;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        .color-swatch.teal { background: #14B8A6; }
+        .color-swatch.purple { background: #A855F7; }
+        .color-swatch.blue { background: #3B82F6; }
+        .color-swatch.green { background: #22C55E; }
+        .color-swatch.amber { background: #F59E0B; }
+        
+        .format-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            background: #0F172A;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .format-badge:hover {
+            background: #1E293B;
+            border-color: #14B8A6;
+        }
+        .format-badge.selected {
+            background: #14B8A6;
+            color: white;
+            border-color: #14B8A6;
+        }
+        
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .action-btn {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #94A3B8;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .action-btn:hover {
+            background: #2D3A4F;
+            color: white;
+            border-color: #14B8A6;
+        }
+        
+        .action-btn.active {
+            background: #14B8A6;
+            color: white;
+            border-color: #14B8A6;
+        }
+        
+        .badge-teal {
+            background: rgba(20, 184, 166, 0.2);
+            color: #14B8A6;
+            border: 1px solid rgba(20, 184, 166, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+        
+        .config-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #14B8A6;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+        .config-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 10px rgba(20, 184, 166, 0.3);
+        }
+        
+        .config-sidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 350px;
+            height: 100vh;
+            background: #0F172A;
+            border-left: 1px solid #334155;
+            padding: 2rem 1.5rem;
+            transition: right 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+        .config-sidebar.open {
+            right: 0;
+        }
+        
+        @media (min-width: 640px) {
+            .config-sidebar {
+                right: -400px;
+                width: 350px;
+            }
+        }
+        
+        .config-sidebar-close {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            cursor: pointer;
+            color: #94A3B8;
+        }
+        .config-sidebar-close:hover {
+            color: white;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+        
+        .preview-card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .preview-card:hover {
+            border-color: #14B8A6;
+            transform: translateY(-2px);
+        }
+        
+        .result-area {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .footer-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748B;
+            border-top: 1px solid #E2E8F0;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+        
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22C55E;
+            color: #22C55E;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        .editor-toolbar {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .editor-btn {
+            background: #0F172A;
+            border: 1px solid #334155;
+            color: #94A3B8;
+            padding: 0.4rem 0.8rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .editor-btn:hover {
+            background: #2D3A4F;
+            color: white;
+            border-color: #14B8A6;
+        }
+        
+        .editor-btn.active {
+            background: #14B8A6;
+            color: white;
+            border-color: #14B8A6;
+        }
+        
+        .editable-content {
+            min-height: 200px;
+            cursor: text;
+        }
+        
+        .editable-content:focus {
+            outline: 2px solid #14B8A6;
+            outline-offset: 2px;
+        }
+        
+        .edit-mode-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: rgba(245, 158, 11, 0.2);
+            border: 1px solid #F59E0B;
+            color: #F59E0B;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 1.5s ease infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div id="fullscreenLoader" class="fullscreen-loader" style="display: none;">
+        <div class="loader-spinner"></div>
+        <div class="text-teal-400 font-semibold">Generando con IA...</div>
+        <div class="text-slate-400 text-sm">Esto puede tomar unos segundos</div>
+    </div>
+
+    <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition-all hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <h1 class="text-xl md:text-2xl font-bold text-white">
+                    <span class="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">Creación</span>
+                    <span class="text-white"> de Boletines con IA</span>
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-yellow-400 flex items-center bg-slate-800/50 px-2 md:px-3 py-1.5 rounded-full border border-slate-700 text-sm" id="creditsContainer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="8" cy="8" r="6"/><path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/><path d="m12 12 4 4"/><path d="M12 12v4h4"/><path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/><path d="m16 16-4-4"/><path d="M16 16v-4h-4"/>
+                    </svg>
+                    <span id="creditsDisplay">Cargando...</span>
+                </span>
+                <button onclick="toggleConfigPanel()" class="text-slate-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="overlay" class="overlay" onclick="toggleConfigPanel()"></div>
+
+    <div id="configSidebar" class="config-sidebar">
+        <div class="config-sidebar-close" onclick="toggleConfigPanel()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </div>
+        
+        <h2 class="text-xl font-bold text-white mb-6 mt-8">Personalizar Estilo</h2>
+        
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">🎨 Color principal</h3>
+            <div class="flex flex-wrap gap-3">
+                <div class="color-swatch teal selected" onclick="selectColor('teal')" title="Verde turquesa"></div>
+                <div class="color-swatch purple" onclick="selectColor('purple')" title="Púrpura"></div>
+                <div class="color-swatch blue" onclick="selectColor('blue')" title="Azul"></div>
+                <div class="color-swatch green" onclick="selectColor('green')" title="Verde"></div>
+                <div class="color-swatch amber" onclick="selectColor('amber')" title="Ámbar"></div>
+            </div>
+        </div>
+        
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">📄 Formato</h3>
+            <div class="space-y-2">
+                <div class="format-badge selected" data-formato="estandar" onclick="selectFormato('estandar')">📏 Estándar</div>
+                <div class="format-badge" data-formato="compacto" onclick="selectFormato('compacto')">📐 Compacto</div>
+                <div class="format-badge" data-formato="detallado" onclick="selectFormato('detallado')">📜 Detallado</div>
+            </div>
+        </div>
+        
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">⚙️ Preferencias</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Tono del boletín</label>
+                    <select id="tono" class="input-field text-sm">
+                        <option value="formal">Formal</option>
+                        <option value="amigable" selected>Amigable</option>
+                        <option value="entusiasta">Entusiasta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Incluir secciones</label>
+                    <select id="secciones" class="input-field text-sm">
+                        <option value="basico">Básico</option>
+                        <option value="completo" selected>Completo</option>
+                        <option value="detallado">Detallado</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="savePreferences()" class="btn-primary w-full">Guardar preferencias</button>
+        <p id="configMessage" class="text-xs text-center mt-3 text-green-400 hidden">✓ Preferencias guardadas</p>
+    </div>
+
+    <main class="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <div class="max-w-6xl mx-auto">
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8 text-center">
+                <div class="inline-block bg-teal-500/20 p-3 md:p-4 rounded-full mb-4">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 md:w-12 md:h-12 text-teal-400">
+                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Creador de Boletines con IA</h2>
+                <p class="text-sm md:text-base text-slate-400">Crea boletines informativos profesionales generados por inteligencia artificial</p>
+                
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 mt-6">
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-teal-400">6</div>
+                        <div class="text-xs text-slate-500">Créditos por boletín</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-teal-400">IA</div>
+                        <div class="text-xs text-slate-500">Generación automática</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h3 class="text-xl font-semibold text-white">📋 Datos del boletín</h3>
+                    <button onclick="toggleConfigPanel()" class="text-sm text-teal-400 hover:text-teal-300">Personalizar estilo</button>
+                </div>
+                
+                <form id="boletinForm" class="space-y-4" onsubmit="event.preventDefault(); handleGenerate()">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Título del boletín *</label>
+                            <input type="text" id="titulo" class="input-field" placeholder="Ej: Novedades de Mayo" value="Novedades de Mayo" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Periodo</label>
+                            <input type="text" id="periodo" class="input-field" placeholder="Ej: Mayo 2025" value="Mayo 2025">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Mensaje general</label>
+                        <textarea id="mensajeGeneral" rows="3" class="input-field" placeholder="Mensaje para todos los padres...">Estimadas familias, les compartimos las novedades de este mes.</textarea>
+                    </div>
+                    
+                    <div class="border-t border-slate-700 pt-6 mt-6">
+                        <h4 class="text-lg font-semibold text-white mb-4">Información por alumno</h4>
+                        
+                        <div class="bg-slate-800/50 p-4 rounded-xl space-y-4 mb-4">
+                            <div class="grid grid-cols-1 gap-4">
+                                <input type="text" id="alumnoNombre" class="input-field" placeholder="Nombre del alumno">
+                                <textarea id="alumnoLogros" rows="2" class="input-field" placeholder="Logros y avances..."></textarea>
+                                <textarea id="alumnoMejoras" rows="2" class="input-field" placeholder="Áreas de mejora..."></textarea>
+                            </div>
+                            <button type="button" onclick="agregarAlumno()" class="btn-secondary text-sm py-2">
+                                + Agregar alumno
+                            </button>
+                        </div>
+                        
+                        <div id="listaAlumnos" class="space-y-2 max-h-60 overflow-y-auto p-2">
+                            <p class="text-slate-500 text-sm italic text-center">No hay alumnos agregados</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                        <button type="submit" id="generateBtn" class="btn-primary flex items-center justify-center space-x-2">
+                            <span>✨ Generar Boletín con IA</span>
+                            <span class="text-sm">(6 créditos)</span>
+                        </button>
+                        <button type="button" onclick="loadPreview()" class="btn-secondary">Vista Previa</button>
+                    </div>
+
+                    <div id="message" class="text-center text-sm hidden"></div>
+                </form>
+            </div>
+
+            <div id="resultContainer" class="glass-card p-4 md:p-8 mb-6 md:mb-8 hidden">
+                <div class="action-toolbar">
+                    <button onclick="toggleEditMode()" id="editModeBtn" class="action-btn" title="Modo edición">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/>
+                        </svg>
+                        <span class="hidden sm:inline ml-1">Editar</span>
+                    </button>
+                    <button onclick="copyToClipboard()" class="action-btn" title="Copiar al portapapeles">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
+                    <button onclick="downloadPDF()" class="action-btn" title="Descargar PDF">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </button>
+                    <button onclick="printDocument()" class="action-btn" title="Imprimir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="editorToolbar" class="editor-toolbar" style="display: none;">
+                    <button class="editor-btn" onclick="formatText('bold')"><b>B</b></button>
+                    <button class="editor-btn" onclick="formatText('italic')"><i>I</i></button>
+                    <button class="editor-btn" onclick="formatText('underline')"><u>U</u></button>
+                    <button class="editor-btn" onclick="formatText('h1')">H1</button>
+                    <button class="editor-btn" onclick="formatText('h2')">H2</button>
+                    <button class="editor-btn" onclick="formatText('p')">P</button>
+                    <button class="editor-btn" onclick="formatText('ul')">• Lista</button>
+                    <button class="editor-btn" onclick="formatText('ol')">1. Lista</button>
+                    <span class="edit-mode-indicator ml-auto">
+                        <span class="pulse-dot"></span>
+                        Modo edición activo
+                    </span>
+                </div>
+                
+                <div id="result" class="result-area editable-content" contenteditable="false" onclick="handleContentClick()"></div>
+                <div id="creditsInfo" class="text-xs text-slate-500 text-right mt-2"></div>
+            </div>
+
+            <div class="glass-card p-6 md:p-8">
+                <h3 class="text-lg md:text-xl font-semibold text-white mb-6">📚 Ejemplos rápidos</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="preview-card" onclick="loadExample('mensual')">
+                        <span class="badge-teal inline-block mb-2">📅 Mensual</span>
+                        <p class="text-sm text-slate-300">Novedades del mes</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('logros')">
+                        <span class="badge-teal inline-block mb-2">🏆 Logros</span>
+                        <p class="text-sm text-slate-300">Boletín de logros</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('eventos')">
+                        <span class="badge-teal inline-block mb-2">🎪 Eventos</span>
+                        <p class="text-sm text-slate-300">Próximos eventos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="config-toggle" onclick="toggleConfigPanel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+        </svg>
+    </div>
+
+    <footer class="bg-slate-950 text-center p-4 mt-auto border-t border-slate-800">
+        <p class="text-xs text-slate-400">✨ Creación de Boletines con IA - TodoProfes</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`
+
+        let isAuthenticated = false
+        let userId = null
+        let token = null
+        let generatedContent = ''
+        let currentColor = 'teal'
+        let currentFormato = 'estandar'
+        let alumnos = []
+        let isEditMode = false
+
+        function toggleConfigPanel() {
+            document.getElementById('configSidebar').classList.toggle('open')
+            document.getElementById('overlay').classList.toggle('show')
+        }
+        
+        function selectColor(color) {
+            document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.color-swatch.${color}`).classList.add('selected')
+            currentColor = color
+            updateResultTheme()
+        }
+        
+        function selectFormato(formato) {
+            document.querySelectorAll('.format-badge').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.format-badge[data-formato="${formato}"]`)?.classList.add('selected')
+            currentFormato = formato
+            updateResultTheme()
+        }
+        
+        function updateResultTheme() {
+            const resultEl = document.getElementById('result')
+            if (resultEl && resultEl.children.length > 0) {
+                const doc = resultEl.querySelector('.boletin-document')
+                if (doc) {
+                    doc.className = doc.className.replace(/theme-\w+/g, '').trim()
+                    doc.className = doc.className.replace(/formato-\w+/g, '').trim()
+                    doc.classList.add(`theme-${currentColor}`, `formato-${currentFormato}`)
+                }
+            }
+        }
+        
+        function savePreferences() {
+            document.getElementById('configMessage').classList.remove('hidden')
+            setTimeout(() => document.getElementById('configMessage').classList.add('hidden'), 2000)
+        }
+
+        function agregarAlumno() {
+            const nombre = document.getElementById('alumnoNombre').value.trim()
+            const logros = document.getElementById('alumnoLogros').value.trim()
+            const mejoras = document.getElementById('alumnoMejoras').value.trim()
+            
+            if (!nombre) {
+                showMessage('❌ Ingresa al menos el nombre del alumno', false)
+                return
+            }
+            
+            alumnos.push({ nombre, logros, mejoras })
+            
+            document.getElementById('alumnoNombre').value = ''
+            document.getElementById('alumnoLogros').value = ''
+            document.getElementById('alumnoMejoras').value = ''
+            
+            actualizarListaAlumnos()
+            showMessage('✅ Alumno agregado correctamente', true)
+        }
+        
+        function eliminarAlumno(index) {
+            alumnos.splice(index, 1)
+            actualizarListaAlumnos()
+            showMessage('✅ Alumno eliminado', true)
+        }
+        
+        function actualizarListaAlumnos() {
+            const container = document.getElementById('listaAlumnos')
+            
+            if (alumnos.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-sm italic text-center">No hay alumnos agregados</p>'
+                return
+            }
+            
+            let html = ''
+            alumnos.forEach((alumno, index) => {
+                html += `
+                    <div class="lista-alumnos-item">
+                        <div class="flex-1 pr-4">
+                            <p class="font-semibold text-white">${alumno.nombre}</p>
+                            ${alumno.logros ? `<p class="text-xs text-slate-400 mt-1">✓ ${alumno.logros.substring(0, 50)}${alumno.logros.length > 50 ? '...' : ''}</p>` : ''}
+                        </div>
+                        <button onclick="eliminarAlumno(${index})" class="hover:bg-red-500 transition-colors">✕</button>
+                    </div>
+                `
+            })
+            container.innerHTML = html
+        }
+
+        async function checkSession() {
+            token = localStorage.getItem('supabase_token')
+            userId = localStorage.getItem('user_id')
+            
+            if (!token || !userId) {
+                window.location.href = 'login.html'
+                return
+            }
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`, 
+                        'apikey': SUPABASE_KEY 
+                    }
+                })
+                
+                if (!response.ok) throw new Error('Sesión inválida')
+                
+                isAuthenticated = true
+                await loadUserCredits()
+                await checkIAFunction()
+                
+            } catch (error) {
+                console.error('Error de autenticación:', error)
+                localStorage.clear()
+                window.location.href = 'login.html'
+            }
+        }
+
+        async function loadUserCredits() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}&select=credits`, {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`, 
+                        'apikey': SUPABASE_KEY,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                
+                if (res.ok) {
+                    const users = await res.json()
+                    if (users && users.length > 0) {
+                        document.getElementById('creditsDisplay').textContent = `${users[0]?.credits || 0} créditos`
+                    } else {
+                        document.getElementById('creditsDisplay').textContent = '0 créditos'
+                    }
+                } else {
+                    document.getElementById('creditsDisplay').textContent = 'Error'
+                }
+            } catch (error) {
+                console.log('Error cargando créditos:', error)
+                document.getElementById('creditsDisplay').textContent = 'No disponible'
+            }
+        }
+
+        function showMessage(text, isSuccess = false) {
+            const msg = document.getElementById('message')
+            msg.textContent = text
+            msg.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'success-message' : 'error-message'}`
+            msg.classList.remove('hidden')
+            setTimeout(() => msg.classList.add('hidden'), 3000)
+        }
+
+        function updateIAStatus(available) {
+            // Función mantenida pero sin mostrar indicador visual
+            console.log('IA Status:', available ? 'Activa' : 'Inactiva');
+        }
+
+        async function checkIAFunction() {
+            try {
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: "test",
+                        tool: "boletin"
+                    })
+                })
+                updateIAStatus(response.ok)
+            } catch (error) {
+                console.warn('No se puede conectar a la función de IA:', error)
+                updateIAStatus(false)
+            }
+        }
+
+        async function handleGenerate() {
+            if (!isAuthenticated) {
+                window.location.href = 'login.html'
+                return
+            }
+            
+            const titulo = document.getElementById('titulo').value.trim()
+            const periodo = document.getElementById('periodo').value.trim()
+            const mensaje = document.getElementById('mensajeGeneral').value.trim()
+            const tono = document.getElementById('tono')?.value || 'amigable'
+            const secciones = document.getElementById('secciones')?.value || 'completo'
+            
+            if (!titulo) {
+                showMessage('❌ Ingresa un título para el boletín', false)
+                return
+            }
+            
+            document.getElementById('fullscreenLoader').style.display = 'flex'
+            
+            const btn = document.getElementById('generateBtn')
+            const originalText = btn.innerHTML
+            btn.innerHTML = '<span class="loader"></span> Generando...'
+            btn.disabled = true
+
+            try {
+                let alumnosText = ''
+                if (alumnos.length > 0) {
+                    alumnosText = 'INFORMACIÓN POR ALUMNO:\n' + alumnos.map((a, i) => `
+Alumno ${i+1}: ${a.nombre}
+- Logros: ${a.logros || 'No especificados'}
+- Áreas de mejora: ${a.mejoras || 'No especificadas'}
+`).join('\n')
+                } else {
+                    alumnosText = 'Sin alumnos específicos (boletín general)'
+                }
+
+                const prompt = `Genera un boletín informativo educativo profesional con los siguientes datos:
+
+TÍTULO: ${titulo}
+PERIODO: ${periodo || 'Fecha no especificada'}
+MENSAJE GENERAL: ${mensaje || 'Mensaje a las familias'}
+TONO: ${tono} (formal/amigable/entusiasta)
+FORMATO: ${secciones} (básico/completo/detallado)
+
+${alumnosText}
+
+El boletín debe incluir:
+1. ENCABEZADO: Título llamativo y periodo
+2. MENSAJE GENERAL: Comunicación a las familias (usar el mensaje proporcionado)
+3. SECCIÓN DE ESTUDIANTES: 
+   ${alumnos.length > 0 ? 'Para cada alumno, incluir sus logros y áreas de mejora de manera personalizada' : 'Si no hay alumnos específicos, crear sección general de logros del grupo'}
+4. PRÓXIMOS EVENTOS: Lista de eventos educativos relevantes
+5. CIERRE: Mensaje institucional y agradecimiento
+
+Formato: HTML con clases CSS para estilizar. Usa la estructura de clases existente en el sistema (boletin-document, boletin-header, section-title, alumno-card, etc.)
+
+Genera el contenido en español, con lenguaje profesional pero cálido.`
+
+                console.log('Llamando a función IA con tool: boletin')
+                
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        tool: 'boletin',
+                        format: 'html'
+                    })
+                })
+
+                const data = await response.json()
+                console.log('Respuesta de IA:', data)
+
+                if (!response.ok) {
+                    if (data.error === 'insufficient_credits') {
+                        throw new Error(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}`)
+                    }
+                    throw new Error(data.message || 'Error al generar el boletín')
+                }
+
+                let boletinHTML = data.content
+                
+                if (typeof boletinHTML === 'string' && boletinHTML.startsWith('"') && boletinHTML.endsWith('"')) {
+                    try {
+                        boletinHTML = JSON.parse(boletinHTML)
+                    } catch (e) {}
+                }
+                
+                if (!boletinHTML.includes('boletin-document')) {
+                    boletinHTML = `
+                    <div class="boletin-document theme-${currentColor} formato-${currentFormato}">
+                        ${boletinHTML}
+                        <div class="footer-note">
+                            Generado por TodoProfes IA · ${new Date().toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    `
+                }
+
+                generatedContent = boletinHTML
+                document.getElementById('result').innerHTML = boletinHTML
+                document.getElementById('resultContainer').classList.remove('hidden')
+                
+                if (data.credits_left !== undefined) {
+                    document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
+                    document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Créditos restantes: ${data.credits_left}`
+                } else {
+                    await loadUserCredits()
+                }
+                
+                showMessage('✅ ¡Boletín generado exitosamente!', true)
+                
+            } catch (error) {
+                console.error('Error detallado:', error)
+                
+                // Fallback: boletín de ejemplo cuando hay error
+                const fallbackHTML = `
+                <div class="boletin-document theme-${currentColor} formato-${currentFormato}">
+                    <div class="boletin-header">
+                        <h1 class="boletin-title">📬 ${titulo}</h1>
+                        <div class="boletin-subtitle">📅 ${periodo}</div>
+                    </div>
+                    <div class="boletin-section">
+                        <h2 class="section-title">📝 Mensaje a las familias</h2>
+                        <p>${mensaje || 'Estimadas familias, compartimos con ustedes las novedades de este periodo.'}</p>
+                    </div>
+                    ${alumnos.length > 0 ? `
+                    <div class="boletin-section">
+                        <h2 class="section-title">👥 Información por estudiante</h2>
+                        <div class="alumnos-grid">
+                            ${alumnos.map(a => `
+                            <div class="alumno-card">
+                                <h4>${a.nombre}</h4>
+                                ${a.logros ? `<p><span class="label">Logros:</span> ${a.logros}</p>` : ''}
+                                ${a.mejoras ? `<p><span class="label">Mejoras:</span> ${a.mejoras}</p>` : ''}
+                            </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    <div class="boletin-section">
+                        <h2 class="section-title">📅 Próximos eventos</h2>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Reunión de padres: 15 de junio</li>
+                            <li>Festival de talentos: 22 de junio</li>
+                            <li>Entrega de boletines: 30 de junio</li>
+                        </ul>
+                    </div>
+                    <div class="footer-note">
+                        Generado por TodoProfes (modo offline) · ${new Date().toLocaleDateString('es-ES')}
+                    </div>
+                </div>
+                `
+                
+                document.getElementById('result').innerHTML = fallbackHTML
+                document.getElementById('resultContainer').classList.remove('hidden')
+                showMessage('⚠️ Modo offline - Contenido de ejemplo', false)
+                
+            } finally {
+                document.getElementById('fullscreenLoader').style.display = 'none'
+                btn.innerHTML = originalText
+                btn.disabled = false
+            }
+        }
+
+        function loadExample(type) {
+            const ejemplos = {
+                mensual: {
+                    titulo: 'Boletín Mensual - Novedades de Mayo',
+                    periodo: 'Mayo 2025',
+                    mensaje: 'Estimadas familias: Compartimos con ustedes las actividades más destacadas del mes, los logros de nuestros estudiantes y los próximos eventos.'
+                },
+                logros: {
+                    titulo: 'Boletín de Logros Académicos',
+                    periodo: 'Primer Trimestre',
+                    mensaje: 'Estamos muy orgullosos de los avances y logros alcanzados por nuestros estudiantes durante este período.'
+                },
+                eventos: {
+                    titulo: 'Próximos Eventos Institucionales',
+                    periodo: 'Junio 2025',
+                    mensaje: 'Los invitamos cordialmente a participar en las actividades programadas para el próximo mes.'
+                }
+            }
+            
+            if (ejemplos[type]) {
+                document.getElementById('titulo').value = ejemplos[type].titulo
+                document.getElementById('periodo').value = ejemplos[type].periodo
+                document.getElementById('mensajeGeneral').value = ejemplos[type].mensaje
+                showMessage('✅ Ejemplo cargado. ¡Ahora genera con IA!', true)
+            }
+        }
+
+        function loadPreview() {
+            const titulo = document.getElementById('titulo').value
+            if (!titulo) {
+                showMessage('❌ Ingresa un título para la vista previa', false)
+                return
+            }
+            
+            const preview = `
+            <div class="boletin-document theme-${currentColor} formato-${currentFormato}" style="opacity:0.9">
+                <div class="boletin-header">
+                    <h1 class="boletin-title">📋 Vista Previa: ${titulo}</h1>
+                </div>
+                <div class="text-center py-8 text-slate-500">
+                    <p>Haz clic en "Generar Boletín con IA" para obtener el documento completo</p>
+                    <p class="text-sm mt-2">${alumnos.length} alumno(s) agregados</p>
+                    <p class="text-xs mt-4 text-teal-500">✨ La IA generará el contenido automáticamente</p>
+                </div>
+                <div class="footer-note">Vista previa · 6 créditos</div>
+            </div>
+            `
+            document.getElementById('result').innerHTML = preview
+            document.getElementById('resultContainer').classList.remove('hidden')
+            showMessage('👆 Vista previa - Genera con IA para obtener el contenido real', true)
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('result').innerText
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('✅ Copiado al portapapeles', true)
+            }).catch(() => {
+                showMessage('❌ Error al copiar', false)
+            })
+        }
+
+        function toggleEditMode() {
+            const resultEl = document.getElementById('result')
+            const editorToolbar = document.getElementById('editorToolbar')
+            const editBtn = document.getElementById('editModeBtn')
+            
+            if (!generatedContent && resultEl.children.length === 0) {
+                showMessage('❌ Primero genera un boletín', false)
+                return
+            }
+            
+            isEditMode = !isEditMode
+            
+            if (isEditMode) {
+                resultEl.setAttribute('contenteditable', 'true')
+                editorToolbar.style.display = 'flex'
+                editBtn.classList.add('active')
+                resultEl.focus()
+                showMessage('✏️ Modo edición activado - Puedes editar el texto directamente', true)
+            } else {
+                resultEl.setAttribute('contenteditable', 'false')
+                editorToolbar.style.display = 'none'
+                editBtn.classList.remove('active')
+                generatedContent = resultEl.innerHTML
+                showMessage('✅ Cambios guardados', true)
+            }
+        }
+        
+        function formatText(command) {
+            if (!isEditMode) return
+            
+            switch(command) {
+                case 'bold':
+                    document.execCommand('bold', false, null)
+                    break
+                case 'italic':
+                    document.execCommand('italic', false, null)
+                    break
+                case 'underline':
+                    document.execCommand('underline', false, null)
+                    break
+                case 'h1':
+                    document.execCommand('formatBlock', false, '<h1>')
+                    break
+                case 'h2':
+                    document.execCommand('formatBlock', false, '<h2>')
+                    break
+                case 'p':
+                    document.execCommand('formatBlock', false, '<p>')
+                    break
+                case 'ul':
+                    document.execCommand('insertUnorderedList', false, null)
+                    break
+                case 'ol':
+                    document.execCommand('insertOrderedList', false, null)
+                    break
+            }
+            
+            // Mantener el foco
+            document.getElementById('result').focus()
+        }
+        
+        function handleContentClick() {
+            if (!isEditMode && generatedContent) {
+                // Si no está en modo edición pero hay contenido, mostrar opción
+                if (confirm('¿Quieres activar el modo edición para modificar el texto?')) {
+                    toggleEditMode()
+                }
+            }
+        }
+
+        async function downloadPDF() {
+    if (!generatedContent && document.getElementById('result').children.length === 0) {
+        showMessage('❌ No hay contenido para descargar', false)
+        return
+    }
+    
+    showMessage('📄 Generando PDF con normas APA 7ª edición...', true)
+    
+    try {
+        const { jsPDF } = window.jspdf
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        })
+        
+        // Configuración APA 7
+        const pageWidth = 210 // mm
+        const pageHeight = 297 // mm
+        const margin = 25.4 // 1 pulgada = 25.4mm (margen APA)
+        const contentWidth = pageWidth - (margin * 2)
+        
+        // Fuente Times New Roman (simulada con helvetica)
+        pdf.setFont('helvetica', 'normal')
+        
+        // Obtener el contenido del boletín
+        const resultElement = document.getElementById('result')
+        const boletinDoc = resultElement.querySelector('.boletin-document')
+        
+        if (!boletinDoc) {
+            throw new Error('No se encontró el contenido del boletín')
+        }
+        
+        // Extraer texto manteniendo estructura
+        const titulo = boletinDoc.querySelector('.boletin-title')?.textContent || 'Boletín Informativo'
+        const subtitulo = boletinDoc.querySelector('.boletin-subtitle')?.textContent || ''
+        const mensajeSection = boletinDoc.querySelector('.boletin-section p')?.textContent || ''
+        
+        // Obtener todas las secciones
+        const secciones = []
+        boletinDoc.querySelectorAll('.boletin-section').forEach(section => {
+            const tituloSection = section.querySelector('.section-title')?.textContent || ''
+            const parrafos = []
+            section.querySelectorAll('p').forEach(p => parrafos.push(p.textContent))
+            
+            // Para la sección de alumnos
+            const alumnos = []
+            section.querySelectorAll('.alumno-card').forEach(card => {
+                const nombre = card.querySelector('h4')?.textContent || ''
+                const logros = card.querySelector('p .label')?.parentElement?.textContent?.replace('Logros:', '').trim() || ''
+                const mejoras = card.querySelectorAll('p')[1]?.textContent?.replace('Mejoras:', '').trim() || ''
+                alumnos.push({ nombre, logros, mejoras })
+            })
+            
+            secciones.push({
+                titulo: tituloSection,
+                parrafos: parrafos,
+                alumnos: alumnos
+            })
+        })
+        
+        // Función para agregar texto con formato APA
+        let yPos = margin + 15 // Posición vertical inicial
+        
+        function addNewPageIfNeeded(spaceNeeded) {
+            if (yPos + spaceNeeded > pageHeight - margin - 10) {
+                pdf.addPage()
+                yPos = margin + 15
+                return true
+            }
+            return false
+        }
+        
+        // Portada (si aplica)
+        pdf.setFontSize(16)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Boletín Informativo', margin, yPos, { align: 'left' })
+        yPos += 10
+        
+        // Título principal (centrado, negrita, tamaño 14)
+        addNewPageIfNeeded(20)
+        pdf.setFontSize(14)
+        pdf.setFont('helvetica', 'bold')
+        const tituloLines = pdf.splitTextToSize(titulo, contentWidth)
+        pdf.text(tituloLines, margin, yPos)
+        yPos += (tituloLines.length * 7) + 5
+        
+        // Subtítulo/Periodo
+        if (subtitulo) {
+            addNewPageIfNeeded(10)
+            pdf.setFontSize(12)
+            pdf.setFont('helvetica', 'italic')
+            pdf.text(subtitulo, margin, yPos)
+            yPos += 10
+        }
+        
+        // Línea decorativa (opcional)
+        pdf.setDrawColor(200, 200, 200)
+        pdf.line(margin, yPos - 2, margin + contentWidth, yPos - 2)
+        yPos += 5
+        
+        // Procesar cada sección
+        secciones.forEach((seccion, index) => {
+            // Título de sección (negrita, tamaño 12)
+            if (seccion.titulo) {
+                addNewPageIfNeeded(10)
+                pdf.setFontSize(12)
+                pdf.setFont('helvetica', 'bold')
+                pdf.text(seccion.titulo, margin, yPos)
+                yPos += 8
+            }
+            
+            // Párrafos de la sección
+            seccion.parrafos.forEach(parrafo => {
+                if (parrafo.trim()) {
+                    pdf.setFontSize(11)
+                    pdf.setFont('helvetica', 'normal')
+                    
+                    const parrafoLines = pdf.splitTextToSize(parrafo, contentWidth)
+                    const spaceNeeded = parrafoLines.length * 6 + 2
+                    
+                    addNewPageIfNeeded(spaceNeeded)
+                    
+                    pdf.text(parrafoLines, margin, yPos)
+                    yPos += spaceNeeded
+                }
+            })
+            
+            // Tarjetas de alumnos (formato APA)
+            if (seccion.alumnos && seccion.alumnos.length > 0) {
+                seccion.alumnos.forEach(alumno => {
+                    const spaceNeeded = 25 // Espacio estimado por alumno
+                    addNewPageIfNeeded(spaceNeeded)
+                    
+                    // Nombre del alumno (negrita, sangría francesa estilo APA)
+                    pdf.setFontSize(11)
+                    pdf.setFont('helvetica', 'bold')
+                    pdf.text(alumno.nombre, margin, yPos)
+                    yPos += 6
+                    
+                    // Logros (con sangría)
+                    if (alumno.logros) {
+                        pdf.setFont('helvetica', 'normal')
+                        pdf.setFontSize(10)
+                        const logrosText = `Logros: ${alumno.logros}`
+                        const logrosLines = pdf.splitTextToSize(logrosText, contentWidth - 5)
+                        pdf.text(logrosLines, margin + 5, yPos)
+                        yPos += logrosLines.length * 5 + 2
+                    }
+                    
+                    // Áreas de mejora (con sangría)
+                    if (alumno.mejoras) {
+                        pdf.setFont('helvetica', 'normal')
+                        pdf.setFontSize(10)
+                        const mejorasText = `Áreas de mejora: ${alumno.mejoras}`
+                        const mejorasLines = pdf.splitTextToSize(mejorasText, contentWidth - 5)
+                        pdf.text(mejorasLines, margin + 5, yPos)
+                        yPos += mejorasLines.length * 5 + 4
+                    }
+                })
+            }
+            
+            yPos += 5 // Espacio entre secciones
+        })
+        
+        // Agregar pie de página en todas las páginas (normas APA)
+        const totalPages = pdf.getNumberOfPages()
+        for (let i = 1; i <= totalPages; i++) {
+            pdf.setPage(i)
+            pdf.setFontSize(9)
+            pdf.setFont('helvetica', 'normal')
+            pdf.setTextColor(100, 100, 100)
+            
+            // Número de página (esquina superior derecha, como APA)
+            pdf.text(`${i}`, pageWidth - margin - 5, margin - 5, { align: 'right' })
+            
+            // Fecha de generación (esquina inferior izquierda)
+            const fecha = new Date().toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            })
+            pdf.text(`Generado: ${fecha}`, margin, pageHeight - margin + 5)
+            
+            // Institución (esquina inferior derecha)
+            pdf.text('TodoProfes', pageWidth - margin - 5, pageHeight - margin + 5, { align: 'right' })
+        }
+        
+        // Guardar PDF
+        const nombreArchivo = document.getElementById('titulo').value || 'Boletin'
+        const fecha = new Date().toISOString().split('T')[0]
+        pdf.save(`Boletin_APA_${nombreArchivo.replace(/\s+/g, '_')}_${fecha}.pdf`)
+        
+        showMessage('✅ PDF generado con normas APA 7ª edición', true)
+        
+    } catch (error) {
+        console.error('Error al generar PDF:', error)
+        showMessage('❌ Error al generar el PDF con formato APA', false)
+        
+        // Fallback: método simple
+        try {
+            const { jsPDF } = window.jspdf
+            const pdf = new jsPDF()
+            const text = document.getElementById('result').innerText
+            
+            pdf.setFont('helvetica', 'normal')
+            pdf.setFontSize(12)
+            pdf.text('Boletín Informativo', 20, 20)
+            pdf.setFontSize(11)
+            
+            const lines = pdf.splitTextToSize(text, 170)
+            let y = 30
+            
+            for (let i = 0; i < lines.length; i++) {
+                if (y > 280) {
+                    pdf.addPage()
+                    y = 20
+                }
+                pdf.text(lines[i], 20, y)
+                y += 7
+            }
+            
+            const nombreArchivo = document.getElementById('titulo').value || 'Boletin'
+            const fecha = new Date().toISOString().split('T')[0]
+            pdf.save(`Boletin_${nombreArchivo.replace(/\s+/g, '_')}_${fecha}.pdf`)
+            
+            showMessage('✅ PDF descargado (formato básico)', true)
+        } catch (fallbackError) {
+            showMessage('❌ Error en la descarga del PDF', false)
+        }
+    }
+}
+
+        function printDocument() {
+            if (!generatedContent && document.getElementById('result').children.length === 0) {
+                showMessage('❌ No hay contenido para imprimir', false)
+                return
+            }
+            
+            const w = window.open('', '_blank')
+            w.document.write(`
+                <html>
+                    <head>
+                        <title>Boletín TodoProfes</title>
+                        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                        <style>
+                            body { 
+                                font-family: 'Inter', sans-serif; 
+                                padding: 2rem;
+                                max-width: 800px;
+                                margin: 0 auto;
+                            }
+                            @media print {
+                                body { padding: 0; }
+                            }
+                        </style>
+                    </head>
+                    <body>${document.getElementById('result').innerHTML}</body>
+                </html>
+            `)
+            w.document.close()
+            setTimeout(() => {
+                w.print()
+                w.close()
+            }, 500)
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession()
+            lucide.createIcons()
+            
+            document.querySelectorAll('.format-badge').forEach(el => {
+                const texto = el.textContent.toLowerCase()
+                if (texto.includes('estándar')) el.setAttribute('data-formato', 'estandar')
+                else if (texto.includes('compacto')) el.setAttribute('data-formato', 'compacto')
+                else if (texto.includes('detallado')) el.setAttribute('data-formato', 'detallado')
+            })
+            
+            // Deshabilitar el pegado con formato por defecto
+            document.getElementById('result').addEventListener('paste', function(e) {
+                if (isEditMode) {
+                    e.preventDefault()
+                    const text = e.clipboardData.getData('text/plain')
+                    document.execCommand('insertText', false, text)
+                }
+            })
+        })
+    </script>
+</body>
+</html>

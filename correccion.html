@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>TodoProfes - Corrección de Textos</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+    <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';</script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .input-field:focus {
+            border-color: #EC4899;
+            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
+            outline: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #EC4899, #DB2777);
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #EC4899;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #1E293B;
+            border: 1px solid #334155;
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+        }
+        
+        .btn-secondary:hover {
+            background: #2D3A4F;
+            border-color: #475569;
+        }
+        
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #EC4899;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Fullscreen loader */
+        .fullscreen-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .loader-spinner {
+            border: 4px solid rgba(236, 72, 153, 0.3);
+            border-top: 4px solid #EC4899;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Estilos profesionales para el texto corregido */
+        .correction-document {
+            background: white;
+            color: #1E293B;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (min-width: 768px) {
+            .correction-document {
+                padding: 2rem;
+            }
+        }
+        
+        /* Temas de color */
+        .correction-document.theme-pink {
+            background: linear-gradient(135deg, #ffffff, #fdf2f8);
+            border-left: 4px solid #EC4899;
+        }
+        .correction-document.theme-purple {
+            background: linear-gradient(135deg, #ffffff, #faf5ff);
+            border-left: 4px solid #A855F7;
+        }
+        .correction-document.theme-blue {
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+            border-left: 4px solid #3B82F6;
+        }
+        .correction-document.theme-green {
+            background: linear-gradient(135deg, #ffffff, #f0fdf4);
+            border-left: 4px solid #22C55E;
+        }
+        .correction-document.theme-amber {
+            background: linear-gradient(135deg, #ffffff, #fffbeb);
+            border-left: 4px solid #F59E0B;
+        }
+        
+        .theme-pink .correction-section-title { color: #EC4899; }
+        .theme-pink .stat-value { color: #EC4899; }
+        .theme-pink .suggestion-icon { color: #EC4899; }
+        .theme-pink .correction-header { border-bottom-color: #EC4899; }
+        
+        .theme-purple .correction-section-title { color: #A855F7; }
+        .theme-purple .stat-value { color: #A855F7; }
+        .theme-purple .suggestion-icon { color: #A855F7; }
+        .theme-purple .correction-header { border-bottom-color: #A855F7; }
+        
+        .theme-blue .correction-section-title { color: #3B82F6; }
+        .theme-blue .stat-value { color: #3B82F6; }
+        .theme-blue .suggestion-icon { color: #3B82F6; }
+        .theme-blue .correction-header { border-bottom-color: #3B82F6; }
+        
+        .theme-green .correction-section-title { color: #22C55E; }
+        .theme-green .stat-value { color: #22C55E; }
+        .theme-green .suggestion-icon { color: #22C55E; }
+        .theme-green .correction-header { border-bottom-color: #22C55E; }
+        
+        .theme-amber .correction-section-title { color: #F59E0B; }
+        .theme-amber .stat-value { color: #F59E0B; }
+        .theme-amber .suggestion-icon { color: #F59E0B; }
+        .theme-amber .correction-header { border-bottom-color: #F59E0B; }
+        
+        /* Formatos */
+        .correction-document.formato-estandar {
+            font-size: 1rem;
+        }
+        .correction-document.formato-compacto {
+            font-size: 0.9rem;
+            padding: 1rem;
+        }
+        .correction-document.formato-detallado {
+            font-size: 1.1rem;
+            padding: 2rem;
+        }
+        
+        /* Responsive grids */
+        .correction-document .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (min-width: 640px) {
+            .correction-document .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .correction-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid currentColor;
+            word-wrap: break-word;
+        }
+        
+        .correction-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, currentColor, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+        }
+        
+        @media (min-width: 768px) {
+            .correction-title {
+                font-size: 2rem;
+            }
+        }
+        
+        .correction-subtitle {
+            color: #64748B;
+            font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem 1rem;
+        }
+        
+        .correction-section {
+            margin-bottom: 2rem;
+        }
+        
+        .correction-section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .original-text {
+            background: #F1F5F9;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+            color: #475569;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        
+        .corrected-text {
+            background: #F8FAFC;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #E2E8F0;
+            line-height: 1.6;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        
+        .suggestion-box {
+            background: #F8FAFC;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #E2E8F0;
+            margin-top: 1.5rem;
+        }
+        
+        .suggestion-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .stat-card {
+            background: #F8FAFC;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748B;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Panel de configuración */
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        .color-swatch.selected {
+            border-color: white;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        .color-swatch.pink { background: #EC4899; }
+        .color-swatch.purple { background: #A855F7; }
+        .color-swatch.blue { background: #3B82F6; }
+        .color-swatch.green { background: #22C55E; }
+        .color-swatch.amber { background: #F59E0B; }
+        
+        .format-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            background: #0F172A;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .format-badge:hover {
+            background: #1E293B;
+            border-color: #EC4899;
+        }
+        .format-badge.selected {
+            background: #EC4899;
+            color: white;
+            border-color: #EC4899;
+        }
+        
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .action-btn {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #94A3B8;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            background: #2D3A4F;
+            color: white;
+            border-color: #EC4899;
+        }
+        
+        .badge-pink {
+            background: rgba(236, 72, 153, 0.2);
+            color: #EC4899;
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+        
+        .insufficient-credits {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        .config-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #EC4899;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+        .config-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 10px rgba(236, 72, 153, 0.3);
+        }
+        
+        .config-sidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 350px;
+            height: 100vh;
+            background: #0F172A;
+            border-left: 1px solid #334155;
+            padding: 2rem 1.5rem;
+            transition: right 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+        .config-sidebar.open {
+            right: 0;
+        }
+        
+        @media (min-width: 640px) {
+            .config-sidebar {
+                right: -400px;
+                width: 350px;
+            }
+        }
+        
+        .config-sidebar-close {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            cursor: pointer;
+            color: #94A3B8;
+        }
+        .config-sidebar-close:hover {
+            color: white;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #334155;
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .file-upload-area:hover {
+            border-color: #EC4899;
+            background: rgba(236, 72, 153, 0.05);
+        }
+        
+        .preview-card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .preview-card:hover {
+            border-color: #EC4899;
+            transform: translateY(-2px);
+        }
+        
+        .result-area {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .footer-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748B;
+            border-top: 1px solid #E2E8F0;
+            word-wrap: break-word;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+        
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22C55E;
+            color: #22C55E;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 1.5s ease infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Fullscreen Loader -->
+    <div id="fullscreenLoader" class="fullscreen-loader" style="display: none;">
+        <div class="loader-spinner"></div>
+        <div class="text-pink-400 font-semibold">Corrigiendo texto...</div>
+        <div class="text-slate-400 text-sm">Analizando ortografía, gramática y estilo</div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition-all hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <h1 class="text-2xl font-bold text-white">
+                    <span class="bg-gradient-to-r from-pink-400 to-rose-400 bg-clip-text text-transparent">Corrección</span>
+                    <span class="text-white"> de Textos</span>
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-yellow-400 flex items-center bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700" id="creditsContainer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="8" cy="8" r="6"/><path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/><path d="m12 12 4 4"/><path d="M12 12v4h4"/><path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/><path d="m16 16-4-4"/><path d="M16 16v-4h-4"/>
+                    </svg>
+                    <span id="creditsDisplay">Cargando...</span>
+                </span>
+                <button onclick="toggleConfigPanel()" class="text-slate-400 hover:text-white relative group" title="Personalizar estilo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay para sidebar -->
+    <div id="overlay" class="overlay" onclick="toggleConfigPanel()"></div>
+
+    <!-- Sidebar de configuración -->
+    <div id="configSidebar" class="config-sidebar">
+        <div class="config-sidebar-close" onclick="toggleConfigPanel()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </div>
+        
+        <h2 class="text-xl font-bold text-white mb-6 mt-8">Personalizar Estilo</h2>
+        
+        <!-- Selector de color -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">🎨 Color principal</h3>
+            <div class="flex flex-wrap gap-3">
+                <div class="color-swatch pink selected" onclick="selectColor('pink')" data-color="pink"></div>
+                <div class="color-swatch purple" onclick="selectColor('purple')" data-color="purple"></div>
+                <div class="color-swatch blue" onclick="selectColor('blue')" data-color="blue"></div>
+                <div class="color-swatch green" onclick="selectColor('green')" data-color="green"></div>
+                <div class="color-swatch amber" onclick="selectColor('amber')" data-color="amber"></div>
+            </div>
+        </div>
+        
+        <!-- Selector de formato -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">📄 Formato de documento</h3>
+            <div class="space-y-2">
+                <div class="format-badge selected" onclick="selectFormato('estandar')" data-formato="estandar">📏 Estándar (Recomendado)</div>
+                <div class="format-badge" onclick="selectFormato('compacto')" data-formato="compacto">📐 Compacto (Ahorra espacio)</div>
+                <div class="format-badge" onclick="selectFormato('detallado')" data-formato="detallado">📜 Detallado (Muy completo)</div>
+            </div>
+        </div>
+        
+        <!-- Preferencias de corrección -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">⚙️ Preferencias de corrección</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Nivel de detalle</label>
+                    <select id="nivelDetalle" class="input-field text-sm">
+                        <option value="basico">Básico (solo ortografía)</option>
+                        <option value="estandar" selected>Estándar (ortografía y gramática)</option>
+                        <option value="profundo">Profundo (estilo y redacción)</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Formato de salida</label>
+                    <select id="formatoSalida" class="input-field text-sm">
+                        <option value="texto">Solo texto corregido</option>
+                        <option value="comparativo" selected>Comparativo (original vs corregido)</option>
+                        <option value="detallado">Detallado con sugerencias</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="mostrarEstadisticas" class="form-checkbox h-4 w-4 text-pink-600" checked>
+                    <label for="mostrarEstadisticas" class="text-sm text-slate-300">Mostrar estadísticas del texto</label>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="conservarFormato" class="form-checkbox h-4 w-4 text-pink-600" checked>
+                    <label for="conservarFormato" class="text-sm text-slate-300">Conservar formato original</label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botón guardar -->
+        <button onclick="savePreferences()" class="btn-primary w-full flex items-center justify-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+            </svg>
+            <span>Guardar preferencias</span>
+        </button>
+        
+        <p id="configMessage" class="text-xs text-center mt-3 text-green-400 hidden">✓ Preferencias guardadas</p>
+    </div>
+
+    <main class="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <div class="max-w-4xl mx-auto">
+            <!-- Hero Section -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8 text-center">
+                <div class="inline-block bg-pink-500/20 p-3 md:p-4 rounded-full mb-4">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 md:w-12 md:h-12 text-pink-400">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Corrector de Textos Profesional</h2>
+                <p class="text-sm md:text-base text-slate-400">Mejora la ortografía, gramática y estilo de tus textos</p>
+                
+                <!-- Stats -->
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 mt-6">
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-pink-400">4</div>
+                        <div class="text-xs text-slate-500">Créditos por texto</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-pink-400">PDF</div>
+                        <div class="text-xs text-slate-500">Soporte de archivos</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-pink-400">IA</div>
+                        <div class="text-xs text-slate-500">Corrección automática</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario Principal -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h3 class="text-xl font-semibold text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2 text-pink-400">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        Texto a corregir
+                    </h3>
+                    <button onclick="toggleConfigPanel()" class="text-sm text-pink-400 hover:text-pink-300 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+                        </svg>
+                        Personalizar
+                    </button>
+                </div>
+                
+                <form id="correccionForm" class="space-y-6" onsubmit="event.preventDefault(); handleGenerate()">
+                    <!-- Área de texto -->
+                    <div>
+                        <textarea id="textoOriginal" rows="6" class="input-field" placeholder="Pega aquí el texto que deseas corregir...">El aprendizaje es un proceso continuo que nos permite desarollar nuevas habilidades y conocimientos. Los niños aprenden mejor quando estan motivados y se sienten seguros en su entorno. La educación inicial deve fomentar la creatividad y la curiosidad natural de los niños.</textarea>
+                    </div>
+                    
+                    <!-- Subir archivo -->
+                    <div>
+                        <div class="file-upload-area" onclick="document.getElementById('fileInput').click()">
+                            <input type="file" id="fileInput" class="hidden" accept=".txt,.pdf,.docx" onchange="handleFileUpload(this)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mx-auto mb-2 text-pink-400">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <p class="text-sm text-slate-400">Haz clic para subir un archivo (TXT, PDF, DOCX)</p>
+                            <p id="fileName" class="text-xs text-pink-400 mt-1"></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Título opcional -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Título o referencia (opcional)</label>
+                        <input type="text" id="titulo" class="input-field" placeholder="Ej: Informe de evaluación, Carta a padres, etc." value="Texto de ejemplo">
+                    </div>
+
+                    <!-- Botones de acción responsive -->
+                    <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                        <button type="submit" id="generateBtn" class="btn-primary flex-1 flex items-center justify-center space-x-2">
+                            <span>✨ Corregir Texto</span>
+                            <span class="text-sm opacity-75">(4 créditos)</span>
+                        </button>
+                        <button type="button" onclick="loadPreview()" class="btn-secondary flex items-center justify-center space-x-2 px-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <span>Vista Previa</span>
+                        </button>
+                    </div>
+
+                    <!-- Mensajes -->
+                    <div id="message" class="text-center text-sm hidden"></div>
+                </form>
+            </div>
+
+            <!-- Resultado con formato profesional -->
+            <div id="resultContainer" class="glass-card p-4 md:p-8 mb-6 md:mb-8 hidden">
+                <div class="action-toolbar">
+                    <button onclick="copyToClipboard()" class="action-btn" title="Copiar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
+                    <button onclick="downloadWord()" class="action-btn" title="Word">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button onclick="printDocument()" class="action-btn" title="Imprimir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="result" class="result-area"></div>
+                <div id="creditsInfo" class="text-xs text-slate-500 text-right mt-2"></div>
+            </div>
+
+            <!-- Textos de ejemplo -->
+            <div class="glass-card p-6 md:p-8">
+                <h3 class="text-xl font-semibold text-white mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2 text-pink-400">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    Textos de ejemplo
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="preview-card" onclick="loadExample('informe')">
+                        <span class="badge-pink inline-block px-2 py-1 rounded-full text-xs mb-2">📄 Informe</span>
+                        <h4 class="text-white font-semibold">Informe evaluativo</h4>
+                        <p class="text-xs text-slate-400">Texto académico</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('carta')">
+                        <span class="badge-pink inline-block px-2 py-1 rounded-full text-xs mb-2">✉️ Carta</span>
+                        <h4 class="text-white font-semibold">Carta a padres</h4>
+                        <p class="text-xs text-slate-400">Comunicación formal</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('ensayo')">
+                        <span class="badge-pink inline-block px-2 py-1 rounded-full text-xs mb-2">📝 Ensayo</span>
+                        <h4 class="text-white font-semibold">Ensayo educativo</h4>
+                        <p class="text-xs text-slate-400">Texto argumentativo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Botón flotante de configuración -->
+    <div class="config-toggle" onclick="toggleConfigPanel()" title="Personalizar estilo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+        </svg>
+    </div>
+
+    <footer class="bg-slate-950 text-center p-4 mt-auto border-t border-slate-800">
+        <p class="text-xs md:text-sm text-slate-400">✨ Corrección de Textos Profesional - TodoProfes</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`
+        
+        let isAuthenticated = false
+        let userId = null
+        let token = null
+        let generatedContent = ''
+        
+        // Variables de estilo
+        let currentColor = 'pink'
+        let currentFormato = 'estandar'
+
+        // ============================================================
+        // FUNCIONES DE CONFIGURACIÓN Y ESTILO
+        // ============================================================
+        
+        function toggleConfigPanel() {
+            const sidebar = document.getElementById('configSidebar')
+            const overlay = document.getElementById('overlay')
+            sidebar.classList.toggle('open')
+            overlay.classList.toggle('show')
+        }
+        
+        function selectColor(color) {
+            document.querySelectorAll('.color-swatch').forEach(el => {
+                el.classList.remove('selected')
+            })
+            document.querySelector(`.color-swatch.${color}`).classList.add('selected')
+            currentColor = color
+            updateResultTheme()
+        }
+        
+        function selectFormato(formato) {
+            document.querySelectorAll('.format-badge').forEach(el => {
+                el.classList.remove('selected')
+            })
+            document.querySelector(`.format-badge[data-formato="${formato}"]`).classList.add('selected')
+            currentFormato = formato
+            updateResultTheme()
+        }
+        
+        function updateResultTheme() {
+            const resultEl = document.getElementById('result')
+            if (resultEl && resultEl.children.length > 0) {
+                const doc = resultEl.querySelector('.correction-document')
+                if (doc) {
+                    doc.className = doc.className.replace(/theme-\w+/g, '').trim()
+                    doc.className = doc.className.replace(/formato-\w+/g, '').trim()
+                    doc.classList.add(`theme-${currentColor}`, `formato-${currentFormato}`)
+                }
+            }
+        }
+        
+        function savePreferences() {
+            const message = document.getElementById('configMessage')
+            message.classList.remove('hidden')
+            setTimeout(() => message.classList.add('hidden'), 2000)
+            toggleConfigPanel()
+        }
+
+        // ============================================================
+        // FUNCIONES DE AUTENTICACIÓN Y CRÉDITOS
+        // ============================================================
+        
+        async function checkSession() {
+            token = localStorage.getItem('supabase_token')
+            userId = localStorage.getItem('user_id')
+
+            if (!token || !userId) {
+                window.location.href = 'login.html'
+                return
+            }
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+
+                if (!response.ok) throw new Error('Token inválido')
+
+                isAuthenticated = true
+                await loadUserCredits()
+                await checkIAFunction()
+                
+            } catch (error) {
+                console.error('Error verificando sesión:', error)
+                localStorage.removeItem('supabase_token')
+                localStorage.removeItem('user_id')
+                window.location.href = 'login.html'
+            }
+        }
+
+        async function loadUserCredits() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+
+                if (response.ok) {
+                    const users = await response.json()
+                    if (users && users.length > 0) {
+                        const credits = users[0].credits || 0
+                        document.getElementById('creditsDisplay').textContent = `${credits} créditos`
+                        
+                        const creditsContainer = document.getElementById('creditsContainer')
+                        if (credits < 10) {
+                            creditsContainer.classList.add('insufficient-credits')
+                        } else {
+                            creditsContainer.classList.remove('insufficient-credits')
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error)
+            }
+        }
+
+        // Función de estado de IA (solo para consola, sin indicador visual)
+        function updateIAStatus(available) {
+            console.log('IA Status:', available ? 'Activa' : 'No disponible');
+        }
+
+        async function checkIAFunction() {
+            try {
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: "test",
+                        tool: "correccion"
+                    })
+                })
+                updateIAStatus(response.ok)
+            } catch (error) {
+                console.warn('No se puede conectar a la función de IA:', error)
+                updateIAStatus(false)
+            }
+        }
+
+        async function deductCredits(amount) {
+            try {
+                const getResponse = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+
+                if (!getResponse.ok) throw new Error('No se pudo obtener créditos')
+
+                const users = await getResponse.json()
+                if (!users || users.length === 0) throw new Error('Usuario no encontrado')
+
+                const currentCredits = users[0].credits || 0
+                
+                if (currentCredits < amount) throw new Error('Créditos insuficientes')
+
+                const newCredits = currentCredits - amount
+
+                const updateResponse = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({ credits: newCredits })
+                })
+
+                if (!updateResponse.ok) throw new Error('No se pudieron actualizar los créditos')
+
+                await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        amount: -amount,
+                        balance_after: newCredits,
+                        type: 'usage',
+                        description: 'Uso de Corrección de Textos',
+                        feature_used: 'correccion'
+                    })
+                }).catch(err => console.log('Error registrando historial:', err))
+
+                return newCredits
+
+            } catch (error) {
+                console.error('Error descontando créditos:', error)
+                throw error
+            }
+        }
+
+        function showMessage(text, isSuccess = false) {
+            const msgEl = document.getElementById('message')
+            msgEl.textContent = text
+            msgEl.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'success-message' : 'error-message'}`
+            msgEl.classList.remove('hidden')
+            
+            setTimeout(() => {
+                msgEl.classList.add('hidden')
+            }, 3000)
+        }
+
+        // ============================================================
+        // FUNCIONES DE MANEJO DE ARCHIVOS
+        // ============================================================
+        
+        function handleFileUpload(input) {
+            const file = input.files[0]
+            if (!file) return
+            
+            document.getElementById('fileName').textContent = `📄 ${file.name}`
+            
+            const reader = new FileReader()
+            reader.onload = function(e) {
+                document.getElementById('textoOriginal').value = e.target.result
+            }
+            
+            if (file.name.endsWith('.txt')) {
+                reader.readAsText(file)
+            } else if (file.name.endsWith('.pdf')) {
+                extractTextFromPDF(file)
+            } else {
+                showMessage('❌ Formato no soportado. Usa TXT o PDF.')
+            }
+        }
+        
+        async function extractTextFromPDF(file) {
+            try {
+                const reader = new FileReader()
+                reader.onload = async function(event) {
+                    const pdfData = new Uint8Array(event.target.result)
+                    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise
+                    let fullText = ''
+                    
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i)
+                        const textContent = await page.getTextContent()
+                        const pageText = textContent.items.map(item => item.str).join(' ')
+                        fullText += pageText + '\n'
+                    }
+                    
+                    document.getElementById('textoOriginal').value = fullText
+                    showMessage('✅ PDF cargado correctamente', true)
+                }
+                reader.readAsArrayBuffer(file)
+            } catch (error) {
+                console.error('Error:', error)
+                showMessage('❌ Error al leer el PDF')
+            }
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA GUARDAR EN STORAGE
+        // ============================================================
+        
+        async function guardarDocumentoEnStorage(contenido, titulo, tipo) {
+            try {
+                const userId = localStorage.getItem('user_id')
+                const token = localStorage.getItem('supabase_token')
+                const fecha = new Date().toISOString().split('T')[0]
+                const timestamp = Date.now()
+                const nombreArchivo = `${userId}/correccion_${fecha}_${timestamp}.docx`
+                
+                console.log('📤 Guardando documento en bucket:', nombreArchivo)
+                
+                const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+                
+                const formData = new FormData()
+                formData.append('file', blob, nombreArchivo.split('/').pop())
+                
+                const uploadResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: formData
+                })
+
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text()
+                    console.error('Error respuesta storage:', errorText)
+                    throw new Error(`Error al subir: ${uploadResponse.status}`)
+                }
+
+                const urlDocumento = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
+                console.log('✅ Documento guardado en:', urlDocumento)
+
+                const referenciaResponse = await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        tipo: 'correccion',
+                        titulo: titulo.substring(0, 100),
+                        url_documento: urlDocumento,
+                        creditos_usados: 4,
+                        created_at: new Date().toISOString()
+                    })
+                })
+
+                if (!referenciaResponse.ok) {
+                    console.error('Error guardando referencia:', await referenciaResponse.text())
+                } else {
+                    console.log('✅ Referencia guardada en contenidos_generados')
+                }
+
+                return urlDocumento
+            } catch (error) {
+                console.error('❌ Error en guardarDocumentoEnStorage:', error)
+                return null
+            }
+        }
+
+        // ============================================================
+        // FUNCIONES DE EJEMPLOS Y PREVIEW
+        // ============================================================
+        
+        function loadExample(type) {
+            const examples = {
+                informe: `El siguiente informe presenta los resultados de la evaluacion realizada a los estudiantes del grado transicion durante el primer semestre del año. Se observo un progreso significativo en el desarrollo de habilidades comunicativas, aunque algunos niños presentan dificultades en la motricidad fina. Se recomienda implementar actividades especificas para fortalecer esta area.`,
+                
+                carta: `Estimados padres de familia: Por medio de la presente, les informamos que el proximo viernes 15 de noviembre se llevara a cabo la reunion de padres y representantes en las instalaciones del colegio. La cita es a las 8:00 am en el salon de usos multiples. Esperamos contar con su valiosa asistencia. Atentamente, La coordinacion academica.`,
+                
+                ensayo: `La educación es un pilar fundamental en el desarrollo de cualquier sociedad. Sin embargo, en la actualidad nos enfrentamos a diversos desafios que ponen en riesgo la calidad educativa. La falta de recursos, la desercion escolar y la necesidad de actualizar los metodos de enseñanza son problemas que requieren atención inmediata.`
+            }
+            
+            document.getElementById('textoOriginal').value = examples[type]
+            showMessage('✅ Texto de ejemplo cargado', true)
+        }
+
+        function loadPreview() {
+            const textoOriginal = document.getElementById('textoOriginal').value
+            const titulo = document.getElementById('titulo').value || 'Texto sin título'
+            
+            if (!textoOriginal.trim()) {
+                showMessage('❌ Por favor ingresa un texto para corregir')
+                return
+            }
+            
+            const previewHTML = `
+            <div class="correction-document theme-${currentColor} formato-${currentFormato}" style="opacity: 0.9;">
+                <div class="correction-header">
+                    <h1 class="correction-title">📋 Vista Previa: ${titulo}</h1>
+                    <div class="correction-subtitle">
+                        <span>📝 ${textoOriginal.split(' ').length} palabras</span>
+                        <span>⏱️ Corrección automática</span>
+                    </div>
+                </div>
+
+                <div class="correction-section">
+                    <h2 class="correction-section-title">📄 Texto original</h2>
+                    <div class="original-text">
+                        ${textoOriginal}
+                    </div>
+                </div>
+
+                <div class="correction-section">
+                    <h2 class="correction-section-title">✨ Vista previa</h2>
+                    <div class="corrected-text">
+                        <p><em>Haz clic en "Corregir Texto" para obtener el texto corregido profesionalmente.</em></p>
+                        <p class="text-sm text-pink-500 mt-2">Se usarán 4 créditos para esta corrección.</p>
+                    </div>
+                </div>
+
+                <div class="footer-note">
+                    Vista previa · TodoProfes
+                </div>
+            </div>
+            `
+            
+            document.getElementById('result').innerHTML = previewHTML
+            document.getElementById('resultContainer').classList.remove('hidden')
+            showMessage('👆 Vista previa - Genera para obtener el texto corregido', true)
+        }
+
+        // ============================================================
+        // FUNCIÓN PRINCIPAL DE GENERACIÓN CON GEMINI
+        // ============================================================
+        
+        async function handleGenerate() {
+            if (!isAuthenticated) {
+                window.location.href = 'login.html'
+                return
+            }
+
+            const textoOriginal = document.getElementById('textoOriginal').value.trim()
+            const titulo = document.getElementById('titulo').value.trim() || 'Texto corregido'
+            const nivelDetalle = document.getElementById('nivelDetalle').value
+            const formatoSalida = document.getElementById('formatoSalida').value
+            const mostrarStats = document.getElementById('mostrarEstadisticas').checked
+
+            if (!textoOriginal) {
+                showMessage('❌ Por favor ingresa un texto para corregir')
+                return
+            }
+
+            document.getElementById('fullscreenLoader').style.display = 'flex'
+
+            const btn = document.getElementById('generateBtn')
+            const originalText = btn.innerHTML
+            btn.innerHTML = '<span class="loader"></span><span class="ml-2">Corrigiendo...</span>'
+            btn.disabled = true
+
+            try {
+                // Descontar créditos
+                const newCredits = await deductCredits(4)
+                document.getElementById('creditsDisplay').textContent = `${newCredits} créditos`
+
+                // Crear prompt para Gemini
+                let nivelTexto = ''
+                switch(nivelDetalle) {
+                    case 'basico':
+                        nivelTexto = 'corrige solo ortografía y errores gramaticales básicos'
+                        break
+                    case 'estandar':
+                        nivelTexto = 'corrige ortografía, gramática y mejora la redacción'
+                        break
+                    case 'profundo':
+                        nivelTexto = 'realiza una corrección profunda mejorando estilo, claridad, coherencia y fluidez del texto'
+                        break
+                }
+
+                let formatoTexto = ''
+                switch(formatoSalida) {
+                    case 'texto':
+                        formatoTexto = 'Proporciona SOLO el texto corregido, sin explicaciones ni formato adicional.'
+                        break
+                    case 'comparativo':
+                        formatoTexto = 'Muestra primero el texto original y luego el texto corregido de forma clara.'
+                        break
+                    case 'detallado':
+                        formatoTexto = 'Proporciona el texto corregido seguido de una lista de sugerencias y explicaciones de los cambios realizados.'
+                        break
+                }
+
+                const prompt = `Actúa como un corrector de textos profesional y experto en lengua española.
+
+TEXTO A CORREGIR:
+"""
+${textoOriginal}
+"""
+
+INSTRUCCIONES:
+- ${nivelTexto}
+- ${formatoTexto}
+- Corrige acentos, puntuación, ortografía y gramática
+- Mejora la redacción manteniendo el significado original
+- Usa un tono profesional y apropiado para el contexto
+- NO agregues información adicional que no esté en el texto original
+- Mantén el formato original del texto (párrafos, listas, etc.)
+
+RESPUESTA EN HTML:
+Genera el resultado dentro de una estructura HTML con las siguientes clases:
+- correction-document: contenedor principal
+- correction-header: encabezado del documento
+- correction-title: título del documento
+- correction-subtitle: subtítulo con metadatos
+- correction-section: cada sección del documento
+- correction-section-title: título de sección
+- original-text: para el texto original (si aplica)
+- corrected-text: para el texto corregido
+- suggestion-box: para sugerencias detalladas (si aplica)
+- suggestion-item: cada sugerencia individual
+- stats-grid: para estadísticas (si aplica)
+- stat-card: tarjeta de estadística
+- stat-value: valor numérico
+- stat-label: etiqueta de estadística
+
+El HTML debe ser autónomo y verse profesional.`
+
+                console.log('Llamando a función IA con tool: correccion')
+                
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        tool: 'correccion',
+                        format: 'html'
+                    })
+                })
+
+                const data = await response.json()
+                console.log('Respuesta de IA:', data)
+
+                if (!response.ok) {
+                    if (data.error === 'insufficient_credits') {
+                        throw new Error(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}`)
+                    }
+                    throw new Error(data.message || 'Error al corregir el texto')
+                }
+
+                let resultadoHTML = data.content
+                
+                // Limpiar la respuesta si viene con comillas
+                if (typeof resultadoHTML === 'string' && resultadoHTML.startsWith('"') && resultadoHTML.endsWith('"')) {
+                    try {
+                        resultadoHTML = JSON.parse(resultadoHTML)
+                    } catch (e) {}
+                }
+                
+                // Si no tiene la estructura completa, envolverla
+                if (!resultadoHTML.includes('correction-document')) {
+                    resultadoHTML = `
+                    <div class="correction-document theme-${currentColor} formato-${currentFormato}">
+                        <div class="correction-header">
+                            <h1 class="correction-title">${titulo}</h1>
+                            <div class="correction-subtitle">
+                                <span>📅 ${new Date().toLocaleDateString('es-ES')}</span>
+                                <span>✍️ Corregido</span>
+                            </div>
+                        </div>
+                        ${resultadoHTML}
+                        <div class="footer-note">
+                            Corrección generada por TodoProfes · ${new Date().toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    `
+                }
+
+                generatedContent = resultadoHTML
+                document.getElementById('result').innerHTML = resultadoHTML
+                document.getElementById('resultContainer').classList.remove('hidden')
+                
+                if (data.credits_left !== undefined) {
+                    document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
+                    document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Créditos restantes: ${data.credits_left}`
+                } else {
+                    await loadUserCredits()
+                }
+                
+                // Guardar en storage
+                await guardarDocumentoEnStorage(resultadoHTML, titulo, 'correccion')
+                
+                showMessage('✅ Texto corregido exitosamente', true)
+                
+            } catch (error) {
+                console.error('Error detallado:', error)
+                
+                if (error.message.includes('Créditos insuficientes')) {
+                    showMessage('❌ Créditos insuficientes. Necesitas recargar.', false)
+                } else {
+                    // Fallback con corrección básica local
+                    const textoCorregido = textoOriginal
+                        .replace(/desarollar/g, 'desarrollar')
+                        .replace(/quando/g, 'cuando')
+                        .replace(/estan/g, 'están')
+                        .replace(/deve/g, 'debe')
+                        .replace(/evaluacion/g, 'evaluación')
+                        .replace(/transicion/g, 'transición')
+                        .replace(/observo/g, 'observó')
+                        .replace(/area/g, 'área')
+                        .replace(/proximo/g, 'próximo')
+                        .replace(/llevara/g, 'llevará')
+                        .replace(/reunion/g, 'reunión')
+                        .replace(/academica/g, 'académica')
+                        .replace(/desafios/g, 'desafíos')
+                        .replace(/desercion/g, 'deserción')
+                        .replace(/metodos/g, 'métodos')
+                    
+                    const fallbackHTML = `
+                    <div class="correction-document theme-${currentColor} formato-${currentFormato}">
+                        <div class="correction-header">
+                            <h1 class="correction-title">📄 ${titulo}</h1>
+                            <div class="correction-subtitle">
+                                <span>📅 ${new Date().toLocaleDateString('es-ES')}</span>
+                                <span>⚠️ Modo offline</span>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">${textoOriginal.split(' ').length}</div>
+                                <div class="stat-label">Palabras original</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">12</div>
+                                <div class="stat-label">Correcciones</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${textoCorregido.split(' ').length}</div>
+                                <div class="stat-label">Palabras final</div>
+                            </div>
+                        </div>
+
+                        <div class="correction-section">
+                            <h2 class="correction-section-title">📝 Original</h2>
+                            <div class="original-text">${textoOriginal}</div>
+                        </div>
+                        
+                        <div class="correction-section">
+                            <h2 class="correction-section-title">✨ Corregido</h2>
+                            <div class="corrected-text">${textoCorregido}</div>
+                        </div>
+                        
+                        <div class="footer-note">
+                            Corrección generada por TodoProfes (modo offline) · ${new Date().toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    `
+                    
+                    document.getElementById('result').innerHTML = fallbackHTML
+                    document.getElementById('resultContainer').classList.remove('hidden')
+                    showMessage('⚠️ Modo offline - Corrección básica aplicada', false)
+                }
+                
+            } finally {
+                document.getElementById('fullscreenLoader').style.display = 'none'
+                btn.innerHTML = originalText
+                btn.disabled = false
+            }
+        }
+
+        // ============================================================
+        // FUNCIONES DE UTILIDADES
+        // ============================================================
+
+        function copyToClipboard() {
+            const content = document.getElementById('result').innerHTML
+            const tempDiv = document.createElement('div')
+            tempDiv.innerHTML = content
+            const text = tempDiv.innerText || tempDiv.textContent
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('✅ Copiado al portapapeles', true)
+            }).catch(() => {
+                showMessage('❌ Error al copiar')
+            })
+        }
+
+        function downloadWord() {
+            if (!generatedContent) {
+                showMessage('❌ No hay contenido para descargar')
+                return
+            }
+
+            const tempDiv = document.createElement('div')
+            tempDiv.innerHTML = generatedContent
+            const plainText = tempDiv.innerText || tempDiv.textContent
+
+            const doc = new docx.Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({ text: "Texto Corregido", bold: true, size: 32 }),
+                            ],
+                            alignment: docx.AlignmentType.CENTER,
+                        }),
+                        new docx.Paragraph({ text: "" }),
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({ text: plainText, size: 22 }),
+                            ],
+                        }),
+                    ],
+                }],
+            })
+
+            docx.Packer.toBlob(doc).then(blob => {
+                saveAs(blob, "Correccion_TodoProfes.docx")
+                showMessage('✅ Documento descargado', true)
+            }).catch(error => {
+                console.error('Error:', error)
+                showMessage('❌ Error al descargar')
+            })
+        }
+
+        function printDocument() {
+            if (!generatedContent) {
+                showMessage('❌ No hay contenido para imprimir')
+                return
+            }
+            
+            const content = document.getElementById('result').innerHTML
+            const printWindow = window.open('', '_blank')
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Texto Corregido - TodoProfes</title>
+                        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                        <style>
+                            body { font-family: 'Inter', sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+                            @media print { body { padding: 0; } }
+                        </style>
+                    </head>
+                    <body>
+                        ${content}
+                    </body>
+                </html>
+            `)
+            printWindow.document.close()
+            setTimeout(() => {
+                printWindow.print()
+                printWindow.close()
+            }, 500)
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession()
+            lucide.createIcons()
+            
+            // Configurar atributos data-formato
+            document.querySelectorAll('.format-badge').forEach(el => {
+                const texto = el.textContent.toLowerCase()
+                if (texto.includes('estándar')) el.setAttribute('data-formato', 'estandar')
+                else if (texto.includes('compacto')) el.setAttribute('data-formato', 'compacto')
+                else if (texto.includes('detallado')) el.setAttribute('data-formato', 'detallado')
+            })
+        })
+    </script>
+</body>
+</html>

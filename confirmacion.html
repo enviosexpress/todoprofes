@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TodoProfes - Confirmación de Pago</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+        }
+        
+        .confirmation-card {
+            background: linear-gradient(145deg, #1E293B, #0F172A);
+            border: 1px solid #334155;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-badge.success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-badge.pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #F59E0B;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        
+        .status-badge.error {
+            background: rgba(239, 68, 68, 0.15);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-label {
+            color: #94A3B8;
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            color: white;
+            font-weight: 600;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: #3B82F6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .auto-refresh {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .session-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #EF4444;
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+        }
+
+        .session-error a {
+            color: white;
+            background: #EF4444;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            display: inline-block;
+            margin-top: 1rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .session-error a:hover {
+            background: #DC2626;
+            transform: scale(1.05);
+        }
+
+        .copy-reference {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .copy-reference:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .copy-reference:active {
+            transform: scale(0.95);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            background-color: #1E293B;
+            color: #fff;
+            text-align: center;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            border: 1px solid #334155;
+            font-size: 0.875rem;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-slate-950/95 p-4 shadow-lg sticky top-0 z-50 border-b border-slate-800 backdrop-blur-md">
+        <div class="container mx-auto flex justify-between items-center px-4">
+            <h1 class="text-2xl md:text-3xl font-bold text-white cursor-pointer hover:opacity-80 transition" onclick="window.location.href='index.html'">
+                <span class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Todo</span>Profes
+            </h1>
+            <div class="flex items-center space-x-4">
+                <span class="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white flex items-center text-sm md:text-base bg-slate-800/50 px-4 py-2 rounded-full shadow-lg">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.51-1.31c-.562-.649-1.413-1.076-2.353-1.253V5z" clip-rule="evenodd"/>
+                    </svg>
+                    <span id="creditsDisplay" class="font-bold">Cargando...</span>
+                </span>
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition p-2.5 hover:bg-slate-800 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 md:p-8">
+        <div class="max-w-3xl mx-auto">
+            <!-- Mensaje de error de sesión -->
+            <div id="sessionError" class="session-error hidden">
+                <svg class="w-16 h-16 mx-auto mb-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <h2 class="text-2xl font-bold mb-2">Sesión no iniciada</h2>
+                <p class="text-lg mb-4">Debes iniciar sesión para ver el estado de tu compra</p>
+                <a href="login.html?redirect=confirmacion.html">Iniciar sesión</a>
+            </div>
+
+            <!-- Tarjeta de confirmación (oculta inicialmente) -->
+            <div id="confirmationContainer" class="confirmation-card p-6 md:p-8 hidden">
+                <!-- Estado de carga inicial -->
+                <div id="loadingState" class="text-center py-12">
+                    <div class="loading-spinner mx-auto mb-4" style="width: 56px; height: 56px;"></div>
+                    <h2 class="text-2xl font-bold text-white mb-2">Verificando tu pago</h2>
+                    <p class="text-slate-400">Por favor espera mientras confirmamos el estado de tu transacción...</p>
+                </div>
+
+                <!-- Estado de éxito -->
+                <div id="successState" class="hidden">
+                    <div class="text-center mb-8">
+                        <div class="inline-block bg-gradient-to-r from-green-500 to-emerald-500 p-5 rounded-full mb-4 shadow-xl">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                                <path d="M20 6L9 17l-5-5"/>
+                            </svg>
+                        </div>
+                        <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-2">¡Pago exitoso!</h2>
+                        <p class="text-lg text-slate-400">Tu transacción se ha completado correctamente</p>
+                    </div>
+
+                    <div class="flex justify-center mb-6">
+                        <span class="status-badge success">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                            Transacción aprobada
+                        </span>
+                    </div>
+
+                    <div class="bg-slate-800/50 rounded-xl p-6 mb-6">
+                        <h3 class="text-xl font-bold text-white mb-4">Detalles de la transacción</h3>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Referencia</span>
+                            <span class="detail-value tooltip" id="refPaycoContainer">
+                                <span id="refPayco">-</span>
+                                <span class="tooltip-text">Click para copiar</span>
+                            </span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Paquete</span>
+                            <span class="detail-value" id="packageName">-</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Créditos</span>
+                            <span class="detail-value" id="creditsPurchased">-</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Valor pagado</span>
+                            <span class="detail-value" id="amount">-</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Método de pago</span>
+                            <span class="detail-value" id="paymentMethod">-</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Fecha</span>
+                            <span class="detail-value" id="transactionDate">-</span>
+                        </div>
+                        
+                        <div class="detail-row">
+                            <span class="detail-label">Estado</span>
+                            <span class="detail-value text-green-400" id="transactionStatus">Completado</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl p-6 mb-8 border border-blue-500/20">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-slate-400 mb-1">Tus créditos actuales</p>
+                                <p class="text-3xl font-bold text-white" id="newCreditBalance">-</p>
+                            </div>
+                            <div class="bg-blue-500/20 p-3 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2">
+                                    <circle cx="8" cy="8" r="6"/>
+                                    <path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/>
+                                    <path d="m12 12 4 4"/>
+                                    <path d="M12 12v4h4"/>
+                                    <path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/>
+                                    <path d="m16 16-4-4"/>
+                                    <path d="M16 16v-4h-4"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="window.location.href='perfil.html'" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 px-6 rounded-xl hover:opacity-90 transition transform hover:scale-105">
+                            Ir a mi perfil
+                        </button>
+                        <button onclick="window.location.href='checkout.html'" class="flex-1 bg-slate-700 text-white font-semibold py-3 px-6 rounded-xl hover:bg-slate-600 transition transform hover:scale-105">
+                            Comprar más créditos
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estado de pendiente -->
+                <div id="pendingState" class="hidden text-center py-8">
+                    <div class="inline-block bg-gradient-to-r from-yellow-500 to-amber-500 p-5 rounded-full mb-4 shadow-xl auto-refresh">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-2">Pago en proceso</h2>
+                    <p class="text-slate-400 mb-4">Tu transacción está siendo procesada por el banco</p>
+                    <span class="status-badge pending mb-4">
+                        <div class="loading-spinner mr-2" style="width: 16px; height: 16px;"></div>
+                        Pendiente de confirmación
+                    </span>
+                    
+                    <div class="bg-slate-800/30 rounded-lg p-4 mb-6">
+                        <p class="text-sm text-slate-300 mb-2">Esto puede tardar hasta 5 minutos</p>
+                        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                            <div class="bg-yellow-500 h-2 rounded-full progress-bar" style="width: 0%;"></div>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-2" id="pendingMessage">Verificando...</p>
+                    </div>
+                    
+                    <!-- Contador de tiempo -->
+                    <div class="text-sm text-slate-500 mb-4" id="countdown">Verificando en <span class="text-yellow-400 font-bold">5</span> segundos...</div>
+                    
+                    <div class="flex gap-3 justify-center">
+                        <button onclick="window.location.reload()" 
+                                class="bg-blue-600/20 text-blue-400 px-6 py-2 rounded-lg hover:bg-blue-600/30 transition border border-blue-500/30">
+                            <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                            </svg>
+                            Verificar ahora
+                        </button>
+                        <button onclick="window.location.href='contacto.html'" 
+                                class="bg-slate-700/50 text-slate-300 px-6 py-2 rounded-lg hover:bg-slate-700 transition">
+                            Contactar soporte
+                        </button>
+                    </div>
+                    
+                    <p class="text-xs text-slate-500 mt-6">Te notificaremos por correo cuando el pago se complete</p>
+                </div>
+
+                <!-- Estado de error -->
+                <div id="errorState" class="hidden text-center py-8">
+                    <div class="inline-block bg-gradient-to-r from-red-500 to-pink-500 p-5 rounded-full mb-4 shadow-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-2">Error en el pago</h2>
+                    <p class="text-slate-400 mb-4" id="errorMessage">No pudimos procesar tu transacción</p>
+                    <span class="status-badge error mb-6">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                        </svg>
+                        Transacción rechazada
+                    </span>
+                    
+                    <!-- Posibles razones -->
+                    <div class="bg-slate-800/30 rounded-lg p-4 mb-6 text-left">
+                        <p class="text-sm font-semibold text-white mb-2">Posibles causas:</p>
+                        <ul class="text-xs text-slate-400 space-y-1 list-disc pl-4">
+                            <li>Fondos insuficientes</li>
+                            <li>Datos incorrectos</li>
+                            <li>Tarjeta no autorizada para compras en línea</li>
+                            <li>Límite de la tarjeta excedido</li>
+                            <li>Problemas con el banco emisor</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="window.location.href='checkout.html'" class="flex-1 bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl hover:bg-blue-700 transition">
+                            Intentar de nuevo
+                        </button>
+                        <button onclick="window.location.href='contacto.html'" class="flex-1 bg-slate-700 text-white font-semibold py-3 px-6 rounded-xl hover:bg-slate-600 transition">
+                            Contactar soporte
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Estado NO ENCONTRADO -->
+                <div id="notFoundState" class="hidden text-center py-8">
+                    <div class="inline-block bg-gradient-to-r from-gray-500 to-gray-600 p-5 rounded-full mb-4 shadow-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-3xl font-bold text-white mb-2">Transacción no encontrada</h2>
+                    <p class="text-slate-400 mb-4">No se encontró información sobre esta transacción</p>
+                    
+                    <div class="bg-slate-800/30 rounded-lg p-4 mb-6">
+                        <p class="text-sm text-slate-300">Si acabas de realizar un pago, puede tardar unos minutos en procesarse</p>
+                    </div>
+                    
+                    <div class="flex gap-3 justify-center">
+                        <button onclick="window.location.href='checkout.html'" class="bg-blue-600 text-white font-semibold py-3 px-8 rounded-xl hover:bg-blue-700 transition">
+                            Comprar créditos
+                        </button>
+                        <button onclick="window.location.reload()" class="bg-slate-700 text-white font-semibold py-3 px-8 rounded-xl hover:bg-slate-600 transition">
+                            Reintentar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA';
+        
+        let userId = localStorage.getItem('user_id');
+        let userToken = localStorage.getItem('supabase_token');
+        let countdownInterval = null;
+        let countdownSeconds = 5;
+        let progressInterval = null;
+        let progressValue = 0;
+
+        // Inicializar Supabase cliente
+        const supabase = window.supabase?.createClient 
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+            : { from: () => ({ select: () => ({ eq: () => ({ order: () => ({ limit: () => ({ }) }) }) }) }) };
+
+        // Obtener parámetros de la URL
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            
+            console.log("URL completa:", window.location.href);
+            console.log("Parámetros:", Object.fromEntries(params.entries()));
+            
+            return {
+                ref_payco: params.get('ref_payco') || params.get('x_ref_payco') || '',
+                transaction_id: params.get('transaction_id') || params.get('x_transaction_id') || '',
+                amount: params.get('amount') || params.get('x_amount') || '',
+                currency: params.get('currency') || params.get('x_currency_code') || 'COP',
+                status: params.get('status') || params.get('x_response') || params.get('estado') || '',
+                cod_response: params.get('cod_response') || params.get('x_cod_response') || '',
+                extra1: params.get('extra1') || params.get('x_extra1') || '',
+                extra2: params.get('extra2') || params.get('x_extra2') || '',
+                extra3: params.get('extra3') || params.get('x_extra3') || '',
+                payment_method: params.get('payment_method') || params.get('banco') || params.get('x_bank_name') || '',
+                date: params.get('date') || params.get('x_date') || ''
+            };
+        }
+
+        // Formatear moneda
+        function formatCurrency(amount) {
+            if (!amount) return '-';
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Formatear fecha
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            try {
+                const date = new Date(dateString);
+                return new Intl.DateTimeFormat('es-CO', {
+                    dateStyle: 'long',
+                    timeStyle: 'medium'
+                }).format(date);
+            } catch {
+                return dateString;
+            }
+        }
+
+        // Obtener nombre del paquete
+        function getPackageName(type) {
+            const packages = {
+                'basico': 'Básico (45 créditos)',
+                'estandar': 'Estándar (90 créditos)',
+                'premium': 'Premium (180 créditos)'
+            };
+            return packages[type] || type || 'No especificado';
+        }
+
+        // Obtener nombre del método de pago
+        function getPaymentMethodName(method) {
+            if (!method) return 'No especificado';
+            
+            const methods = {
+                'visa': 'Visa',
+                'mastercard': 'Mastercard',
+                'amex': 'American Express',
+                'pse': 'PSE',
+                'efecty': 'Efecty',
+                'baloto': 'Baloto',
+                'daviplata': 'Daviplata',
+                'nequi': 'Nequi'
+            };
+            
+            method = method.toLowerCase();
+            return methods[method] || method;
+        }
+
+        // Cargar créditos del usuario
+        async function loadUserCredits() {
+            if (!userId || !userToken) return;
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                });
+                
+                if (response.ok) {
+                    const users = await response.json();
+                    if (users && users.length > 0) {
+                        const credits = users[0].credits || 0;
+                        document.getElementById('creditsDisplay').textContent = `${credits} créditos`;
+                        document.getElementById('newCreditBalance').textContent = `${credits} créditos`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error);
+            }
+        }
+
+        // Mostrar éxito con datos de transacción
+        function showSuccessWithData(transaccion) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('successState').classList.remove('hidden');
+            
+            document.getElementById('refPayco').textContent = transaccion.transaction_id || '-';
+            document.getElementById('packageName').textContent = getPackageName(transaccion.package_type);
+            document.getElementById('creditsPurchased').textContent = `${transaccion.credits_amount || 0} créditos`;
+            document.getElementById('amount').textContent = formatCurrency(transaccion.amount_paid || 0);
+            document.getElementById('paymentMethod').textContent = getPaymentMethodName(transaccion.payment_method);
+            document.getElementById('transactionDate').textContent = formatDate(transaccion.completed_at || transaccion.created_at);
+            
+            // Hacer click para copiar referencia
+            document.getElementById('refPaycoContainer').addEventListener('click', function() {
+                const refText = document.getElementById('refPayco').textContent;
+                navigator.clipboard.writeText(refText).then(() => {
+                    const tooltip = this.querySelector('.tooltip-text');
+                    const originalText = tooltip.textContent;
+                    tooltip.textContent = '¡Copiado!';
+                    setTimeout(() => {
+                        tooltip.textContent = originalText;
+                    }, 2000);
+                });
+            });
+            
+            loadUserCredits();
+        }
+
+        // Mostrar error
+        function showError(message) {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('errorState').classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = message || 'La transacción no pudo ser completada';
+        }
+
+        // Mostrar pendiente con contador
+        function showPending() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('pendingState').classList.remove('hidden');
+            
+            // Iniciar contador
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (progressInterval) clearInterval(progressInterval);
+            
+            countdownSeconds = 5;
+            progressValue = 0;
+            
+            // Animación de progreso
+            progressInterval = setInterval(() => {
+                progressValue += 20;
+                if (progressValue <= 100) {
+                    document.querySelector('.progress-bar').style.width = progressValue + '%';
+                }
+            }, 1000);
+            
+            countdownInterval = setInterval(() => {
+                countdownSeconds--;
+                document.getElementById('countdown').innerHTML = `Verificando en <span class="text-yellow-400 font-bold">${countdownSeconds}</span> segundos...`;
+                document.getElementById('pendingMessage').textContent = `Verificando estado... ${countdownSeconds}s`;
+                
+                if (countdownSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    clearInterval(progressInterval);
+                    window.location.reload();
+                }
+            }, 1000);
+        }
+
+        // Mostrar no encontrado
+        function showNotFound() {
+            document.getElementById('loadingState').classList.add('hidden');
+            document.getElementById('notFoundState').classList.remove('hidden');
+        }
+
+        // Buscar transacción en Supabase
+        async function findTransaction(refPayco = null) {
+            if (!userId || !userToken) return null;
+            
+            try {
+                let query = `${SUPABASE_URL}/rest/v1/transacciones?user_id=eq.${userId}&select=*`;
+                
+                if (refPayco) {
+                    query += `&transaction_id=eq.${refPayco}`;
+                } else {
+                    query += `&order=created_at.desc&limit=1`;
+                }
+                
+                const response = await fetch(query, {
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                });
+                
+                if (response.ok) {
+                    const transacciones = await response.json();
+                    if (transacciones && transacciones.length > 0) {
+                        return transacciones[0];
+                    }
+                }
+            } catch (error) {
+                console.error('Error buscando transacción:', error);
+            }
+            return null;
+        }
+
+        // Función principal de verificación
+        async function verifyTransaction() {
+            const params = getQueryParams();
+            const refPayco = params.ref_payco || sessionStorage.getItem('last_transaction');
+            
+            console.log('Verificando transacción:', { refPayco, params });
+            
+            // Guardar referencia
+            if (refPayco) {
+                sessionStorage.setItem('last_transaction', refPayco);
+            }
+            
+            // 1. Verificar sesión
+            if (!userId || !userToken) {
+                document.getElementById('sessionError').classList.remove('hidden');
+                document.getElementById('confirmationContainer').classList.add('hidden');
+                return;
+            }
+            
+            document.getElementById('sessionError').classList.add('hidden');
+            document.getElementById('confirmationContainer').classList.remove('hidden');
+            
+            // 2. Intentar encontrar la transacción en Supabase
+            let transaccion = await findTransaction(refPayco);
+            
+            if (transaccion) {
+                console.log('Transacción encontrada:', transaccion);
+                
+                if (transaccion.status === 'completado') {
+                    showSuccessWithData(transaccion);
+                } else if (transaccion.status === 'pendiente') {
+                    showPending();
+                } else if (transaccion.status === 'rechazado') {
+                    showError('La transacción fue rechazada');
+                } else {
+                    showPending();
+                }
+                return;
+            }
+            
+            // 3. Si hay parámetros en la URL pero no está en Supabase
+            if (params.ref_payco && params.cod_response) {
+                console.log('Parámetros recibidos pero transacción no encontrada en BD');
+                
+                if (params.cod_response === '1') {
+                    // Éxito pero no en BD - esperar
+                    showPending();
+                } else if (params.cod_response === '2') {
+                    showPending();
+                } else if (params.cod_response === '0') {
+                    showError('La transacción fue rechazada');
+                } else {
+                    showNotFound();
+                }
+                return;
+            }
+            
+            // 4. No hay transacción
+            showNotFound();
+        }
+
+        // Copiar referencia al portapapeles
+        function copyReference() {
+            const refText = document.getElementById('refPayco').textContent;
+            if (refText && refText !== '-') {
+                navigator.clipboard.writeText(refText);
+                alert('Referencia copiada al portapapeles');
+            }
+        }
+
+        // Limpiar intervalos al salir
+        window.addEventListener('beforeunload', () => {
+            if (countdownInterval) clearInterval(countdownInterval);
+            if (progressInterval) clearInterval(progressInterval);
+        });
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            verifyTransaction();
+        });
+
+        // Exponer funciones globales
+        window.copyReference = copyReference;
+    </script>
+</body>
+</html>

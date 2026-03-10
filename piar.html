@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>TodoProfes - Plan Individual de Ajustes Razonables (PIAR)</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            overflow-x: hidden;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Inputs */
+        .input-field, .form-select, textarea.input-field {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .input-field:focus, .form-select:focus, textarea.input-field:focus {
+            border-color: #10B981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+            outline: none;
+        }
+        
+        /* Botones */
+        .btn-primary {
+            background: linear-gradient(135deg, #10B981, #059669);
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #10B981;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #1E293B;
+            border: 1px solid #334155;
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+        }
+        
+        .btn-secondary:hover {
+            background: #2D3A4F;
+            border-color: #475569;
+        }
+        
+        /* Loader */
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #10B981;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Estilos para PIAR */
+        .piar-document {
+            background: white;
+            color: #1E293B;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (min-width: 768px) {
+            .piar-document {
+                padding: 2rem;
+            }
+        }
+        
+        /* Temas de color */
+        .piar-document.theme-emerald {
+            background: linear-gradient(135deg, #ffffff, #ecfdf5);
+            border-left: 4px solid #10B981;
+        }
+        .piar-document.theme-purple {
+            background: linear-gradient(135deg, #ffffff, #faf5ff);
+            border-left: 4px solid #A855F7;
+        }
+        .piar-document.theme-blue {
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+            border-left: 4px solid #3B82F6;
+        }
+        .piar-document.theme-green {
+            background: linear-gradient(135deg, #ffffff, #f0fdf4);
+            border-left: 4px solid #22C55E;
+        }
+        .piar-document.theme-amber {
+            background: linear-gradient(135deg, #ffffff, #fffbeb);
+            border-left: 4px solid #F59E0B;
+        }
+        
+        .theme-emerald .section-title { color: #10B981; }
+        .theme-emerald .piar-header { border-bottom-color: #10B981; }
+        .theme-emerald .badge { background: #10B981; }
+        
+        .theme-purple .section-title { color: #A855F7; }
+        .theme-purple .piar-header { border-bottom-color: #A855F7; }
+        .theme-purple .badge { background: #A855F7; }
+        
+        .theme-blue .section-title { color: #3B82F6; }
+        .theme-blue .piar-header { border-bottom-color: #3B82F6; }
+        .theme-blue .badge { background: #3B82F6; }
+        
+        .theme-green .section-title { color: #22C55E; }
+        .theme-green .piar-header { border-bottom-color: #22C55E; }
+        .theme-green .badge { background: #22C55E; }
+        
+        .theme-amber .section-title { color: #F59E0B; }
+        .theme-amber .piar-header { border-bottom-color: #F59E0B; }
+        .theme-amber .badge { background: #F59E0B; }
+        
+        /* Header del PIAR */
+        .piar-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid currentColor;
+        }
+        
+        .piar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, currentColor, #10B981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .piar-title {
+                font-size: 2rem;
+            }
+        }
+        
+        .piar-subtitle {
+            color: #64748B;
+            font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        /* Información del estudiante */
+        .estudiante-info {
+            background: #F8FAFC;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        @media (min-width: 640px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .info-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .info-item {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 0.75rem;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .info-label {
+            font-size: 0.7rem;
+            color: #64748B;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1E293B;
+        }
+        
+        /* Grid de ajustes */
+        .ajustes-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        @media (min-width: 640px) {
+            .ajustes-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .ajustes-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .ajuste-card {
+            background: #F8FAFC;
+            border-radius: 1rem;
+            border: 1px solid #E2E8F0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .ajuste-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .ajuste-header {
+            padding: 1rem;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            text-align: center;
+        }
+        
+        .ajuste-content {
+            padding: 1.5rem;
+        }
+        
+        .ajuste-icon {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .ajuste-descripcion {
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .ajuste-ejemplos {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px dashed #E2E8F0;
+        }
+        
+        .ajuste-ejemplos p {
+            font-weight: 600;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            color: #1E293B;
+        }
+        
+        .ajuste-ejemplos ul {
+            list-style: disc;
+            padding-left: 1.5rem;
+        }
+        
+        .ajuste-ejemplos li {
+            color: #64748B;
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Tabla de seguimiento */
+        .seguimiento-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        .seguimiento-table th {
+            background: #E2E8F0;
+            color: #1E293B;
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        
+        .seguimiento-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid #E2E8F0;
+            font-size: 0.85rem;
+        }
+        
+        .seguimiento-table tr:hover {
+            background: #F1F5F9;
+        }
+        
+        /* Panel de configuración */
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        .color-swatch.selected {
+            border-color: white;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        .color-swatch.emerald { background: #10B981; }
+        .color-swatch.purple { background: #A855F7; }
+        .color-swatch.blue { background: #3B82F6; }
+        .color-swatch.green { background: #22C55E; }
+        .color-swatch.amber { background: #F59E0B; }
+        
+        .format-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            background: #0F172A;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .format-badge:hover {
+            background: #1E293B;
+            border-color: #10B981;
+        }
+        .format-badge.selected {
+            background: #10B981;
+            color: white;
+            border-color: #10B981;
+        }
+        
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .action-btn {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #94A3B8;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            background: #2D3A4F;
+            color: white;
+            border-color: #10B981;
+        }
+        
+        .badge-emerald {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+        
+        .insufficient-credits {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        .config-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #10B981;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+        .config-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 10px rgba(16, 185, 129, 0.3);
+        }
+        
+        .config-sidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 350px;
+            height: 100vh;
+            background: #0F172A;
+            border-left: 1px solid #334155;
+            padding: 2rem 1.5rem;
+            transition: right 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+        .config-sidebar.open {
+            right: 0;
+        }
+        
+        @media (min-width: 640px) {
+            .config-sidebar {
+                right: -400px;
+                width: 350px;
+            }
+        }
+        
+        .config-sidebar-close {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            cursor: pointer;
+            color: #94A3B8;
+        }
+        .config-sidebar-close:hover {
+            color: white;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+        
+        .preview-card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .preview-card:hover {
+            border-color: #10B981;
+            transform: translateY(-2px);
+        }
+        
+        .result-area {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .footer-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748B;
+            border-top: 1px solid #E2E8F0;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition-all hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <h1 class="text-xl md:text-2xl font-bold text-white">
+                    <span class="bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">Plan Individual</span>
+                    <span class="text-white"> de Ajustes Razonables</span>
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-yellow-400 flex items-center bg-slate-800/50 px-2 md:px-3 py-1.5 rounded-full border border-slate-700 text-sm" id="creditsContainer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="8" cy="8" r="6"/><path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/><path d="m12 12 4 4"/><path d="M12 12v4h4"/><path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/><path d="m16 16-4-4"/><path d="M16 16v-4h-4"/>
+                    </svg>
+                    <span id="creditsDisplay">Cargando...</span>
+                </span>
+                <button onclick="toggleConfigPanel()" class="text-slate-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay para sidebar -->
+    <div id="overlay" class="overlay" onclick="toggleConfigPanel()"></div>
+
+    <!-- Sidebar de configuración -->
+    <div id="configSidebar" class="config-sidebar">
+        <div class="config-sidebar-close" onclick="toggleConfigPanel()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </div>
+        
+        <h2 class="text-xl font-bold text-white mb-6 mt-8">Personalizar Estilo</h2>
+        
+        <!-- Selector de color -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">🎨 Color principal</h3>
+            <div class="flex flex-wrap gap-3">
+                <div class="color-swatch emerald selected" onclick="selectColor('emerald')"></div>
+                <div class="color-swatch purple" onclick="selectColor('purple')"></div>
+                <div class="color-swatch blue" onclick="selectColor('blue')"></div>
+                <div class="color-swatch green" onclick="selectColor('green')"></div>
+                <div class="color-swatch amber" onclick="selectColor('amber')"></div>
+            </div>
+        </div>
+        
+        <!-- Selector de formato -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">📄 Formato</h3>
+            <div class="space-y-2">
+                <div class="format-badge selected" onclick="selectFormato('estandar')">📏 Estándar</div>
+                <div class="format-badge" onclick="selectFormato('compacto')">📐 Compacto</div>
+                <div class="format-badge" onclick="selectFormato('detallado')">📜 Detallado</div>
+            </div>
+        </div>
+        
+        <!-- Preferencias -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">⚙️ Preferencias</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Nivel de detalle</label>
+                    <select id="nivelDetalle" class="input-field text-sm">
+                        <option value="basico">Básico (ajustes principales)</option>
+                        <option value="estandar" selected>Estándar (con ejemplos)</option>
+                        <option value="profundo">Profundo (muy detallado)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Incluir seguimiento</label>
+                    <select id="seguimiento" class="input-field text-sm">
+                        <option value="si" selected>Sí</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="savePreferences()" class="btn-primary w-full">Guardar</button>
+        <p id="configMessage" class="text-xs text-center mt-3 text-green-400 hidden">✓ Guardado</p>
+    </div>
+
+    <main class="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Hero Section -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8 text-center">
+                <div class="inline-block bg-emerald-500/20 p-3 md:p-4 rounded-full mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-10 h-10 md:w-12 md:h-12 text-emerald-400">
+                        <path d="M12 2a10 10 0 0 1 10 10c0 5-4 8-10 8-6 0-10-3-10-8 0-5 4-10 10-10z"/>
+                        <path d="M12 6v6l4 2"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Plan Individual de Ajustes Razonables</h2>
+                <p class="text-sm md:text-base text-slate-400">Diseña planes personalizados para estudiantes con necesidades específicas</p>
+                
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 mt-6">
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-emerald-400">5</div>
+                        <div class="text-xs text-slate-500">Créditos</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-emerald-400">Personalizado</div>
+                        <div class="text-xs text-slate-500">Por estudiante</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario Principal -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h3 class="text-xl font-semibold text-white">👤 Datos del estudiante</h3>
+                    <button onclick="toggleConfigPanel()" class="text-sm text-emerald-400 hover:text-emerald-300">Personalizar</button>
+                </div>
+                
+                <form id="piarForm" class="space-y-4" onsubmit="event.preventDefault(); handleGenerate()">
+                    <!-- Datos del estudiante -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Nombre completo</label>
+                            <input type="text" id="nombre" class="input-field" placeholder="Ej: Juan Pérez" value="Juan Pérez">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Edad</label>
+                            <input type="text" id="edad" class="input-field" placeholder="Ej: 8 años" value="8 años">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Grado / Curso</label>
+                            <input type="text" id="grado" class="input-field" placeholder="Ej: 3° grado" value="3° grado">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Institución</label>
+                            <input type="text" id="institucion" class="input-field" placeholder="Nombre del colegio" value="Colegio San José">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Diagnóstico / Necesidad específica</label>
+                        <textarea id="diagnostico" rows="2" class="input-field" placeholder="Describir la necesidad educativa especial...">Dificultad en la lectoescritura (dislexia). Presenta problemas para asociar sonidos con letras y lectura fluida.</textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Fortalezas del estudiante</label>
+                        <textarea id="fortalezas" rows="2" class="input-field" placeholder="Describir las fortalezas...">Buena memoria visual, creatividad, habilidades artísticas, motivación para aprender.</textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Barreras para el aprendizaje</label>
+                        <textarea id="barreras" rows="2" class="input-field" placeholder="Describir las barreras...">Dificultad con textos extensos, problemas para decodificar palabras nuevas, frustración al leer en voz alta.</textarea>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                        <button type="submit" id="generateBtn" class="btn-primary flex items-center justify-center space-x-2">
+                            <span>✨ Diseñar PIAR</span>
+                            <span class="text-sm">(5 créditos)</span>
+                        </button>
+                        <button type="button" onclick="loadPreview()" class="btn-secondary">Vista Previa</button>
+                    </div>
+
+                    <div id="message" class="text-center text-sm hidden"></div>
+                </form>
+            </div>
+
+            <!-- Resultado -->
+            <div id="resultContainer" class="glass-card p-4 md:p-8 mb-6 md:mb-8 hidden">
+                <div class="action-toolbar">
+                    <button onclick="copyToClipboard()" class="action-btn" title="Copiar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
+                    <button onclick="downloadWord()" class="action-btn" title="Word">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button onclick="printDocument()" class="action-btn" title="Imprimir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="result" class="result-area"></div>
+            </div>
+
+            <!-- Ejemplos -->
+            <div class="glass-card p-6 md:p-8">
+                <h3 class="text-lg md:text-xl font-semibold text-white mb-6">📚 Ejemplos de PIAR</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="preview-card" onclick="loadExample('dislexia')">
+                        <span class="badge-emerald inline-block mb-2">📖 Dislexia</span>
+                        <p class="text-sm text-slate-300">Dificultades en lectoescritura</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('tdah')">
+                        <span class="badge-emerald inline-block mb-2">⚡ TDAH</span>
+                        <p class="text-sm text-slate-300">Atención e hiperactividad</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('tea')">
+                        <span class="badge-emerald inline-block mb-2">🧩 TEA</span>
+                        <p class="text-sm text-slate-300">Trastorno del espectro autista</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Botón flotante -->
+    <div class="config-toggle" onclick="toggleConfigPanel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+        </svg>
+    </div>
+
+    <footer class="bg-slate-950 text-center p-4 mt-auto border-t border-slate-800">
+        <p class="text-xs text-slate-400">✨ Plan Individual de Ajustes Razonables - TodoProfes</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+
+        let isAuthenticated = false
+        let userId = null
+        let token = null
+        let generatedContent = ''
+        let currentColor = 'emerald'
+        let currentFormato = 'estandar'
+
+        // ============================================================
+        // FUNCIONES DE CONFIGURACIÓN
+        // ============================================================
+        
+        function toggleConfigPanel() {
+            document.getElementById('configSidebar').classList.toggle('open')
+            document.getElementById('overlay').classList.toggle('show')
+        }
+        
+        function selectColor(color) {
+            document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.color-swatch.${color}`).classList.add('selected')
+            currentColor = color
+            updateResultTheme()
+        }
+        
+        function selectFormato(formato) {
+            document.querySelectorAll('.format-badge').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.format-badge[data-formato="${formato}"]`).classList.add('selected')
+            currentFormato = formato
+            updateResultTheme()
+        }
+        
+        function updateResultTheme() {
+            const resultEl = document.getElementById('result')
+            if (resultEl && resultEl.children.length > 0) {
+                const doc = resultEl.querySelector('.piar-document')
+                if (doc) {
+                    doc.className = doc.className.replace(/theme-\w+/g, '').trim()
+                    doc.className = doc.className.replace(/formato-\w+/g, '').trim()
+                    doc.classList.add(`theme-${currentColor}`, `formato-${currentFormato}`)
+                }
+            }
+        }
+        
+        function savePreferences() {
+            document.getElementById('configMessage').classList.remove('hidden')
+            setTimeout(() => document.getElementById('configMessage').classList.add('hidden'), 2000)
+        }
+
+        // ============================================================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ============================================================
+        
+        async function checkSession() {
+            token = localStorage.getItem('supabase_token')
+            userId = localStorage.getItem('user_id')
+            if (!token || !userId) window.location.href = 'login.html'
+            try {
+                await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                }).then(res => { if (!res.ok) throw new Error() })
+                isAuthenticated = true
+                await loadUserCredits()
+            } catch {
+                localStorage.clear()
+                window.location.href = 'login.html'
+            }
+        }
+
+        async function loadUserCredits() {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+            })
+            if (res.ok) {
+                const users = await res.json()
+                document.getElementById('creditsDisplay').textContent = `${users[0]?.credits || 0} créditos`
+            }
+        }
+
+        async function deductCredits(amount) {
+            const getRes = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+            })
+            const users = await getRes.json()
+            if (!users[0] || users[0].credits < amount) throw new Error('Créditos insuficientes')
+            
+            const newCredits = users[0].credits - amount
+            await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                body: JSON.stringify({ credits: newCredits })
+            })
+            
+            await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                body: JSON.stringify({
+                    user_id: userId, amount: -amount, balance_after: newCredits,
+                    type: 'usage', description: 'Plan Individual de Ajustes Razonables'
+                })
+            })
+            return newCredits
+        }
+
+        function showMessage(text, isSuccess = false) {
+            const msg = document.getElementById('message')
+            msg.textContent = text
+            msg.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`
+            msg.classList.remove('hidden')
+            setTimeout(() => msg.classList.add('hidden'), 3000)
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA GUARDAR EN STORAGE
+        // ============================================================
+        
+        async function guardarDocumentoEnStorage(contenido, titulo, tipo) {
+            const fecha = new Date().toISOString().split('T')[0]
+            const timestamp = Date.now()
+            const nombreArchivo = `${userId}/piar_${fecha}_${timestamp}.docx`
+            
+            const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+            const formData = new FormData()
+            formData.append('file', blob, nombreArchivo.split('/').pop())
+            
+            const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                body: formData
+            })
+            
+            if (!uploadRes.ok) throw new Error('Error al subir')
+            
+            const url = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
+            
+            await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                body: JSON.stringify({
+                    user_id: userId, tipo: 'piar', titulo: titulo.substring(0, 100),
+                    url_documento: url, creditos_usados: 5, created_at: new Date().toISOString()
+                })
+            })
+            return url
+        }
+
+        // ============================================================
+        // FUNCIONES DE EJEMPLOS
+        // ============================================================
+        
+        function loadExample(type) {
+            const ejemplos = {
+                dislexia: {
+                    nombre: 'Martina Gómez',
+                    edad: '8 años',
+                    grado: '3° grado',
+                    diagnostico: 'Dislexia fonológica. Dificultad para asociar grafemas con fonemas, lectura lenta y con errores.',
+                    fortalezas: 'Excelente comprensión auditiva, creatividad, habilidad para el dibujo y las artes.',
+                    barreras: 'Textos extensos, lectura en voz alta, escritura convencional.'
+                },
+                tdah: {
+                    nombre: 'Santiago López',
+                    edad: '9 años',
+                    grado: '4° grado',
+                    diagnostico: 'TDAH tipo combinado. Dificultades de atención sostenida, impulsividad e hiperactividad.',
+                    fortalezas: 'Creatividad, energía, habilidades sociales, pensamiento divergente.',
+                    barreras: 'Tareas largas, permanecer sentado, seguir instrucciones complejas.'
+                },
+                tea: {
+                    nombre: 'Emilia Ruiz',
+                    edad: '7 años',
+                    grado: '2° grado',
+                    diagnostico: 'Trastorno del Espectro Autista nivel 1. Dificultades en comunicación social y flexibilidad cognitiva.',
+                    fortalezas: 'Memoria visual excepcional, atención al detalle, sinceridad, rutinas.',
+                    barreras: 'Cambios inesperados, interacciones sociales grupales, lenguaje figurado.'
+                }
+            }
+            if (ejemplos[type]) {
+                document.getElementById('nombre').value = ejemplos[type].nombre
+                document.getElementById('edad').value = ejemplos[type].edad
+                document.getElementById('grado').value = ejemplos[type].grado
+                document.getElementById('diagnostico').value = ejemplos[type].diagnostico
+                document.getElementById('fortalezas').value = ejemplos[type].fortalezas
+                document.getElementById('barreras').value = ejemplos[type].barreras
+                showMessage('✅ Ejemplo cargado', true)
+            }
+        }
+
+        function loadPreview() {
+            const nombre = document.getElementById('nombre').value
+            if (!nombre) return showMessage('❌ Ingresa el nombre del estudiante')
+            
+            const preview = `
+            <div class="piar-document theme-${currentColor} formato-${currentFormato}" style="opacity:0.9">
+                <div class="piar-header">
+                    <h1 class="piar-title">📋 Vista Previa: ${nombre}</h1>
+                </div>
+                <div class="text-center py-8 text-slate-500">
+                    <p>Haz clic en "Diseñar PIAR" para obtener el plan completo</p>
+                </div>
+                <div class="footer-note">Vista previa · 5 créditos</div>
+            </div>
+            `
+            document.getElementById('result').innerHTML = preview
+            document.getElementById('resultContainer').classList.remove('hidden')
+            showMessage('👆 Vista previa', true)
+        }
+
+        // ============================================================
+        // FUNCIÓN PRINCIPAL
+        // ============================================================
+        
+        async function handleGenerate() {
+            if (!isAuthenticated) return window.location.href = 'login.html'
+            
+            const nombre = document.getElementById('nombre').value.trim()
+            const edad = document.getElementById('edad').value.trim()
+            const grado = document.getElementById('grado').value.trim()
+            const institucion = document.getElementById('institucion').value.trim()
+            const diagnostico = document.getElementById('diagnostico').value.trim()
+            const fortalezas = document.getElementById('fortalezas').value.trim()
+            const barreras = document.getElementById('barreras').value.trim()
+            
+            if (!nombre) return showMessage('❌ Ingresa el nombre del estudiante')
+            
+            const btn = document.getElementById('generateBtn')
+            const originalText = btn.innerHTML
+            btn.innerHTML = '<span class="loader"></span> Generando...'
+            btn.disabled = true
+
+            try {
+                await deductCredits(5)
+                await new Promise(r => setTimeout(r, 2000))
+                
+                const nivelDetalle = document.getElementById('nivelDetalle').value
+                const incluirSeguimiento = document.getElementById('seguimiento').value === 'si'
+                
+                let piarHTML = `
+                <div class="piar-document theme-${currentColor} formato-${currentFormato}">
+                    <div class="piar-header">
+                        <h1 class="piar-title">📋 Plan Individual de Ajustes Razonables</h1>
+                        <div class="piar-subtitle">
+                            <span>👤 ${nombre}</span>
+                            <span>🎓 ${grado}</span>
+                            <span>🏫 ${institucion || 'Institución no especificada'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="estudiante-info">
+                        <h2 class="section-title text-lg mb-4">📌 Datos del estudiante</h2>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">Nombre</div>
+                                <div class="info-value">${nombre}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Edad</div>
+                                <div class="info-value">${edad || 'No especificada'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Grado</div>
+                                <div class="info-value">${grado || 'No especificado'}</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">Fecha</div>
+                                <div class="info-value">${new Date().toLocaleDateString('es-ES')}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="estudiante-info">
+                        <h2 class="section-title text-lg mb-4">🔍 Diagnóstico y necesidades</h2>
+                        <p class="text-slate-700 mb-4"><strong>Diagnóstico:</strong> ${diagnostico || 'No especificado'}</p>
+                        <p class="text-slate-700 mb-2"><strong>Fortalezas:</strong> ${fortalezas || 'No especificadas'}</p>
+                        <p class="text-slate-700"><strong>Barreras:</strong> ${barreras || 'No especificadas'}</p>
+                    </div>
+                    
+                    <h2 class="section-title">🔄 Ajustes razonables</h2>
+                    <div class="ajustes-grid">
+                        <div class="ajuste-card">
+                            <div class="ajuste-header" style="background: ${currentColor === 'emerald' ? '#10B981' : 
+                                                                       currentColor === 'purple' ? '#A855F7' :
+                                                                       currentColor === 'blue' ? '#3B82F6' :
+                                                                       currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
+                                Acceso al currículo
+                            </div>
+                            <div class="ajuste-content">
+                                <div class="ajuste-icon">📚</div>
+                                <p class="ajuste-descripcion">Adecuaciones en la presentación de contenidos y materiales.</p>
+                                <div class="ajuste-ejemplos">
+                                    <p>Ejemplos:</p>
+                                    <ul>
+                                        <li>Textos con apoyos visuales</li>
+                                        <li>Audiolibros y videos</li>
+                                        <li>Organizadores gráficos</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="ajuste-card">
+                            <div class="ajuste-header" style="background: ${currentColor === 'emerald' ? '#10B981' : 
+                                                                       currentColor === 'purple' ? '#A855F7' :
+                                                                       currentColor === 'blue' ? '#3B82F6' :
+                                                                       currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
+                                Metodología
+                            </div>
+                            <div class="ajuste-content">
+                                <div class="ajuste-icon">✏️</div>
+                                <p class="ajuste-descripcion">Estrategias de enseñanza flexibles y diversificadas.</p>
+                                <div class="ajuste-ejemplos">
+                                    <p>Ejemplos:</p>
+                                    <ul>
+                                        <li>Instrucciones claras y cortas</li>
+                                        <li>Trabajo en parejas</li>
+                                        <li>Actividades multisensoriales</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="ajuste-card">
+                            <div class="ajuste-header" style="background: ${currentColor === 'emerald' ? '#10B981' : 
+                                                                       currentColor === 'purple' ? '#A855F7' :
+                                                                       currentColor === 'blue' ? '#3B82F6' :
+                                                                       currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
+                                Evaluación
+                            </div>
+                            <div class="ajuste-content">
+                                <div class="ajuste-icon">📝</div>
+                                <p class="ajuste-descripcion">Formatos y criterios de evaluación adaptados.</p>
+                                <div class="ajuste-ejemplos">
+                                    <p>Ejemplos:</p>
+                                    <ul>
+                                        <li>Evaluaciones orales</li>
+                                        <li>Tiempo adicional</li>
+                                        <li>Presentaciones visuales</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+                
+                if (nivelDetalle !== 'basico') {
+                    piarHTML += `
+                    <div class="estudiante-info">
+                        <h2 class="section-title text-lg mb-4">🤝 Participación de la familia</h2>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Reunión mensual de seguimiento</li>
+                            <li>Refuerzo de estrategias en casa</li>
+                            <li>Comunicación constante vía agenda</li>
+                            <li>Talleres para familias</li>
+                        </ul>
+                    </div>
+                    `
+                }
+                
+                if (incluirSeguimiento) {
+                    piarHTML += `
+                    <div class="estudiante-info">
+                        <h2 class="section-title text-lg mb-4">📊 Seguimiento y evaluación</h2>
+                        <table class="seguimiento-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Ajuste implementado</th>
+                                    <th>Resultados</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>${new Date().toLocaleDateString('es-ES')}</td>
+                                    <td>Apoyos visuales en lectura</td>
+                                    <td>En proceso</td>
+                                    <td>Responde bien a imágenes</td>
+                                </tr>
+                                <tr>
+                                    <td>${new Date(Date.now() + 7*24*60*60*1000).toLocaleDateString('es-ES')}</td>
+                                    <td>Tiempo adicional en evaluaciones</td>
+                                    <td>Pendiente</td>
+                                    <td>Próxima reunión</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    `
+                }
+                
+                if (nivelDetalle === 'profundo') {
+                    piarHTML += `
+                    <div class="estudiante-info">
+                        <h2 class="section-title text-lg mb-4">📚 Recursos necesarios</h2>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="bg-slate-200 px-3 py-1 rounded-full text-sm">Material visual</span>
+                            <span class="bg-slate-200 px-3 py-1 rounded-full text-sm">Audiolibros</span>
+                            <span class="bg-slate-200 px-3 py-1 rounded-full text-sm">Apps educativas</span>
+                            <span class="bg-slate-200 px-3 py-1 rounded-full text-sm">Organizadores gráficos</span>
+                            <span class="bg-slate-200 px-3 py-1 rounded-full text-sm">Tecnología asistiva</span>
+                        </div>
+                    </div>
+                    `
+                }
+                
+                piarHTML += `
+                    <div class="footer-note">
+                        PIAR diseñado por TodoProfes IA · ${new Date().toLocaleDateString('es-ES')}
+                    </div>
+                </div>
+                `
+                
+                generatedContent = piarHTML
+                document.getElementById('result').innerHTML = piarHTML
+                document.getElementById('resultContainer').classList.remove('hidden')
+                
+                await guardarDocumentoEnStorage(piarHTML, nombre, 'piar')
+                showMessage('✅ PIAR diseñado', true)
+                
+            } catch (error) {
+                showMessage(error.message === 'Créditos insuficientes' ? '❌ Créditos insuficientes' : '❌ Error')
+            } finally {
+                btn.innerHTML = originalText
+                btn.disabled = false
+            }
+        }
+
+        // Funciones auxiliares
+        function copyToClipboard() {
+            const text = document.getElementById('result').innerText
+            navigator.clipboard.writeText(text).then(() => showMessage('✅ Copiado', true))
+        }
+
+        function downloadWord() {
+            if (!generatedContent) return showMessage('❌ No hay contenido')
+            const text = document.getElementById('result').innerText
+            const doc = new docx.Document({
+                sections: [{
+                    children: [new docx.Paragraph({ children: [new docx.TextRun({ text: "Plan Individual de Ajustes Razonables", bold: true, size: 32 })] }),
+                             new docx.Paragraph({ children: [new docx.TextRun({ text: text, size: 22 })] })]
+                }]
+            })
+            docx.Packer.toBlob(doc).then(blob => saveAs(blob, "PIAR_TodoProfes.docx"))
+        }
+
+        function printDocument() {
+            const w = window.open('', '_blank')
+            w.document.write(`<html><head><style>body{font-family:Inter;padding:1rem}</style></head><body>${document.getElementById('result').innerHTML}</body></html>`)
+            w.document.close()
+            w.print()
+        }
+
+        document.addEventListener('DOMContentLoaded', checkSession)
+        lucide.createIcons()
+    </script>
+</body>
+</html>

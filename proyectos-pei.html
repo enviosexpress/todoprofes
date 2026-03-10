@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>TodoProfes - Diseño de Proyectos PEI</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            overflow-x: hidden;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Inputs */
+        .input-field, .form-select, textarea.input-field {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .input-field:focus, .form-select:focus, textarea.input-field:focus {
+            border-color: #F43F5E;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2);
+            outline: none;
+        }
+        
+        /* Botones */
+        .btn-primary {
+            background: linear-gradient(135deg, #F43F5E, #E11D48);
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #F43F5E;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #1E293B;
+            border: 1px solid #334155;
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+        }
+        
+        .btn-secondary:hover {
+            background: #2D3A4F;
+            border-color: #475569;
+        }
+        
+        /* Loader */
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #F43F5E;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Estilos para PEI */
+        .pei-document {
+            background: white;
+            color: #1E293B;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (min-width: 768px) {
+            .pei-document {
+                padding: 2rem;
+            }
+        }
+        
+        /* Temas de color */
+        .pei-document.theme-rose {
+            background: linear-gradient(135deg, #ffffff, #fff1f2);
+            border-left: 4px solid #F43F5E;
+        }
+        .pei-document.theme-purple {
+            background: linear-gradient(135deg, #ffffff, #faf5ff);
+            border-left: 4px solid #A855F7;
+        }
+        .pei-document.theme-blue {
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+            border-left: 4px solid #3B82F6;
+        }
+        .pei-document.theme-green {
+            background: linear-gradient(135deg, #ffffff, #f0fdf4);
+            border-left: 4px solid #22C55E;
+        }
+        .pei-document.theme-amber {
+            background: linear-gradient(135deg, #ffffff, #fffbeb);
+            border-left: 4px solid #F59E0B;
+        }
+        
+        .theme-rose .section-title { color: #F43F5E; }
+        .theme-rose .pei-header { border-bottom-color: #F43F5E; }
+        .theme-rose .componente-badge { background: #F43F5E; }
+        
+        .theme-purple .section-title { color: #A855F7; }
+        .theme-purple .pei-header { border-bottom-color: #A855F7; }
+        .theme-purple .componente-badge { background: #A855F7; }
+        
+        .theme-blue .section-title { color: #3B82F6; }
+        .theme-blue .pei-header { border-bottom-color: #3B82F6; }
+        .theme-blue .componente-badge { background: #3B82F6; }
+        
+        .theme-green .section-title { color: #22C55E; }
+        .theme-green .pei-header { border-bottom-color: #22C55E; }
+        .theme-green .componente-badge { background: #22C55E; }
+        
+        .theme-amber .section-title { color: #F59E0B; }
+        .theme-amber .pei-header { border-bottom-color: #F59E0B; }
+        .theme-amber .componente-badge { background: #F59E0B; }
+        
+        /* Header del PEI */
+        .pei-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid currentColor;
+        }
+        
+        .pei-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, currentColor, #F43F5E);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .pei-title {
+                font-size: 2rem;
+            }
+        }
+        
+        .pei-subtitle {
+            color: #64748B;
+            font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        /* Grid de componentes */
+        .componentes-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        @media (min-width: 640px) {
+            .componentes-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .componentes-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .componente-card {
+            background: #F8FAFC;
+            border-radius: 1rem;
+            border: 1px solid #E2E8F0;
+            overflow: hidden;
+        }
+        
+        .componente-header {
+            padding: 1rem;
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .componente-content {
+            padding: 1rem;
+        }
+        
+        .componente-content p {
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            color: #475569;
+            line-height: 1.6;
+        }
+        
+        .componente-content ul {
+            list-style: disc;
+            padding-left: 1.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        .componente-content li {
+            color: #475569;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Grid de información institucional */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        @media (min-width: 640px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .info-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .info-card {
+            background: #F8FAFC;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .info-label {
+            font-size: 0.7rem;
+            color: #64748B;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1E293B;
+        }
+        
+        /* Sección de principios */
+        .principios-list {
+            background: #F8FAFC;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            list-style: none;
+        }
+        
+        .principios-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #E2E8F0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .principios-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .principios-list li::before {
+            content: "✓";
+            color: #22C55E;
+            font-weight: bold;
+        }
+        
+        /* Sección de valores */
+        .valores-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+        
+        .valor-tag {
+            background: #E2E8F0;
+            color: #1E293B;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        /* Panel de configuración */
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        .color-swatch.selected {
+            border-color: white;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        .color-swatch.rose { background: #F43F5E; }
+        .color-swatch.purple { background: #A855F7; }
+        .color-swatch.blue { background: #3B82F6; }
+        .color-swatch.green { background: #22C55E; }
+        .color-swatch.amber { background: #F59E0B; }
+        
+        .format-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            background: #0F172A;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .format-badge:hover {
+            background: #1E293B;
+            border-color: #F43F5E;
+        }
+        .format-badge.selected {
+            background: #F43F5E;
+            color: white;
+            border-color: #F43F5E;
+        }
+        
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .action-btn {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #94A3B8;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            background: #2D3A4F;
+            color: white;
+            border-color: #F43F5E;
+        }
+        
+        .badge-rose {
+            background: rgba(244, 63, 94, 0.2);
+            color: #F43F5E;
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+        
+        .insufficient-credits {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        .config-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #F43F5E;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+        .config-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 10px rgba(244, 63, 94, 0.3);
+        }
+        
+        .config-sidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 350px;
+            height: 100vh;
+            background: #0F172A;
+            border-left: 1px solid #334155;
+            padding: 2rem 1.5rem;
+            transition: right 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+        .config-sidebar.open {
+            right: 0;
+        }
+        
+        @media (min-width: 640px) {
+            .config-sidebar {
+                right: -400px;
+                width: 350px;
+            }
+        }
+        
+        .config-sidebar-close {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            cursor: pointer;
+            color: #94A3B8;
+        }
+        .config-sidebar-close:hover {
+            color: white;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+        
+        .preview-card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .preview-card:hover {
+            border-color: #F43F5E;
+            transform: translateY(-2px);
+        }
+        
+        .result-area {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .footer-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748B;
+            border-top: 1px solid #E2E8F0;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition-all hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <h1 class="text-xl md:text-2xl font-bold text-white">
+                    <span class="bg-gradient-to-r from-rose-400 to-pink-400 bg-clip-text text-transparent">Diseño</span>
+                    <span class="text-white"> de Proyectos PEI</span>
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-yellow-400 flex items-center bg-slate-800/50 px-2 md:px-3 py-1.5 rounded-full border border-slate-700 text-sm" id="creditsContainer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="8" cy="8" r="6"/><path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/><path d="m12 12 4 4"/><path d="M12 12v4h4"/><path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/><path d="m16 16-4-4"/><path d="M16 16v-4h-4"/>
+                    </svg>
+                    <span id="creditsDisplay">Cargando...</span>
+                </span>
+                <button onclick="toggleConfigPanel()" class="text-slate-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay para sidebar -->
+    <div id="overlay" class="overlay" onclick="toggleConfigPanel()"></div>
+
+    <!-- Sidebar de configuración -->
+    <div id="configSidebar" class="config-sidebar">
+        <div class="config-sidebar-close" onclick="toggleConfigPanel()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </div>
+        
+        <h2 class="text-xl font-bold text-white mb-6 mt-8">Personalizar Estilo</h2>
+        
+        <!-- Selector de color -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">🎨 Color principal</h3>
+            <div class="flex flex-wrap gap-3">
+                <div class="color-swatch rose selected" onclick="selectColor('rose')"></div>
+                <div class="color-swatch purple" onclick="selectColor('purple')"></div>
+                <div class="color-swatch blue" onclick="selectColor('blue')"></div>
+                <div class="color-swatch green" onclick="selectColor('green')"></div>
+                <div class="color-swatch amber" onclick="selectColor('amber')"></div>
+            </div>
+        </div>
+        
+        <!-- Selector de formato -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">📄 Formato</h3>
+            <div class="space-y-2">
+                <div class="format-badge selected" onclick="selectFormato('estandar')">📏 Estándar</div>
+                <div class="format-badge" onclick="selectFormato('compacto')">📐 Compacto</div>
+                <div class="format-badge" onclick="selectFormato('detallado')">📜 Detallado</div>
+            </div>
+        </div>
+        
+        <!-- Preferencias -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">⚙️ Preferencias</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Nivel de detalle</label>
+                    <select id="nivelDetalle" class="input-field text-sm">
+                        <option value="basico">Básico (esquema)</option>
+                        <option value="estandar" selected>Estándar (completo)</option>
+                        <option value="profundo">Profundo (muy detallado)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Incluir anexos</label>
+                    <select id="anexos" class="input-field text-sm">
+                        <option value="si" selected>Sí</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="savePreferences()" class="btn-primary w-full">Guardar</button>
+        <p id="configMessage" class="text-xs text-center mt-3 text-green-400 hidden">✓ Guardado</p>
+    </div>
+
+    <main class="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Hero Section -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8 text-center">
+                <div class="inline-block bg-rose-500/20 p-3 md:p-4 rounded-full mb-4">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 md:w-12 md:h-12 text-rose-400">
+                        <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 2v5l-1-.75L15 9V4h2zm-3 7H9v-2h4v2zm4-3H9V6h8v2z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Diseño de Proyectos PEI</h2>
+                <p class="text-sm md:text-base text-slate-400">Construye el Proyecto Educativo Institucional de tu centro</p>
+                
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 mt-6">
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-rose-400">5</div>
+                        <div class="text-xs text-slate-500">Créditos</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-rose-400">Completo</div>
+                        <div class="text-xs text-slate-500">Documento</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario Principal -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h3 class="text-xl font-semibold text-white">🏫 Datos de la institución</h3>
+                    <button onclick="toggleConfigPanel()" class="text-sm text-rose-400 hover:text-rose-300">Personalizar</button>
+                </div>
+                
+                <form id="peiForm" class="space-y-4" onsubmit="event.preventDefault(); handleGenerate()">
+                    <!-- Datos principales -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Nombre de la institución</label>
+                            <input type="text" id="institucion" class="input-field" placeholder="Ej: Colegio San José" value="Colegio San José">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Nivel educativo</label>
+                            <select id="nivel" class="input-field">
+                                <option value="inicial">Educación Inicial</option>
+                                <option value="primaria" selected>Educación Primaria</option>
+                                <option value="secundaria">Educación Secundaria</option>
+                                <option value="media">Educación Media</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Ubicación</label>
+                            <input type="text" id="ubicacion" class="input-field" placeholder="Ciudad, País" value="Buenos Aires, Argentina">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Año lectivo</label>
+                            <input type="text" id="anio" class="input-field" placeholder="Ej: 2025" value="2025">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Misión de la institución</label>
+                        <textarea id="mision" rows="2" class="input-field" placeholder="Describir la misión...">Formar personas íntegras con excelencia académica y valores humanos.</textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Visión de la institución</label>
+                        <textarea id="vision" rows="2" class="input-field" placeholder="Describir la visión...">Ser reconocidos como una institución educativa líder en innovación pedagógica y formación en valores.</textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Valores institucionales (separados por comas)</label>
+                        <input type="text" id="valores" class="input-field" placeholder="Ej: Respeto, Responsabilidad, Solidaridad" value="Respeto, Responsabilidad, Solidaridad, Honestidad">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Enfoque pedagógico</label>
+                        <textarea id="enfoque" rows="2" class="input-field" placeholder="Describir el enfoque pedagógico...">Constructivista con énfasis en el aprendizaje significativo y el desarrollo de competencias.</textarea>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                        <button type="submit" id="generateBtn" class="btn-primary flex items-center justify-center space-x-2">
+                            <span>✨ Diseñar PEI</span>
+                            <span class="text-sm">(5 créditos)</span>
+                        </button>
+                        <button type="button" onclick="loadPreview()" class="btn-secondary">Vista Previa</button>
+                    </div>
+
+                    <div id="message" class="text-center text-sm hidden"></div>
+                </form>
+            </div>
+
+            <!-- Resultado -->
+            <div id="resultContainer" class="glass-card p-4 md:p-8 mb-6 md:mb-8 hidden">
+                <div class="action-toolbar">
+                    <button onclick="copyToClipboard()" class="action-btn" title="Copiar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
+                    <button onclick="downloadWord()" class="action-btn" title="Word">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button onclick="printDocument()" class="action-btn" title="Imprimir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="result" class="result-area"></div>
+            </div>
+
+            <!-- Ejemplos -->
+            <div class="glass-card p-6 md:p-8">
+                <h3 class="text-lg md:text-xl font-semibold text-white mb-6">📚 Ejemplos de PEI</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="preview-card" onclick="loadExample('inicial')">
+                        <span class="badge-rose inline-block mb-2">🧸 Educación Inicial</span>
+                        <p class="text-sm text-slate-300">Jardín de Infantes</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('primaria')">
+                        <span class="badge-rose inline-block mb-2">📚 Educación Primaria</span>
+                        <p class="text-sm text-slate-300">Escuela primaria</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('secundaria')">
+                        <span class="badge-rose inline-block mb-2">🎓 Educación Secundaria</span>
+                        <p class="text-sm text-slate-300">Colegio secundario</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Botón flotante -->
+    <div class="config-toggle" onclick="toggleConfigPanel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+        </svg>
+    </div>
+
+    <footer class="bg-slate-950 text-center p-4 mt-auto border-t border-slate-800">
+        <p class="text-xs text-slate-400">✨ Diseño de Proyectos PEI - TodoProfes</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+
+        let isAuthenticated = false
+        let userId = null
+        let token = null
+        let generatedContent = ''
+        let currentColor = 'rose'
+        let currentFormato = 'estandar'
+
+        // ============================================================
+        // FUNCIONES DE CONFIGURACIÓN
+        // ============================================================
+        
+        function toggleConfigPanel() {
+            document.getElementById('configSidebar').classList.toggle('open')
+            document.getElementById('overlay').classList.toggle('show')
+        }
+        
+        function selectColor(color) {
+            document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.color-swatch.${color}`).classList.add('selected')
+            currentColor = color
+            updateResultTheme()
+        }
+        
+        function selectFormato(formato) {
+            document.querySelectorAll('.format-badge').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.format-badge[data-formato="${formato}"]`).classList.add('selected')
+            currentFormato = formato
+            updateResultTheme()
+        }
+        
+        function updateResultTheme() {
+            const resultEl = document.getElementById('result')
+            if (resultEl && resultEl.children.length > 0) {
+                const doc = resultEl.querySelector('.pei-document')
+                if (doc) {
+                    doc.className = doc.className.replace(/theme-\w+/g, '').trim()
+                    doc.className = doc.className.replace(/formato-\w+/g, '').trim()
+                    doc.classList.add(`theme-${currentColor}`, `formato-${currentFormato}`)
+                }
+            }
+        }
+        
+        function savePreferences() {
+            document.getElementById('configMessage').classList.remove('hidden')
+            setTimeout(() => document.getElementById('configMessage').classList.add('hidden'), 2000)
+        }
+
+        // ============================================================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ============================================================
+        
+        async function checkSession() {
+            token = localStorage.getItem('supabase_token')
+            userId = localStorage.getItem('user_id')
+            if (!token || !userId) window.location.href = 'login.html'
+            try {
+                await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                }).then(res => { if (!res.ok) throw new Error() })
+                isAuthenticated = true
+                await loadUserCredits()
+            } catch {
+                localStorage.clear()
+                window.location.href = 'login.html'
+            }
+        }
+
+        async function loadUserCredits() {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+            })
+            if (res.ok) {
+                const users = await res.json()
+                document.getElementById('creditsDisplay').textContent = `${users[0]?.credits || 0} créditos`
+            }
+        }
+
+        async function deductCredits(amount) {
+            const getRes = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+            })
+            const users = await getRes.json()
+            if (!users[0] || users[0].credits < amount) throw new Error('Créditos insuficientes')
+            
+            const newCredits = users[0].credits - amount
+            await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                body: JSON.stringify({ credits: newCredits })
+            })
+            
+            await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                body: JSON.stringify({
+                    user_id: userId, amount: -amount, balance_after: newCredits,
+                    type: 'usage', description: 'Diseño de Proyectos PEI'
+                })
+            })
+            return newCredits
+        }
+
+        function showMessage(text, isSuccess = false) {
+            const msg = document.getElementById('message')
+            msg.textContent = text
+            msg.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`
+            msg.classList.remove('hidden')
+            setTimeout(() => msg.classList.add('hidden'), 3000)
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA GUARDAR EN STORAGE
+        // ============================================================
+        
+        async function guardarDocumentoEnStorage(contenido, titulo, tipo) {
+            const fecha = new Date().toISOString().split('T')[0]
+            const timestamp = Date.now()
+            const nombreArchivo = `${userId}/pei_${fecha}_${timestamp}.docx`
+            
+            const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+            const formData = new FormData()
+            formData.append('file', blob, nombreArchivo.split('/').pop())
+            
+            const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                body: formData
+            })
+            
+            if (!uploadRes.ok) throw new Error('Error al subir')
+            
+            const url = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
+            
+            await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                body: JSON.stringify({
+                    user_id: userId, tipo: 'pei', titulo: titulo.substring(0, 100),
+                    url_documento: url, creditos_usados: 5, created_at: new Date().toISOString()
+                })
+            })
+            return url
+        }
+
+        // ============================================================
+        // FUNCIONES DE EJEMPLOS
+        // ============================================================
+        
+        function loadExample(type) {
+            const ejemplos = {
+                inicial: {
+                    institucion: 'Jardín de Infantes Rayito de Sol',
+                    nivel: 'inicial',
+                    mision: 'Brindar educación inicial de calidad, promoviendo el desarrollo integral de niños y niñas en un ambiente cálido y seguro.',
+                    vision: 'Ser un jardín referente en educación inicial, reconocido por su enfoque lúdico y el acompañamiento a las familias.',
+                    valores: 'Amor, Respeto, Creatividad, Juego'
+                },
+                primaria: {
+                    institucion: 'Escuela Primaria N° 123',
+                    nivel: 'primaria',
+                    mision: 'Formar niños y niñas con sólidas bases académicas y valores, preparándolos para los desafíos del futuro.',
+                    vision: 'Ser una institución educativa innovadora que promueva el pensamiento crítico y la formación integral.',
+                    valores: 'Responsabilidad, Honestidad, Solidaridad, Esfuerzo'
+                },
+                secundaria: {
+                    institucion: 'Colegio Secundario Nuevo Horizonte',
+                    nivel: 'secundaria',
+                    mision: 'Ofrecer una educación secundaria de excelencia que prepare a los jóvenes para la educación superior y el mundo laboral.',
+                    vision: 'Ser reconocidos por la calidad académica y la formación de ciudadanos comprometidos con la sociedad.',
+                    valores: 'Excelencia, Compromiso, Respeto, Innovación'
+                }
+            }
+            if (ejemplos[type]) {
+                document.getElementById('institucion').value = ejemplos[type].institucion
+                document.getElementById('nivel').value = ejemplos[type].nivel
+                document.getElementById('mision').value = ejemplos[type].mision
+                document.getElementById('vision').value = ejemplos[type].vision
+                document.getElementById('valores').value = ejemplos[type].valores
+                showMessage('✅ Ejemplo cargado', true)
+            }
+        }
+
+        function loadPreview() {
+            const institucion = document.getElementById('institucion').value
+            if (!institucion) return showMessage('❌ Ingresa el nombre de la institución')
+            
+            const preview = `
+            <div class="pei-document theme-${currentColor} formato-${currentFormato}" style="opacity:0.9">
+                <div class="pei-header">
+                    <h1 class="pei-title">📋 Vista Previa: ${institucion}</h1>
+                </div>
+                <div class="text-center py-8 text-slate-500">
+                    <p>Haz clic en "Diseñar PEI" para obtener el documento completo</p>
+                </div>
+                <div class="footer-note">Vista previa · 5 créditos</div>
+            </div>
+            `
+            document.getElementById('result').innerHTML = preview
+            document.getElementById('resultContainer').classList.remove('hidden')
+            showMessage('👆 Vista previa', true)
+        }
+
+        // ============================================================
+        // FUNCIÓN PRINCIPAL
+        // ============================================================
+        
+        async function handleGenerate() {
+            if (!isAuthenticated) return window.location.href = 'login.html'
+            
+            const institucion = document.getElementById('institucion').value.trim()
+            const nivel = document.getElementById('nivel').value
+            const ubicacion = document.getElementById('ubicacion').value.trim()
+            const anio = document.getElementById('anio').value.trim()
+            const mision = document.getElementById('mision').value.trim()
+            const vision = document.getElementById('vision').value.trim()
+            const valores = document.getElementById('valores').value.trim()
+            const enfoque = document.getElementById('enfoque').value.trim()
+            
+            if (!institucion) return showMessage('❌ Ingresa el nombre de la institución')
+            
+            const btn = document.getElementById('generateBtn')
+            const originalText = btn.innerHTML
+            btn.innerHTML = '<span class="loader"></span> Generando...'
+            btn.disabled = true
+
+            try {
+                await deductCredits(5)
+                await new Promise(r => setTimeout(r, 2000))
+                
+                const valoresList = valores.split(',').map(v => v.trim())
+                
+                const nivelTexto = {
+                    inicial: 'Educación Inicial',
+                    primaria: 'Educación Primaria',
+                    secundaria: 'Educación Secundaria',
+                    media: 'Educación Media'
+                }[nivel] || nivel
+                
+                const nivelDetalle = document.getElementById('nivelDetalle').value
+                const incluirAnexos = document.getElementById('anexos').value === 'si'
+                
+                let peiHTML = `
+                <div class="pei-document theme-${currentColor} formato-${currentFormato}">
+                    <div class="pei-header">
+                        <h1 class="pei-title">📚 Proyecto Educativo Institucional</h1>
+                        <div class="pei-subtitle">
+                            <span>🏫 ${institucion}</span>
+                            <span>📍 ${ubicacion || 'Ubicación no especificada'}</span>
+                            <span>📅 ${anio || 'Año lectivo'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <div class="info-label">Nivel educativo</div>
+                            <div class="info-value">${nivelTexto}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Jornada</div>
+                            <div class="info-value">Completa</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Matrícula estimada</div>
+                            <div class="info-value">400 estudiantes</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Personal</div>
+                            <div class="info-value">35 docentes</div>
+                        </div>
+                    </div>
+                    
+                    <div class="pei-section">
+                        <h2 class="section-title">🎯 Misión</h2>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            ${mision || 'Misión no especificada'}
+                        </div>
+                    </div>
+                    
+                    <div class="pei-section">
+                        <h2 class="section-title">👁️ Visión</h2>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            ${vision || 'Visión no especificada'}
+                        </div>
+                    </div>
+                    
+                    <div class="pei-section">
+                        <h2 class="section-title">💫 Valores institucionales</h2>
+                        <div class="valores-tags">
+                            ${valoresList.map(v => `<span class="valor-tag">${v}</span>`).join('')}
+                        </div>
+                    </div>
+                    
+                    <h2 class="section-title">📋 Componentes del PEI</h2>
+                    <div class="componentes-grid">
+                        <div class="componente-card">
+                            <div class="componente-header" style="background: ${currentColor === 'rose' ? '#F43F5E' : 
+                                                                       currentColor === 'purple' ? '#A855F7' :
+                                                                       currentColor === 'blue' ? '#3B82F6' :
+                                                                       currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
+                                Componente Pedagógico
+                            </div>
+                            <div class="componente-content">
+                                <p><strong>Enfoque:</strong> ${enfoque || 'Constructivista'}</p>
+                                <ul>
+                                    <li>Aprendizaje significativo</li>
+                                    <li>Evaluación formativa</li>
+                                    <li>Atención a la diversidad</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="componente-card">
+                            <div class="componente-header" style="background: ${currentColor === 'rose' ? '#F43F5E' : 
+                                                                       currentColor === 'purple' ? '#A855F7' :
+                                                                       currentColor === 'blue' ? '#3B82F6' :
+                                                                       currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
+                                Componente Administrativo
+                            </div>
+                            <div class="componente-content">
+                                <ul>
+                                    <li>Gestión participativa</li>
+                                    <li>Organización institucional</li>
+                                    <li>Recursos humanos</li>
+                                    <li>Infraestructura</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="componente-card">
+                            <div class="componente-header" style="background: ${currentColor === 'rose' ? '#F43F5E' : 
+                                                                       currentColor === 'purple' ? '#A855F7' :
+                                                                       currentColor === 'blue' ? '#3B82F6' :
+                                                                       currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
+                                Componente Comunitario
+                            </div>
+                            <div class="componente-content">
+                                <ul>
+                                    <li>Participación de las familias</li>
+                                    <li>Vínculo con la comunidad</li>
+                                    <li>Proyectos de extensión</li>
+                                    <li>Alianzas estratégicas</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pei-section">
+                        <h2 class="section-title">⚖️ Principios institucionales</h2>
+                        <ul class="principios-list">
+                            <li>Educación integral y de calidad</li>
+                            <li>Inclusión y respeto por la diversidad</li>
+                            <li>Participación democrática</li>
+                            <li>Innovación pedagógica continua</li>
+                            <li>Compromiso con la comunidad</li>
+                        </ul>
+                    </div>
+                `
+                
+                if (nivelDetalle === 'profundo' || incluirAnexos) {
+                    peiHTML += `
+                    <div class="pei-section">
+                        <h2 class="section-title">📎 Anexos</h2>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li>Reglamento interno</li>
+                                <li>Plan de estudios por nivel</li>
+                                <li>Proyectos transversales</li>
+                                <li>Plan de convivencia escolar</li>
+                                <li>Cronograma anual</li>
+                            </ul>
+                        </div>
+                    </div>
+                    `
+                }
+                
+                peiHTML += `
+                    <div class="footer-note">
+                        PEI diseñado por TodoProfes IA · ${new Date().toLocaleDateString('es-ES')}
+                    </div>
+                </div>
+                `
+                
+                generatedContent = peiHTML
+                document.getElementById('result').innerHTML = peiHTML
+                document.getElementById('resultContainer').classList.remove('hidden')
+                
+                await guardarDocumentoEnStorage(peiHTML, institucion, 'pei')
+                showMessage('✅ PEI diseñado', true)
+                
+            } catch (error) {
+                showMessage(error.message === 'Créditos insuficientes' ? '❌ Créditos insuficientes' : '❌ Error')
+            } finally {
+                btn.innerHTML = originalText
+                btn.disabled = false
+            }
+        }
+
+        // Funciones auxiliares
+        function copyToClipboard() {
+            const text = document.getElementById('result').innerText
+            navigator.clipboard.writeText(text).then(() => showMessage('✅ Copiado', true))
+        }
+
+        function downloadWord() {
+            if (!generatedContent) return showMessage('❌ No hay contenido')
+            const text = document.getElementById('result').innerText
+            const doc = new docx.Document({
+                sections: [{
+                    children: [new docx.Paragraph({ children: [new docx.TextRun({ text: "Proyecto Educativo Institucional", bold: true, size: 32 })] }),
+                             new docx.Paragraph({ children: [new docx.TextRun({ text: text, size: 22 })] })]
+                }]
+            })
+            docx.Packer.toBlob(doc).then(blob => saveAs(blob, "PEI_TodoProfes.docx"))
+        }
+
+        function printDocument() {
+            const w = window.open('', '_blank')
+            w.document.write(`<html><head><style>body{font-family:Inter;padding:1rem}</style></head><body>${document.getElementById('result').innerHTML}</body></html>`)
+            w.document.close()
+            w.print()
+        }
+
+        document.addEventListener('DOMContentLoaded', checkSession)
+        lucide.createIcons()
+    </script>
+</body>
+</html>

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TodoProfes - Comprar Créditos</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            min-height: 100vh;
+        }
+
+        .package-card {
+            background: linear-gradient(145deg, #1E293B, #0F172A);
+            border: 2px solid transparent;
+            border-radius: 1.5rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            backdrop-filter: blur(10px);
+        }
+
+        .package-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: #3B82F6;
+            box-shadow: 0 30px 40px -15px rgba(59, 130, 246, 0.5);
+        }
+
+        .package-card.selected {
+            border-color: #3B82F6;
+            background: linear-gradient(145deg, #1E3A5F, #0F172A);
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: 1.5rem;
+            right: -3rem;
+            background: linear-gradient(135deg, #F59E0B, #FBBF24);
+            color: #000;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.6rem 3.5rem;
+            transform: rotate(45deg);
+            z-index: 20;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .price-tag {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60A5FA, #C084FC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+
+        .epayco-button-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .epayco-button-container form {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .epayco-button-container .epayco-button {
+            width: 100%;
+            max-width: 280px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 1rem;
+            overflow: hidden;
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            color: white;
+            font-weight: 600;
+            padding: 0.875rem 1.5rem;
+            text-align: center;
+            border: none;
+            font-size: 1rem;
+            box-shadow: 0 8px 16px -4px rgba(59, 130, 246, 0.3);
+        }
+
+        .epayco-button-container .epayco-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -5px rgba(59, 130, 246, 0.5);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #paymentModal {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        .shine {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shine::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.1) 50%,
+                rgba(255,255,255,0) 100%
+            );
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(30deg); }
+            20% { transform: translateX(100%) rotate(30deg); }
+            100% { transform: translateX(100%) rotate(30deg); }
+        }
+
+        .payment-image-container {
+            background: rgba(255,255,255,0.03);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .payment-image-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 1rem;
+            box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .payment-image-container img:hover {
+            transform: scale(1.02);
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10B981;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        /* Estilo para el mensaje de error de sesión */
+        .session-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #EF4444;
+            padding: 1rem;
+            border-radius: 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .session-error a {
+            color: white;
+            background: #EF4444;
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.75rem;
+            display: inline-block;
+            margin-top: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .session-error a:hover {
+            background: #DC2626;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-slate-950/95 p-4 shadow-lg sticky top-0 z-50 border-b border-slate-800 backdrop-blur-md">
+        <div class="container mx-auto flex justify-between items-center px-4">
+            <h1 class="text-2xl md:text-3xl font-bold text-white cursor-pointer hover:opacity-80 transition" onclick="window.location.href='index.html'">
+                <span class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Todo</span>Profes
+            </h1>
+            <div class="flex items-center space-x-4">
+                <span class="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white flex items-center text-sm md:text-base bg-slate-800/50 px-4 py-2 rounded-full shadow-lg">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.51-1.31c-.562-.649-1.413-1.076-2.353-1.253V5z" clip-rule="evenodd"/>
+                    </svg>
+                    <span id="creditsDisplay" class="font-bold">Cargando...</span>
+                </span>
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition p-2.5 hover:bg-slate-800 rounded-xl">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                        <polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 md:p-8">
+        <div class="max-w-7xl mx-auto">
+            <!-- Mensaje de error de sesión (oculto por defecto) -->
+            <div id="sessionError" class="session-error hidden">
+                <svg class="w-12 h-12 mx-auto mb-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-lg font-semibold mb-2">Sesión no iniciada</p>
+                <p class="text-sm mb-3">Debes iniciar sesión para comprar créditos</p>
+                <a href="login.html?redirect=checkout.html">Iniciar sesión</a>
+            </div>
+
+            <!-- Contenido principal (oculto si no hay sesión) -->
+            <div id="mainContent" class="hidden">
+                <!-- Encabezado -->
+                <div class="text-center mb-8 md:mb-12">
+                    <div class="inline-block bg-gradient-to-r from-blue-500 to-purple-500 p-5 rounded-full mb-4 shadow-xl shine">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                            <line x1="12" y1="2" x2="12" y2="22"/>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-4xl md:text-5xl font-extrabold text-white mb-3">Adquiere más créditos</h2>
+                    <p class="text-xl text-slate-400">Elige el paquete que mejor se adapte a tus necesidades</p>
+                </div>
+
+                <!-- PAQUETES DE CRÉDITOS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
+                    
+                    <!-- PAQUETE BÁSICO -->
+                    <div class="package-card p-6 md:p-8" id="package-basico">
+                        <div class="flex-grow">
+                            <h3 class="text-2xl font-bold text-white mb-2">Básico</h3>
+                            <div class="price-tag">$24.900</div>
+                            <div class="text-5xl font-bold text-white mb-6">45 <span class="text-lg text-slate-400">créditos</span></div>
+                            <ul class="space-y-3 mb-8">
+                                <li class="flex items-center text-slate-300"><svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Ideal para empezar</li>
+                                <li class="flex items-center text-slate-300"><svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>22 planeaciones aprox.</li>
+                                <li class="flex items-center text-slate-300"><svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Válido por 1 año</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- BOTÓN BÁSICO (oculto hasta que se cargue el userId) -->
+                        <div class="epayco-button-container" id="btn-basico-container" style="display: none;">
+                            <form>
+                                <script src='https://checkout.epayco.co/checkout.js'
+                                    data-epayco-key='f466c96b7a67c34ef467b5f349571cbf'
+                                    class='epayco-button'
+                                    data-epayco-amount='24900'
+                                    data-epayco-tax='0.00'
+                                    data-epayco-tax-base='24900'
+                                    data-epayco-name='Paquete Básico (45 créditos)'
+                                    data-epayco-description='Paquete Básico (45 créditos)'
+                                    data-epayco-currency='cop'
+                                    data-epayco-country='CO'
+                                    data-epayco-test='true'
+                                    data-epayco-external='true'
+                                    data-epayco-response='https://todoprofes.com/confirmacion.html'
+                                    data-epayco-confirmation='https://todoprofes.com/.netlify/functions/epayco-confirmation'
+                                    data-epayco-extra1=''
+                                    data-epayco-extra2='basico'
+                                    data-epayco-extra3='45'>
+                                </script>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- PAQUETE ESTÁNDAR (MÁS POPULAR) -->
+                    <div class="package-card p-6 md:p-8 relative border-blue-500 scale-105 lg:scale-105" id="package-estandar">
+                        <div class="popular-badge">MÁS POPULAR</div>
+                        <div class="flex-grow">
+                            <h3 class="text-2xl font-bold text-white mb-2">Estándar</h3>
+                            <div class="price-tag">$44.900</div>
+                            <div class="text-5xl font-bold text-white mb-6">90 <span class="text-lg text-slate-400">créditos</span></div>
+                            <ul class="space-y-3 mb-8">
+                                <li class="flex items-center text-slate-300"><svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Mejor relación costo-beneficio</li>
+                                <li class="flex items-center text-slate-300"><svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>45 planeaciones aprox.</li>
+                                <li class="flex items-center text-slate-300"><svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>+10 créditos extra</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- BOTÓN ESTÁNDAR (oculto hasta que se cargue el userId) -->
+                        <div class="epayco-button-container" id="btn-estandar-container" style="display: none;">
+                            <form>
+                                <script src='https://checkout.epayco.co/checkout.js'
+                                    data-epayco-key='f466c96b7a67c34ef467b5f349571cbf'
+                                    class='epayco-button'
+                                    data-epayco-amount='44900'
+                                    data-epayco-tax='0.00'
+                                    data-epayco-tax-base='44900'
+                                    data-epayco-name='Paquete Estándar (90 créditos)'
+                                    data-epayco-description='Paquete Estándar (90 créditos)'
+                                    data-epayco-currency='cop'
+                                    data-epayco-country='CO'
+                                    data-epayco-test='true'
+                                    data-epayco-external='true'
+                                    data-epayco-response='https://todoprofes.com/confirmacion.html'
+                                    data-epayco-confirmation='https://todoprofes.com/.netlify/functions/epayco-confirmation'
+                                    data-epayco-extra1=''
+                                    data-epayco-extra2='estandar'
+                                    data-epayco-extra3='90'>
+                                </script>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- PAQUETE PREMIUM -->
+                    <div class="package-card p-6 md:p-8" id="package-premium">
+                        <div class="flex-grow">
+                            <h3 class="text-2xl font-bold text-white mb-2">Premium</h3>
+                            <div class="price-tag">$54.900</div>
+                            <div class="text-5xl font-bold text-white mb-6">180 <span class="text-lg text-slate-400">créditos</span></div>
+                            <ul class="space-y-3 mb-8">
+                                <li class="flex items-center text-slate-300"><svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Máximo ahorro</li>
+                                <li class="flex items-center text-slate-300"><svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>90 planeaciones aprox.</li>
+                                <li class="flex items-center text-slate-300"><svg class="w-5 h-5 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>Soporte prioritario</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- BOTÓN PREMIUM (oculto hasta que se cargue el userId) -->
+                        <div class="epayco-button-container" id="btn-premium-container" style="display: none;">
+                            <form>
+                                <script src='https://checkout.epayco.co/checkout.js'
+                                    data-epayco-key='f466c96b7a67c34ef467b5f349571cbf'
+                                    class='epayco-button'
+                                    data-epayco-amount='54900'
+                                    data-epayco-tax='0.00'
+                                    data-epayco-tax-base='54900'
+                                    data-epayco-name='Paquete Premium (180 créditos)'
+                                    data-epayco-description='Paquete Premium (180 créditos)'
+                                    data-epayco-currency='cop'
+                                    data-epayco-country='CO'
+                                    data-epayco-test='true'
+                                    data-epayco-external='true'
+                                    data-epayco-response='https://todoprofes.com/confirmacion.html'
+                                    data-epayco-confirmation='https://todoprofes.com/.netlify/functions/epayco-confirmation'
+                                    data-epayco-extra1=''
+                                    data-epayco-extra2='premium'
+                                    data-epayco-extra3='180'>
+                                </script>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Métodos de pago -->
+                <div class="bg-gradient-to-br from-slate-800/40 to-slate-900/40 rounded-2xl p-8 border border-slate-700 backdrop-blur-sm">
+                    <h3 class="text-2xl font-bold text-white mb-6 text-center">Métodos de pago aceptados</h3>
+                    
+                    <div class="payment-image-container flex justify-center">
+                        <img src="C:\Users\Familia jaimes\Desktop\Todo profes\imagenes\pagos.png" 
+                             alt="Métodos de pago" 
+                             class="max-w-full h-auto rounded-lg shadow-lg"
+                             onerror="this.onerror=null; this.src='https://placehold.co/800x200/1E293B/3B82F6?text=Visa+Mastercard+Amex+PSE+Efecty+Baloto'">
+                    </div>
+                    
+                    <div class="flex justify-center mt-6">
+                        <div class="security-badge">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Pago 100% seguro procesado por ePayco</span>
+                        </div>
+                    </div>
+                    
+                    <p class="text-center text-xs text-slate-500 mt-4">
+                        Todos los datos son encriptados y procesados de forma segura
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de carga -->
+    <div id="paymentModal" class="fixed inset-0 hidden items-center justify-center z-50">
+        <div class="bg-slate-800 p-8 rounded-2xl text-center max-w-sm mx-4 shadow-2xl border border-slate-700 transform scale-100 animate-pulse">
+            <div class="loading-spinner mx-auto mb-4" style="width: 56px; height: 56px; border-width: 4px;"></div>
+            <h3 class="text-xl font-bold text-white mb-2">Procesando pago</h3>
+            <p class="text-slate-400">Estamos preparando tu transacción segura...</p>
+            <p class="text-xs text-slate-500 mt-4">Serás redirigido a la plataforma de ePayco</p>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Supabase
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA';
+        
+        let userId = null;
+        let userToken = null;
+
+        // Verificar sesión y cargar datos del usuario
+        async function checkSession() {
+            const token = localStorage.getItem('supabase_token');
+            const userIdStored = localStorage.getItem('user_id');
+            
+            console.log('🔍 Verificando sesión:', { token: !!token, userId: userIdStored });
+            
+            // Mostrar/ocultar elementos según sesión
+            const sessionError = document.getElementById('sessionError');
+            const mainContent = document.getElementById('mainContent');
+            
+            if (!token || !userIdStored) {
+                console.warn('⚠️ No hay sesión activa');
+                sessionError.classList.remove('hidden');
+                mainContent.classList.add('hidden');
+                return false;
+            }
+
+            userId = userIdStored;
+            userToken = token;
+            
+            try {
+                // Verificar que el token sea válido
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Sesión inválida');
+                }
+
+                // Sesión válida, mostrar contenido
+                sessionError.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+                
+                // Cargar créditos del usuario
+                await loadUserCredits();
+                
+                // Actualizar botones con userId (con un pequeño retraso para asegurar que los scripts de ePayco se carguen)
+                setTimeout(() => {
+                    updateEpaycoButtonsWithUserId(userId);
+                }, 500);
+                
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Error de sesión:', error);
+                localStorage.removeItem('supabase_token');
+                localStorage.removeItem('user_id');
+                
+                sessionError.classList.remove('hidden');
+                mainContent.classList.add('hidden');
+                return false;
+            }
+        }
+
+        // Cargar créditos del usuario
+        async function loadUserCredits() {
+            if (!userId || !userToken) return;
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${userToken}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    if (users && users.length > 0) {
+                        document.getElementById('creditsDisplay').textContent = `${users[0].credits || 0} créditos`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error);
+                document.getElementById('creditsDisplay').textContent = 'Error al cargar';
+            }
+        }
+
+        // Actualizar los botones con el ID del usuario y mostrarlos
+        function updateEpaycoButtonsWithUserId(userId) {
+            if (!userId) {
+                console.error('❌ No hay userId disponible');
+                return;
+            }
+            
+            // Mostrar los contenedores de los botones
+            document.getElementById('btn-basico-container').style.display = 'flex';
+            document.getElementById('btn-estandar-container').style.display = 'flex';
+            document.getElementById('btn-premium-container').style.display = 'flex';
+            
+            // Actualizar el data-epayco-extra1 de cada script
+            const scripts = document.querySelectorAll('script.epayco-button');
+            console.log(`🔄 Encontrados ${scripts.length} botones de ePayco para actualizar`);
+            
+            scripts.forEach((script, index) => {
+                script.setAttribute('data-epayco-extra1', userId);
+                console.log(`✅ Botón ${index + 1} (${script.getAttribute('data-epayco-extra2')}) actualizado con userId: ${userId}`);
+            });
+        }
+
+        // Seleccionar paquete (para efecto visual)
+        function selectPackage(pkg) {
+            document.querySelectorAll('.package-card').forEach(card => {
+                card.classList.remove('selected', 'border-blue-500');
+            });
+            const packageElement = document.getElementById(`package-${pkg}`);
+            if (packageElement) {
+                packageElement.classList.add('selected', 'border-blue-500');
+            }
+        }
+
+        // Mostrar modal al hacer clic en cualquier botón de pago
+        document.addEventListener('click', (e) => {
+            // Verificar si el clic fue en un botón de ePayco o en su contenedor
+            const isEpaycoButton = e.target.closest('.epayco-button') || e.target.closest('.epayco-button-container button');
+            
+            if (isEpaycoButton) {
+                console.log('💰 Iniciando proceso de pago...');
+                
+                // Verificar que haya sesión antes de proceder
+                if (!userId) {
+                    e.preventDefault();
+                    alert('Debes iniciar sesión para realizar una compra');
+                    window.location.href = 'login.html?redirect=checkout.html';
+                    return;
+                }
+                
+                const modal = document.getElementById('paymentModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                
+                // Ocultar modal después de 8 segundos (por si algo falla)
+                setTimeout(() => {
+                    if (modal.classList.contains('flex')) {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('flex');
+                    }
+                }, 8000);
+            }
+        });
+
+        // Ocultar modal cuando ePayco abre su ventana (el usuario cambia de foco)
+        window.addEventListener('blur', () => {
+            const modal = document.getElementById('paymentModal');
+            if (modal.classList.contains('flex')) {
+                // Pequeño retraso para asegurar que la ventana de ePayco ya se abrió
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 500);
+            }
+        });
+
+        // Si el usuario vuelve a la página sin completar el pago, asegurar que el modal esté oculto
+        window.addEventListener('focus', () => {
+            const modal = document.getElementById('paymentModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        });
+
+        // Inicializar todo cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Verificar sesión primero
+            const hasSession = await checkSession();
+            
+            if (hasSession) {
+                // Seleccionar paquete estándar por defecto
+                setTimeout(() => selectPackage('estandar'), 100);
+            }
+        });
+
+        // Verificar si hay parámetros de error en la URL (cuando ePayco redirige con error)
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const errorCode = urlParams.get('cod_error');
+            
+            if (errorCode) {
+                console.log('⚠️ Error en pago detectado:', errorCode);
+                // Podrías mostrar un mensaje de error aquí
+            }
+        });
+    </script>
+</body>
+</html>

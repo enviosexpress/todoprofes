@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>TodoProfes - Generador de Ideas PPA</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            overflow-x: hidden;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Inputs */
+        .input-field, .form-select, textarea.input-field {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .input-field:focus, .form-select:focus, textarea.input-field:focus {
+            border-color: #F97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+            outline: none;
+        }
+        
+        /* Botones */
+        .btn-primary {
+            background: linear-gradient(135deg, #F97316, #EA580C);
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #F97316;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #1E293B;
+            border: 1px solid #334155;
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+        }
+        
+        .btn-secondary:hover {
+            background: #2D3A4F;
+            border-color: #475569;
+        }
+        
+        /* Loader */
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #F97316;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Fullscreen Loader */
+        .fullscreen-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .loader-spinner {
+            border: 4px solid rgba(249, 115, 22, 0.3);
+            border-top: 4px solid #F97316;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Estilos para ideas PPA */
+        .ideas-document {
+            background: white;
+            color: #1E293B;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (min-width: 768px) {
+            .ideas-document {
+                padding: 2rem;
+            }
+        }
+        
+        /* Temas de color */
+        .ideas-document.theme-orange {
+            background: linear-gradient(135deg, #ffffff, #fff7ed);
+            border-left: 4px solid #F97316;
+        }
+        .ideas-document.theme-purple {
+            background: linear-gradient(135deg, #ffffff, #faf5ff);
+            border-left: 4px solid #A855F7;
+        }
+        .ideas-document.theme-blue {
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+            border-left: 4px solid #3B82F6;
+        }
+        .ideas-document.theme-green {
+            background: linear-gradient(135deg, #ffffff, #f0fdf4);
+            border-left: 4px solid #22C55E;
+        }
+        .ideas-document.theme-amber {
+            background: linear-gradient(135deg, #ffffff, #fffbeb);
+            border-left: 4px solid #F59E0B;
+        }
+        
+        .theme-orange .section-title { color: #F97316; }
+        .theme-orange .idea-title { color: #F97316; }
+        .theme-orange .badge { background: #F97316; }
+        
+        .theme-purple .section-title { color: #A855F7; }
+        .theme-purple .idea-title { color: #A855F7; }
+        .theme-purple .badge { background: #A855F7; }
+        
+        .theme-blue .section-title { color: #3B82F6; }
+        .theme-blue .idea-title { color: #3B82F6; }
+        .theme-blue .badge { background: #3B82F6; }
+        
+        .theme-green .section-title { color: #22C55E; }
+        .theme-green .idea-title { color: #22C55E; }
+        .theme-green .badge { background: #22C55E; }
+        
+        .theme-amber .section-title { color: #F59E0B; }
+        .theme-amber .idea-title { color: #F59E0B; }
+        .theme-amber .badge { background: #F59E0B; }
+        
+        /* Header */
+        .ideas-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid currentColor;
+        }
+        
+        .ideas-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, currentColor, #F97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .ideas-title {
+                font-size: 2rem;
+            }
+        }
+        
+        .ideas-subtitle {
+            color: #64748B;
+            font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
+        
+        /* Grid de ideas */
+        .ideas-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        @media (min-width: 640px) {
+            .ideas-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .ideas-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .idea-card {
+            background: #F8FAFC;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid #E2E8F0;
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .idea-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.2);
+        }
+        
+        .idea-card .badge {
+            display: inline-block;
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            align-self: flex-start;
+        }
+        
+        .idea-card .idea-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #F97316;
+        }
+        
+        .idea-card .idea-description {
+            color: #475569;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            flex-grow: 1;
+        }
+        
+        .idea-card .activities {
+            list-style: none;
+            padding: 0;
+            margin-top: auto;
+        }
+        
+        .idea-card .activities li {
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed #E2E8F0;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            color: #1E293B;
+        }
+        
+        .idea-card .activities li:before {
+            content: "✓";
+            color: #22C55E;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .idea-card .activities li:last-child {
+            border-bottom: none;
+        }
+        
+        /* Grid de información */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        @media (min-width: 640px) {
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .info-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        .info-card {
+            background: #F8FAFC;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #E2E8F0;
+        }
+        
+        .info-label {
+            font-size: 0.7rem;
+            color: #64748B;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .info-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1E293B;
+        }
+        
+        /* Panel de configuración */
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        .color-swatch.selected {
+            border-color: white;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        .color-swatch.orange { background: #F97316; }
+        .color-swatch.purple { background: #A855F7; }
+        .color-swatch.blue { background: #3B82F6; }
+        .color-swatch.green { background: #22C55E; }
+        .color-swatch.amber { background: #F59E0B; }
+        
+        .format-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            background: #0F172A;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .format-badge:hover {
+            background: #1E293B;
+            border-color: #F97316;
+        }
+        .format-badge.selected {
+            background: #F97316;
+            color: white;
+            border-color: #F97316;
+        }
+        
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .action-btn {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #94A3B8;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .action-btn:hover {
+            background: #2D3A4F;
+            color: white;
+            border-color: #F97316;
+        }
+        
+        .badge-orange {
+            background: rgba(249, 115, 22, 0.2);
+            color: #F97316;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+        
+        .insufficient-credits {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        .config-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #F97316;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+        .config-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 10px rgba(249, 115, 22, 0.3);
+        }
+        
+        .config-sidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 350px;
+            height: 100vh;
+            background: #0F172A;
+            border-left: 1px solid #334155;
+            padding: 2rem 1.5rem;
+            transition: right 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+        .config-sidebar.open {
+            right: 0;
+        }
+        
+        @media (min-width: 640px) {
+            .config-sidebar {
+                right: -400px;
+                width: 350px;
+            }
+        }
+        
+        .config-sidebar-close {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            cursor: pointer;
+            color: #94A3B8;
+        }
+        .config-sidebar-close:hover {
+            color: white;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+        
+        .preview-card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .preview-card:hover {
+            border-color: #F97316;
+            transform: translateY(-2px);
+        }
+        
+        .result-area {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .footer-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748B;
+            border-top: 1px solid #E2E8F0;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+        
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22C55E;
+            color: #22C55E;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fullscreen Loader -->
+    <div id="fullscreenLoader" class="fullscreen-loader" style="display: none;">
+        <div class="loader-spinner"></div>
+        <div class="text-orange-400 font-semibold">Generando ideas PPA con IA...</div>
+        <div class="text-slate-400 text-sm">Creando proyectos pedagógicos personalizados</div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition-all hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <h1 class="text-xl md:text-2xl font-bold text-white">
+                    <span class="bg-gradient-to-r from-orange-400 to-amber-400 bg-clip-text text-transparent">Generador</span>
+                    <span class="text-white"> de Ideas PPA</span>
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-yellow-400 flex items-center bg-slate-800/50 px-2 md:px-3 py-1.5 rounded-full border border-slate-700 text-sm" id="creditsContainer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="8" cy="8" r="6"/><path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/><path d="m12 12 4 4"/><path d="M12 12v4h4"/><path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/><path d="m16 16-4-4"/><path d="M16 16v-4h-4"/>
+                    </svg>
+                    <span id="creditsDisplay">Cargando...</span>
+                </span>
+                <button onclick="toggleConfigPanel()" class="text-slate-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay para sidebar -->
+    <div id="overlay" class="overlay" onclick="toggleConfigPanel()"></div>
+
+    <!-- Sidebar de configuración -->
+    <div id="configSidebar" class="config-sidebar">
+        <div class="config-sidebar-close" onclick="toggleConfigPanel()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </div>
+        
+        <h2 class="text-xl font-bold text-white mb-6 mt-8">Personalizar Estilo</h2>
+        
+        <!-- Selector de color -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">🎨 Color principal</h3>
+            <div class="flex flex-wrap gap-3">
+                <div class="color-swatch orange selected" onclick="selectColor('orange')"></div>
+                <div class="color-swatch purple" onclick="selectColor('purple')"></div>
+                <div class="color-swatch blue" onclick="selectColor('blue')"></div>
+                <div class="color-swatch green" onclick="selectColor('green')"></div>
+                <div class="color-swatch amber" onclick="selectColor('amber')"></div>
+            </div>
+        </div>
+        
+        <!-- Selector de formato -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">📄 Formato</h3>
+            <div class="space-y-2">
+                <div class="format-badge selected" onclick="selectFormato('estandar')" data-formato="estandar">📏 Estándar</div>
+                <div class="format-badge" onclick="selectFormato('compacto')" data-formato="compacto">📐 Compacto</div>
+                <div class="format-badge" onclick="selectFormato('detallado')" data-formato="detallado">📜 Detallado</div>
+            </div>
+        </div>
+        
+        <!-- Preferencias -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">⚙️ Preferencias</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Nivel de innovación</label>
+                    <select id="innovacion" class="input-field text-sm">
+                        <option value="tradicional">Tradicional</option>
+                        <option value="equilibrado" selected>Equilibrado</option>
+                        <option value="innovador">Innovador</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Número de ideas</label>
+                    <select id="numIdeas" class="input-field text-sm">
+                        <option value="3">3 ideas</option>
+                        <option value="5" selected>5 ideas</option>
+                        <option value="7">7 ideas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Incluir actividades</label>
+                    <select id="incluirActividades" class="input-field text-sm">
+                        <option value="si" selected>Sí, incluir actividades</option>
+                        <option value="no">Solo ideas principales</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="savePreferences()" class="btn-primary w-full">Guardar</button>
+        <p id="configMessage" class="text-xs text-center mt-3 text-green-400 hidden">✓ Guardado</p>
+    </div>
+
+    <main class="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Hero Section -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8 text-center">
+                <div class="inline-block bg-orange-500/20 p-3 md:p-4 rounded-full mb-4">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 md:w-12 md:h-12 text-orange-400">
+                        <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Generador de Ideas PPA</h2>
+                <p class="text-sm md:text-base text-slate-400">Crea proyectos pedagógicos innovadores con IA para educación inicial</p>
+                
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 mt-6">
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-orange-400">5</div>
+                        <div class="text-xs text-slate-500">Créditos por proyecto</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-orange-400">∞</div>
+                        <div class="text-xs text-slate-500">Combinaciones</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h3 class="text-xl font-semibold text-white">📝 Datos del proyecto</h3>
+                    <button onclick="toggleConfigPanel()" class="text-sm text-orange-400 hover:text-orange-300">Personalizar</button>
+                </div>
+                
+                <form id="ideasForm" class="space-y-4" onsubmit="event.preventDefault(); handleGenerate()">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Temática *</label>
+                            <input type="text" id="tematica" class="input-field" placeholder="Ej: Animales de la granja" value="Animales de la granja" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Edad del grupo *</label>
+                            <input type="text" id="edad" class="input-field" placeholder="Ej: 4-5 años" value="4-5 años" required>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Intereses del grupo</label>
+                        <input type="text" id="intereses" class="input-field" placeholder="Ej: Música, arte, juegos, animales" value="Música, arte, juegos, animales">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Duración del proyecto</label>
+                            <select id="duracion" class="input-field">
+                                <option value="2">2 semanas</option>
+                                <option value="4" selected>1 mes</option>
+                                <option value="8">2 meses</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Contexto</label>
+                            <input type="text" id="contexto" class="input-field" placeholder="Ej: Aula regular, inclusiva" value="Aula regular">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                        <button type="submit" id="generateBtn" class="btn-primary flex items-center justify-center space-x-2">
+                            <span>✨ Generar Ideas con IA</span>
+                            <span class="text-sm">(5 créditos)</span>
+                        </button>
+                        <button type="button" onclick="loadPreview()" class="btn-secondary">Vista Previa</button>
+                    </div>
+
+                    <div id="message" class="text-center text-sm hidden"></div>
+                </form>
+            </div>
+
+            <!-- Resultado -->
+            <div id="resultContainer" class="glass-card p-4 md:p-8 mb-6 md:mb-8 hidden">
+                <div class="action-toolbar">
+                    <button onclick="copyToClipboard()" class="action-btn" title="Copiar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
+                    <button onclick="downloadPDF()" class="action-btn" title="PDF Profesional">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </button>
+                    <button onclick="downloadWord()" class="action-btn" title="Word">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button onclick="printDocument()" class="action-btn" title="Imprimir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="result" class="result-area"></div>
+                <div id="creditsInfo" class="text-xs text-slate-500 text-right mt-2"></div>
+            </div>
+
+            <!-- Ejemplos -->
+            <div class="glass-card p-6 md:p-8">
+                <h3 class="text-lg md:text-xl font-semibold text-white mb-6">📚 Ejemplos</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="preview-card" onclick="loadExample('animales')">
+                        <span class="badge-orange inline-block mb-2">🐷 Animales</span>
+                        <p class="text-sm text-slate-300">La granja</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('naturaleza')">
+                        <span class="badge-orange inline-block mb-2">🌳 Naturaleza</span>
+                        <p class="text-sm text-slate-300">El bosque</p>
+                    </div>
+                    <div class="preview-card" onclick="loadExample('oficios')">
+                        <span class="badge-orange inline-block mb-2">👨‍🍳 Oficios</span>
+                        <p class="text-sm text-slate-300">Profesiones</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Botón flotante -->
+    <div class="config-toggle" onclick="toggleConfigPanel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+        </svg>
+    </div>
+
+    <footer class="bg-slate-950 text-center p-4 mt-auto border-t border-slate-800">
+        <p class="text-xs text-slate-400">✨ Generador de Ideas PPA - TodoProfes</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`
+
+        let isAuthenticated = false
+        let userId = null
+        let token = null
+        let generatedContent = ''
+        let currentColor = 'orange'
+        let currentFormato = 'estandar'
+
+        // ============================================================
+        // FUNCIONES DE CONFIGURACIÓN
+        // ============================================================
+        
+        function toggleConfigPanel() {
+            document.getElementById('configSidebar').classList.toggle('open')
+            document.getElementById('overlay').classList.toggle('show')
+        }
+        
+        function selectColor(color) {
+            document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.color-swatch.${color}`).classList.add('selected')
+            currentColor = color
+            updateResultTheme()
+        }
+        
+        function selectFormato(formato) {
+            document.querySelectorAll('.format-badge').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.format-badge[data-formato="${formato}"]`).classList.add('selected')
+            currentFormato = formato
+            updateResultTheme()
+        }
+        
+        function updateResultTheme() {
+            const resultEl = document.getElementById('result')
+            if (resultEl && resultEl.children.length > 0) {
+                const doc = resultEl.querySelector('.ideas-document')
+                if (doc) {
+                    doc.className = doc.className.replace(/theme-\w+/g, '').trim()
+                    doc.className = doc.className.replace(/formato-\w+/g, '').trim()
+                    doc.classList.add(`theme-${currentColor}`, `formato-${currentFormato}`)
+                }
+            }
+        }
+        
+        function savePreferences() {
+            document.getElementById('configMessage').classList.remove('hidden')
+            setTimeout(() => document.getElementById('configMessage').classList.add('hidden'), 2000)
+        }
+
+        // ============================================================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ============================================================
+        
+        async function checkSession() {
+            token = localStorage.getItem('supabase_token')
+            userId = localStorage.getItem('user_id')
+            if (!token || !userId) window.location.href = 'login.html'
+            try {
+                await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                }).then(res => { if (!res.ok) throw new Error() })
+                isAuthenticated = true
+                await loadUserCredits()
+                await checkIAFunction()
+            } catch {
+                localStorage.clear()
+                window.location.href = 'login.html'
+            }
+        }
+
+        async function loadUserCredits() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                })
+                if (res.ok) {
+                    const users = await res.json()
+                    const credits = users[0]?.credits || 0
+                    document.getElementById('creditsDisplay').textContent = `${credits} créditos`
+                    
+                    const container = document.getElementById('creditsContainer')
+                    if (credits < 20) {
+                        container.classList.add('insufficient-credits')
+                    } else {
+                        container.classList.remove('insufficient-credits')
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error)
+            }
+        }
+
+        async function checkIAFunction() {
+            try {
+                await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ prompt: "test", tool: "ideas" })
+                })
+                console.log('✅ IA disponible')
+            } catch (error) {
+                console.warn('⚠️ IA no disponible:', error)
+            }
+        }
+
+        async function deductCredits(amount) {
+            try {
+                const getRes = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                })
+                const users = await getRes.json()
+                if (!users[0] || users[0].credits < amount) throw new Error('Créditos insuficientes')
+                
+                const newCredits = users[0].credits - amount
+                await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({ credits: newCredits })
+                })
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({
+                        user_id: userId, amount: -amount, balance_after: newCredits,
+                        type: 'usage', description: 'Generador de Ideas PPA', feature_used: 'ideas'
+                    })
+                }).catch(err => console.log('Error registrando historial:', err))
+                
+                return newCredits
+            } catch (error) {
+                console.error('Error descontando créditos:', error)
+                throw error
+            }
+        }
+
+        function showMessage(text, isSuccess = false) {
+            const msg = document.getElementById('message')
+            msg.textContent = text
+            msg.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'success-message' : 'error-message'}`
+            msg.classList.remove('hidden')
+            setTimeout(() => msg.classList.add('hidden'), 3000)
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA GUARDAR EN STORAGE
+        // ============================================================
+        
+        async function guardarDocumentoEnStorage(contenido, titulo, tipo) {
+            try {
+                const fecha = new Date().toISOString().split('T')[0]
+                const timestamp = Date.now()
+                const nombreArchivo = `${userId}/ideas_${fecha}_${timestamp}.docx`
+                
+                const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+                const formData = new FormData()
+                formData.append('file', blob, nombreArchivo.split('/').pop())
+                
+                const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: formData
+                })
+                
+                if (!uploadRes.ok) throw new Error('Error al subir')
+                
+                const url = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({
+                        user_id: userId, tipo: 'ideas', titulo: titulo.substring(0, 100),
+                        url_documento: url, creditos_usados: 5, created_at: new Date().toISOString()
+                    })
+                }).catch(err => console.log('Error guardando referencia:', err))
+                
+                return url
+            } catch (error) {
+                console.error('Error guardando:', error)
+                return null
+            }
+        }
+
+        // ============================================================
+        // FUNCIONES DE EJEMPLOS
+        // ============================================================
+        
+        function loadExample(type) {
+            const ejemplos = {
+                animales: {
+                    tematica: 'Animales de la granja',
+                    intereses: 'Música, arte, juegos, animales',
+                    contexto: 'Aula regular'
+                },
+                naturaleza: {
+                    tematica: 'El bosque y sus secretos',
+                    intereses: 'Naturaleza, exploración, cuentos',
+                    contexto: 'Aula al aire libre'
+                },
+                oficios: {
+                    tematica: 'Los oficios de mi comunidad',
+                    intereses: 'Profesiones, roles, juego simbólico',
+                    contexto: 'Aula inclusiva'
+                }
+            }
+            if (ejemplos[type]) {
+                document.getElementById('tematica').value = ejemplos[type].tematica
+                document.getElementById('intereses').value = ejemplos[type].intereses
+                document.getElementById('contexto').value = ejemplos[type].contexto
+                showMessage('✅ Ejemplo cargado', true)
+            }
+        }
+
+        function loadPreview() {
+            const tematica = document.getElementById('tematica').value
+            const edad = document.getElementById('edad').value
+            if (!tematica) return showMessage('❌ Completa la temática')
+            
+            const preview = `
+            <div class="ideas-document theme-${currentColor} formato-${currentFormato}" style="opacity:0.9">
+                <div class="ideas-header">
+                    <h1 class="ideas-title">📋 Vista Previa</h1>
+                    <div class="ideas-subtitle">
+                        <span>📚 ${tematica}</span>
+                        <span>👥 ${edad}</span>
+                    </div>
+                </div>
+                <div class="text-center py-8 text-slate-500">
+                    <p>Haz clic en "Generar Ideas con IA" para obtener ideas personalizadas</p>
+                    <p class="text-sm mt-2 text-orange-500">Se usarán 5 créditos</p>
+                </div>
+                <div class="footer-note">Vista previa · TodoProfes</div>
+            </div>
+            `
+            document.getElementById('result').innerHTML = preview
+            document.getElementById('resultContainer').classList.remove('hidden')
+            showMessage('👆 Vista previa', true)
+        }
+
+        // ============================================================
+        // FUNCIÓN PRINCIPAL CON IA
+        // ============================================================
+        
+        async function handleGenerate() {
+            if (!isAuthenticated) return window.location.href = 'login.html'
+            
+            const tematica = document.getElementById('tematica').value.trim()
+            const edad = document.getElementById('edad').value.trim()
+            const intereses = document.getElementById('intereses').value.trim()
+            const duracion = document.getElementById('duracion').value
+            const contexto = document.getElementById('contexto').value.trim()
+            const innovacion = document.getElementById('innovacion').value
+            const numIdeas = parseInt(document.getElementById('numIdeas').value)
+            const incluirActividades = document.getElementById('incluirActividades').value === 'si'
+            
+            if (!tematica || !edad) return showMessage('❌ Completa los campos obligatorios')
+            
+            document.getElementById('fullscreenLoader').style.display = 'flex'
+            
+            const btn = document.getElementById('generateBtn')
+            const originalText = btn.innerHTML
+            btn.innerHTML = '<span class="loader"></span> Generando ideas...'
+            btn.disabled = true
+
+            try {
+                const newCredits = await deductCredits(5)
+                document.getElementById('creditsDisplay').textContent = `${newCredits} créditos`
+
+                // Crear prompt para Gemini
+                let innovacionTexto = ''
+                if (innovacion === 'tradicional') {
+                    innovacionTexto = 'enfoque tradicional, actividades clásicas y probadas'
+                } else if (innovacion === 'equilibrado') {
+                    innovacionTexto = 'enfoque equilibrado mezclando lo tradicional con elementos innovadores'
+                } else {
+                    innovacionTexto = 'enfoque altamente innovador, creativo y original'
+                }
+
+                const actividadesTexto = incluirActividades ? 'Incluye al menos 3 actividades específicas por cada idea' : 'No incluyas actividades detalladas, solo ideas principales'
+
+                const prompt = `Actúa como un experto en educación inicial y diseño de Proyectos Pedagógicos de Aula (PPA).
+
+DATOS DEL PROYECTO:
+- Temática: ${tematica}
+- Edad del grupo: ${edad}
+- Intereses del grupo: ${intereses || 'No especificados'}
+- Duración: ${duracion} semanas
+- Contexto: ${contexto || 'Aula regular'}
+- Nivel de innovación: ${innovacionTexto}
+- Número de ideas a generar: ${numIdeas}
+- ${actividadesTexto}
+
+INSTRUCCIONES ESPECÍFICAS:
+- Genera ${numIdeas} ideas creativas para un PPA sobre la temática "${tematica}"
+- Cada idea debe tener un título atractivo y una descripción clara
+- Adapta las ideas a niños de ${edad}
+- Considera los intereses mencionados: ${intereses || 'generales'}
+- Las ideas deben ser prácticas, viables y pedagógicamente sólidas
+- Incluye elementos de juego, exploración y creatividad
+
+RESPUESTA EN FORMATO JSON:
+Debes responder ÚNICAMENTE con un objeto JSON con esta estructura exacta:
+
+{
+  "proyecto": {
+    "titulo": "título atractivo para el proyecto general",
+    "descripcion": "breve descripción del proyecto integrador",
+    "ideas": [
+      {
+        "titulo": "título de la idea 1",
+        "descripcion": "descripción detallada de la idea",
+        "actividades": ["actividad 1", "actividad 2", "actividad 3"],
+        "materiales": ["material 1", "material 2", "material 3"],
+        "aprendizajes": ["aprendizaje esperado 1", "aprendizaje esperado 2"]
+      }
+    ],
+    "recomendaciones": ["recomendación 1", "recomendación 2", "recomendación 3"],
+    "evaluacion": "sugerencias para evaluar el proyecto"
+  }
+}`
+
+                console.log('Llamando a función IA para ideas PPA')
+                
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        tool: 'ideas',
+                        format: 'json'
+                    })
+                })
+
+                const data = await response.json()
+                console.log('Respuesta de IA:', data)
+
+                if (!response.ok) {
+                    if (data.error === 'insufficient_credits') {
+                        throw new Error(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}`)
+                    }
+                    throw new Error(data.message || 'Error al generar ideas')
+                }
+
+                // Parsear la respuesta JSON
+                let resultado
+                try {
+                    if (typeof data.content === 'string') {
+                        resultado = JSON.parse(data.content)
+                    } else {
+                        resultado = data.content
+                    }
+                } catch (e) {
+                    console.error('Error parseando JSON:', e)
+                    throw new Error('La respuesta de la IA no tiene el formato esperado')
+                }
+
+                // Validar que tenga la estructura esperada
+                if (!resultado.proyecto || !resultado.proyecto.ideas) {
+                    throw new Error('Respuesta incompleta de la IA')
+                }
+
+                // Generar HTML profesional con los datos de la IA
+                let ideasHTML = `
+                <div class="ideas-document theme-${currentColor} formato-${currentFormato}">
+                    <div class="ideas-header">
+                        <h1 class="ideas-title">✨ Proyecto: ${tematica}</h1>
+                        <div class="ideas-subtitle">
+                            <span>👥 ${edad}</span>
+                            <span>⏱️ ${duracion} semanas</span>
+                            <span>📚 ${contexto || 'Aula regular'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <div class="info-label">Título del proyecto</div>
+                            <div class="info-value">${resultado.proyecto.titulo || tematica}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Descripción</div>
+                            <div class="info-value">${resultado.proyecto.descripcion || 'Proyecto integrador'}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Intereses</div>
+                            <div class="info-value">${intereses || 'Generales'}</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="info-label">Innovación</div>
+                            <div class="info-value">${innovacion === 'tradicional' ? 'Tradicional' : innovacion === 'equilibrado' ? 'Equilibrado' : 'Innovador'}</div>
+                        </div>
+                    </div>
+                    
+                    <h2 class="section-title">💡 Ideas para el PPA</h2>
+                    <div class="ideas-grid">
+                `
+
+                resultado.proyecto.ideas.forEach((idea, index) => {
+                    ideasHTML += `
+                        <div class="idea-card">
+                            <span class="badge">Idea ${index + 1}</span>
+                            <h3 class="idea-title">${idea.titulo}</h3>
+                            <p class="idea-description">${idea.descripcion}</p>
+                    `
+                    
+                    if (incluirActividades && idea.actividades && idea.actividades.length > 0) {
+                        ideasHTML += `<ul class="activities">`
+                        idea.actividades.forEach(actividad => {
+                            ideasHTML += `<li>${actividad}</li>`
+                        })
+                        ideasHTML += `</ul>`
+                    }
+                    
+                    ideasHTML += `</div>`
+                })
+
+                ideasHTML += `
+                    </div>
+                `
+
+                if (resultado.proyecto.recomendaciones && resultado.proyecto.recomendaciones.length > 0) {
+                    ideasHTML += `
+                    <h2 class="section-title">📝 Recomendaciones</h2>
+                    <div style="background:#F8FAFC; padding:1.5rem; border-radius:0.75rem; margin:1.5rem 0;">
+                        <ul style="list-style:disc; padding-left:1.5rem; color:#475569;">
+                            ${resultado.proyecto.recomendaciones.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                    `
+                }
+
+                if (resultado.proyecto.evaluacion) {
+                    ideasHTML += `
+                    <h2 class="section-title">📊 Evaluación</h2>
+                    <div style="background:#F8FAFC; padding:1.5rem; border-radius:0.75rem; margin:1.5rem 0;">
+                        <p style="color:#475569; font-style:italic;">${resultado.proyecto.evaluacion}</p>
+                    </div>
+                    `
+                }
+
+                ideasHTML += `
+                    <div class="footer-note">
+                        Ideas generadas con IA · ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                </div>
+                `
+
+                generatedContent = ideasHTML
+                document.getElementById('result').innerHTML = ideasHTML
+                document.getElementById('resultContainer').classList.remove('hidden')
+                
+                if (data.credits_left !== undefined) {
+                    document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
+                    document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Restantes: ${data.credits_left}`
+                } else {
+                    await loadUserCredits()
+                }
+                
+                await guardarDocumentoEnStorage(ideasHTML, tematica, 'ideas')
+                showMessage('✅ Ideas generadas con IA', true)
+                
+            } catch (error) {
+                console.error('Error:', error)
+                
+                if (error.message.includes('Créditos insuficientes')) {
+                    showMessage('❌ Créditos insuficientes. Necesitas recargar.', false)
+                } else {
+                    // Fallback con ideas predeterminadas
+                    const fallbackHTML = `
+                    <div class="ideas-document theme-${currentColor} formato-${currentFormato}">
+                        <div class="ideas-header">
+                            <h1 class="ideas-title">✨ Proyecto: ${tematica}</h1>
+                            <div class="ideas-subtitle">
+                                <span>👥 ${edad}</span>
+                                <span>⏱️ ${duracion} semanas</span>
+                            </div>
+                        </div>
+                        <div class="ideas-grid">
+                            <div class="idea-card">
+                                <span class="badge">Idea 1</span>
+                                <h3 class="idea-title">La granja divertida</h3>
+                                <p class="idea-description">Crear una granja en el aula con animales de plastilina y sonidos</p>
+                                <ul class="activities">
+                                    <li>Construir animales con materiales reciclados</li>
+                                    <li>Aprender sonidos y movimientos</li>
+                                    <li>Crear un cuento colectivo</li>
+                                </ul>
+                            </div>
+                            <div class="idea-card">
+                                <span class="badge">Idea 2</span>
+                                <h3 class="idea-title">El mercado de los animales</h3>
+                                <p class="idea-description">Juego de roles donde los niños venden y compran animales</p>
+                                <ul class="activities">
+                                    <li>Crear billetes y precios</li>
+                                    <li>Representar roles de vendedores</li>
+                                    <li>Clasificar animales por tipo</li>
+                                </ul>
+                            </div>
+                            <div class="idea-card">
+                                <span class="badge">Idea 3</span>
+                                <h3 class="idea-title">El show de talentos animal</h3>
+                                <p class="idea-description">Cada niño representa un animal en un show de talentos</p>
+                                <ul class="activities">
+                                    <li>Disfraces y caracterización</li>
+                                    <li>Presentación al grupo</li>
+                                    <li>Votación y premios</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="footer-note">
+                            ⚠️ Modo offline - Ideas de ejemplo · ${new Date().toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    `
+                    
+                    document.getElementById('result').innerHTML = fallbackHTML
+                    document.getElementById('resultContainer').classList.remove('hidden')
+                    showMessage('⚠️ Modo offline - Ideas de ejemplo', false)
+                }
+            } finally {
+                document.getElementById('fullscreenLoader').style.display = 'none'
+                btn.innerHTML = originalText
+                btn.disabled = false
+            }
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA DESCARGAR PDF PROFESIONAL
+        // ============================================================
+        
+        async function downloadPDF() {
+            if (!generatedContent && document.getElementById('result').children.length === 0) {
+                showMessage('❌ No hay contenido para descargar', false)
+                return
+            }
+            
+            showMessage('📄 Generando PDF profesional...', true)
+            
+            try {
+                const { jsPDF } = window.jspdf
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                })
+                
+                const pageWidth = 210
+                const pageHeight = 297
+                const margin = 20
+                
+                const colors = {
+                    primary: '#F97316',
+                    secondary: '#EA580C',
+                    accent: '#F59E0B',
+                    text: '#1E293B',
+                    textLight: '#64748B',
+                    border: '#E2E8F0',
+                    background: '#F8FAFC',
+                    white: '#FFFFFF'
+                }
+                
+                pdf.setFont('helvetica', 'normal')
+                
+                function addHeader(pageNum) {
+                    pdf.setFillColor(colors.primary)
+                    pdf.rect(0, 0, pageWidth, 8, 'F')
+                    
+                    pdf.setFillColor(colors.white)
+                    pdf.circle(15, 15, 5, 'F')
+                    pdf.setFillColor(colors.primary)
+                    pdf.circle(15, 15, 4, 'F')
+                    pdf.setFontSize(8)
+                    pdf.setTextColor(colors.white)
+                    pdf.text('TP', 12, 16)
+                    
+                    pdf.setFontSize(12)
+                    pdf.setFont('helvetica', 'bold')
+                    pdf.setTextColor(colors.white)
+                    pdf.text('TodoProfes - Generador de Ideas PPA', 25, 17)
+                    
+                    pdf.setFontSize(8)
+                    pdf.setFont('helvetica', 'normal')
+                    pdf.text(`Página ${pageNum}`, pageWidth - margin - 10, 17)
+                    
+                    pdf.setDrawColor(colors.primary)
+                    pdf.setLineWidth(0.5)
+                    pdf.line(margin, 25, pageWidth - margin, 25)
+                }
+                
+                function addFooter() {
+                    const y = pageHeight - margin
+                    
+                    pdf.setDrawColor(colors.border)
+                    pdf.setLineWidth(0.2)
+                    pdf.line(margin, y - 5, pageWidth - margin, y - 5)
+                    
+                    pdf.setFontSize(7)
+                    pdf.setFont('helvetica', 'normal')
+                    pdf.setTextColor(colors.textLight)
+                    const fecha = new Date().toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                    pdf.text(`Documento generado: ${fecha}`, margin, y)
+                    pdf.text('© 2025 TodoProfes - Todos los derechos reservados', pageWidth - margin - 70, y)
+                }
+                
+                const tematica = document.getElementById('tematica').value || 'Proyecto PPA'
+                const edad = document.getElementById('edad').value || 'No especificada'
+                const intereses = document.getElementById('intereses').value || 'No especificados'
+                const duracion = document.getElementById('duracion').value
+                const contexto = document.getElementById('contexto').value || 'Aula regular'
+                
+                let yPos = 35
+                
+                pdf.setFontSize(20)
+                pdf.setFont('helvetica', 'bold')
+                pdf.setTextColor(colors.primary)
+                pdf.text(`Proyecto: ${tematica}`, margin, yPos)
+                yPos += 8
+                
+                pdf.setFontSize(9)
+                pdf.setFont('helvetica', 'normal')
+                pdf.setTextColor(colors.textLight)
+                pdf.text(`${edad} | ${duracion} semanas | ${contexto}`, margin, yPos)
+                yPos += 10
+                
+                pdf.setFillColor(colors.background)
+                pdf.setDrawColor(colors.border)
+                pdf.roundedRect(margin, yPos, pageWidth - (margin * 2), 20, 3, 3, 'FD')
+                
+                pdf.setFontSize(8)
+                pdf.setFont('helvetica', 'bold')
+                pdf.setTextColor(colors.primary)
+                pdf.text('INTERESES DEL GRUPO', margin + 5, yPos + 5)
+                
+                pdf.setFontSize(8)
+                pdf.setFont('helvetica', 'normal')
+                pdf.setTextColor(colors.text)
+                pdf.text(intereses, margin + 5, yPos + 12)
+                
+                yPos += 30
+                
+                const ideas = generatedContent ? generatedContent.match(/<div class="idea-card">(.*?)<\/div>/gs) : []
+                
+                if (ideas && ideas.length > 0) {
+                    pdf.setFontSize(14)
+                    pdf.setFont('helvetica', 'bold')
+                    pdf.setTextColor(colors.text)
+                    pdf.text('Ideas para el PPA', margin, yPos)
+                    yPos += 10
+                    
+                    ideas.forEach((idea, index) => {
+                        if (yPos > pageHeight - margin - 40) {
+                            addFooter()
+                            pdf.addPage()
+                            addHeader(pdf.getNumberOfPages())
+                            yPos = 35
+                        }
+                        
+                        const tituloMatch = idea.match(/<h3 class="idea-title">(.*?)<\/h3>/)
+                        const descMatch = idea.match(/<p class="idea-description">(.*?)<\/p>/)
+                        
+                        pdf.setFillColor(colors.primary + '20')
+                        pdf.setDrawColor(colors.primary)
+                        pdf.roundedRect(margin, yPos, pageWidth - (margin * 2), 25, 3, 3, 'FD')
+                        
+                        pdf.setFontSize(11)
+                        pdf.setFont('helvetica', 'bold')
+                        pdf.setTextColor(colors.primary)
+                        pdf.text(`Idea ${index + 1}: ${tituloMatch ? tituloMatch[1] : 'Sin título'}`, margin + 5, yPos + 5)
+                        
+                        pdf.setFontSize(8)
+                        pdf.setFont('helvetica', 'normal')
+                        pdf.setTextColor(colors.text)
+                        const descText = descMatch ? descMatch[1] : 'Sin descripción'
+                        const descLines = pdf.splitTextToSize(descText, pageWidth - (margin * 2) - 10)
+                        pdf.text(descLines, margin + 5, yPos + 12)
+                        
+                        yPos += 30
+                    })
+                }
+                
+                yPos += 10
+                
+                if (yPos < pageHeight - margin - 30) {
+                    pdf.setFillColor(colors.accent + '20')
+                    pdf.setDrawColor(colors.accent)
+                    pdf.roundedRect(margin, yPos, pageWidth - (margin * 2), 30, 3, 3, 'FD')
+                    
+                    pdf.setFontSize(9)
+                    pdf.setFont('helvetica', 'bold')
+                    pdf.setTextColor(colors.accent)
+                    pdf.text('RECOMENDACIONES', margin + 5, yPos + 5)
+                    
+                    pdf.setFontSize(7)
+                    pdf.setFont('helvetica', 'normal')
+                    pdf.setTextColor(colors.text)
+                    pdf.text('• Observar los intereses emergentes durante el desarrollo', margin + 5, yPos + 12)
+                    pdf.text('• Documentar el proceso con fotografías y registros', margin + 5, yPos + 17)
+                    pdf.text('• Involucrar a las familias en las actividades', margin + 5, yPos + 22)
+                }
+                
+                const totalPages = pdf.getNumberOfPages()
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.setPage(i)
+                    addFooter()
+                }
+                
+                const nombreArchivo = tematica.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0]
+                pdf.save(`${nombreArchivo}.pdf`)
+                
+                showMessage('✅ PDF profesional descargado', true)
+                
+            } catch (error) {
+                console.error('Error generando PDF:', error)
+                showMessage('❌ Error al generar el PDF', false)
+            }
+        }
+
+        // Funciones auxiliares
+        function copyToClipboard() {
+            const text = document.getElementById('result').innerText
+            navigator.clipboard.writeText(text).then(() => showMessage('✅ Copiado al portapapeles', true))
+        }
+
+        function downloadWord() {
+            if (!generatedContent) return showMessage('❌ No hay contenido para descargar')
+            const text = document.getElementById('result').innerText
+            const doc = new docx.Document({
+                sections: [{
+                    children: [
+                        new docx.Paragraph({ children: [new docx.TextRun({ text: "Ideas PPA", bold: true, size: 32 })] }),
+                        new docx.Paragraph({ text: "" }),
+                        new docx.Paragraph({ children: [new docx.TextRun({ text: text, size: 22 })] })
+                    ]
+                }]
+            })
+            docx.Packer.toBlob(doc).then(blob => saveAs(blob, `Ideas_PPA_${new Date().toISOString().split('T')[0]}.docx`))
+        }
+
+        function printDocument() {
+            if (!generatedContent) return showMessage('❌ No hay contenido para imprimir')
+            const w = window.open('', '_blank')
+            w.document.write(`
+                <html>
+                    <head>
+                        <title>Ideas PPA - TodoProfes</title>
+                        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                        <style>body{font-family:'Inter',sans-serif;padding:2rem;max-width:1200px;margin:0 auto;}</style>
+                    </head>
+                    <body>${document.getElementById('result').innerHTML}</body>
+                </html>
+            `)
+            w.document.close()
+            setTimeout(() => {
+                w.print()
+                w.close()
+            }, 500)
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession()
+            lucide.createIcons()
+            
+            document.querySelectorAll('.format-badge').forEach(el => {
+                const texto = el.textContent.toLowerCase()
+                if (texto.includes('estándar')) el.setAttribute('data-formato', 'estandar')
+                else if (texto.includes('compacto')) el.setAttribute('data-formato', 'compacto')
+                else if (texto.includes('detallado')) el.setAttribute('data-formato', 'detallado')
+            })
+        })
+    </script>
+</body>
+</html>

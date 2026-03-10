@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>TodoProfes - Mi Perfil</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            overflow-x: hidden;
+        }
+        
+        /* Glassmorphism mejorado */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .glass-card:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Avatar con efecto */
+        .avatar-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+        }
+        
+        .avatar-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid transparent;
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            transition: transform 0.3s ease;
+        }
+        
+        .avatar-image:hover {
+            transform: scale(1.05);
+        }
+        
+        .avatar-upload {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #3B82F6;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 3px solid #0F172A;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .avatar-upload:hover {
+            background: #2563EB;
+            transform: scale(1.1);
+        }
+        
+        /* Tarjetas de estadísticas */
+        .stat-card {
+            background: linear-gradient(145deg, #1E293B, #0F172A);
+            border: 1px solid #334155;
+            border-radius: 1.25rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: #3B82F6;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        /* Tabla de historial responsive */
+        .history-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 0.75rem;
+        }
+        
+        .history-table th {
+            color: #94A3B8;
+            font-weight: 500;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0 1rem 0.5rem 1rem;
+        }
+        
+        .history-table td {
+            padding: 1rem;
+            background: #1E293B;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .history-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .history-table td:first-child {
+            border-top-left-radius: 0.75rem;
+            border-bottom-left-radius: 0.75rem;
+        }
+        
+        .history-table td:last-child {
+            border-top-right-radius: 0.75rem;
+            border-bottom-right-radius: 0.75rem;
+        }
+        
+        /* Modal de documentos */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-container {
+            background: #1E293B;
+            border-radius: 2rem;
+            width: 100%;
+            max-width: 1000px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #334155;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+        
+        /* Tarjetas de documentos */
+        .document-card {
+            background: #0F172A;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .document-card:hover {
+            border-color: #3B82F6;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -10px rgba(59, 130, 246, 0.3);
+        }
+        
+        .document-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .document-icon.planeacion { background: rgba(168, 85, 247, 0.2); color: #A855F7; }
+        .document-icon.correccion { background: rgba(236, 72, 153, 0.2); color: #EC4899; }
+        .document-icon.observacion { background: rgba(14, 165, 233, 0.2); color: #0EA5E9; }
+        .document-icon.herramienta { background: rgba(139, 92, 246, 0.2); color: #8B5CF6; }
+        
+        /* Scroll personalizado */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .badge-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ADE80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+        
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #FBBF24;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        
+        .badge-blue {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Selector de fecha */
+        .date-picker {
+            background: #0F172A;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+            color: white;
+        }
+        
+        .date-picker:focus {
+            border-color: #3B82F6;
+            outline: none;
+        }
+        
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #1E293B 25%, #2D3A4F 50%, #1E293B 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 0.5rem;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 640px) {
+            .avatar-container {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .modal-container {
+                border-radius: 1.5rem;
+            }
+        }
+        
+        /* Tooltips */
+        [data-tooltip] {
+            position: relative;
+            cursor: help;
+        }
+        
+        [data-tooltip]:before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 1rem;
+            background: #1E293B;
+            color: white;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            border-radius: 0.5rem;
+            border: 1px solid #334155;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+        }
+        
+        [data-tooltip]:hover:before {
+            opacity: 1;
+        }
+        
+        /* Loader */
+        .loader {
+            border: 2px solid #1E293B;
+            border-top: 2px solid #3B82F6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header mejorado -->
+    <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition-all hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <h1 class="text-2xl font-bold text-white">
+                    <span class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Mi</span>
+                    <span class="text-white"> Perfil</span>
+                </h1>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="text-yellow-400 flex items-center bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="8" cy="8" r="6"/><path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/><path d="m12 12 4 4"/><path d="M12 12v4h4"/><path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/><path d="m16 16-4-4"/><path d="M16 16v-4h-4"/>
+                    </svg>
+                    <span id="creditsDisplay" class="font-semibold text-sm">0</span>
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8">
+        <div class="max-w-6xl mx-auto space-y-6 md:space-y-8">
+            <!-- Cabecera del perfil con foto -->
+            <div class="glass-card p-6 md:p-8">
+                <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
+                    <!-- Avatar con upload -->
+                    <div class="avatar-container">
+                        <img id="avatarImage" src="https://ui-avatars.com/api/?name=Usuario&background=3B82F6&color=fff&size=200" alt="Avatar" class="avatar-image">
+                        <div class="avatar-upload" onclick="triggerFileUpload()" data-tooltip="Cambiar foto">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                                <circle cx="12" cy="13" r="4"/>
+                            </svg>
+                        </div>
+                        <input type="file" id="avatarUpload" class="hidden" accept="image/*" onchange="handleAvatarUpload(event)">
+                    </div>
+                    
+                    <!-- Información del usuario -->
+                    <div class="flex-1 text-center md:text-left">
+                        <h2 class="text-3xl md:text-4xl font-bold text-white mb-2" id="userFullName">
+                            <span class="skeleton inline-block w-48 h-8"></span>
+                        </h2>
+                        <p class="text-slate-400 flex items-center justify-center md:justify-start gap-2 mb-4" id="userEmail">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                            <span class="skeleton inline-block w-48 h-4"></span>
+                        </p>
+                        
+                        <!-- Badges de estado -->
+                        <div class="flex flex-wrap gap-2 justify-center md:justify-start">
+                            <span class="badge badge-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                                Cuenta verificada
+                            </span>
+                            <span class="badge badge-warning">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                <span id="memberSince">Miembro desde 2025</span>
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Créditos destacado -->
+                    <div class="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border border-yellow-500/30 rounded-2xl p-6 text-center min-w-[160px]">
+                        <p class="text-sm text-yellow-400 mb-1">Créditos disponibles</p>
+                        <p class="text-4xl md:text-5xl font-bold text-yellow-400" id="userCredits">0</p>
+                        <p class="text-xs text-slate-500 mt-2">≈ $0 COP</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estadísticas en grid responsive -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <!-- Créditos comprados -->
+                <div class="stat-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="stat-icon bg-green-500/20 text-green-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-green-400" id="totalPurchased">0</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm">Créditos Comprados</h3>
+                </div>
+
+                <!-- Créditos usados -->
+                <div class="stat-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="stat-icon bg-blue-500/20 text-blue-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M2 12h20"/>
+                                <path d="M12 2v20"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-blue-400" id="totalUsage">0</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm">Créditos Usados</h3>
+                </div>
+
+                <!-- Contenidos generados (clic para abrir modal) -->
+                <div class="stat-card" onclick="abrirModalDocumentos()">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="stat-icon bg-purple-500/20 text-purple-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-purple-400" id="totalGenerations">0</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm">Documentos Generados</h3>
+                    <p class="text-xs text-blue-400 mt-1">Ver todos →</p>
+                </div>
+
+                <!-- Días activo -->
+                <div class="stat-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="stat-icon bg-amber-500/20 text-amber-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                        </div>
+                        <span class="text-2xl font-bold text-amber-400" id="memberDays">0</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm">Días Activo</h3>
+                </div>
+            </div>
+
+            <!-- Historial de transacciones -->
+            <div class="glass-card p-6 md:p-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-400">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        Historial de Transacciones
+                    </h3>
+                    
+                    <!-- Filtros -->
+                    <select id="filterType" class="bg-slate-800 border border-slate-700 text-sm rounded-lg px-3 py-2 text-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <option value="all">Todos</option>
+                        <option value="purchase">Compras</option>
+                        <option value="usage">Usos</option>
+                        <option value="bonus">Bonos</option>
+                    </select>
+                </div>
+
+                <!-- Contenedor del historial con scroll horizontal -->
+                <div class="overflow-x-auto">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Descripción</th>
+                                <th>Tipo</th>
+                                <th class="text-right">Créditos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr>
+                                <td colspan="4" class="text-center text-slate-500 py-12">
+                                    <div class="flex flex-col items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mb-4 text-slate-600">
+                                            <circle cx="12" cy="12" r="10"/>
+                                            <line x1="12" y1="8" x2="12" y2="12"/>
+                                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                        </svg>
+                                        <p class="mb-3">Cargando historial...</p>
+                                        <div class="loader"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Acciones rápidas -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button onclick="window.location.href='checkout.html'" class="group relative bg-gradient-to-r from-green-500 to-emerald-500 text-white p-6 rounded-2xl font-semibold hover:from-green-600 hover:to-emerald-600 transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden">
+                    <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform"></div>
+                    <div class="relative flex items-center justify-center space-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        <span>Comprar más créditos</span>
+                    </div>
+                </button>
+                
+                <button onclick="window.location.href='index.html'" class="group relative bg-slate-800 text-white p-6 rounded-2xl font-semibold hover:bg-slate-700 transition-all hover:scale-[1.02] active:scale-[0.98] border border-slate-700 overflow-hidden">
+                    <div class="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform"></div>
+                    <div class="relative flex items-center justify-center space-x-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                        <span>Ir al Dashboard</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal de Documentos Generados -->
+    <div id="documentsModal" class="modal-overlay" onclick="cerrarModalDocumentos(event)">
+        <div class="modal-container" onclick="event.stopPropagation()">
+            <!-- Cabecera del modal -->
+            <div class="p-6 border-b border-slate-800">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-purple-400">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                        Mis Documentos Generados
+                    </h2>
+                    <button onclick="cerrarModalDocumentos()" class="text-slate-400 hover:text-white transition-all hover:scale-110">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Filtros del modal -->
+                <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                    <div class="flex-1">
+                        <label class="block text-sm text-slate-400 mb-2">Filtrar por fecha</label>
+                        <input type="date" id="filterDate" class="date-picker w-full">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm text-slate-400 mb-2">Filtrar por tipo</label>
+                        <select id="filterDocType" class="date-picker w-full">
+                            <option value="all">Todos los tipos</option>
+                            <option value="planeacion">Planeaciones</option>
+                            <option value="correccion">Correcciones</option>
+                            <option value="observacion">Observaciones</option>
+                            <option value="herramienta">Herramientas Didácticas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Grid de documentos (DESDE STORAGE) -->
+            <div class="p-6 max-h-[60vh] overflow-y-auto">
+                <div id="documentsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Los documentos se cargarán aquí dinámicamente -->
+                    <div class="col-span-full text-center text-slate-500 py-12">
+                        <div class="loader mx-auto"></div>
+                        <p class="mt-4">Cargando documentos...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pie del modal con estadísticas -->
+            <div class="p-6 border-t border-slate-800 bg-slate-900/50">
+                <div class="flex justify-between items-center text-sm">
+                    <span class="text-slate-400">Total documentos: <span id="totalDocsCount" class="text-white font-bold">0</span></span>
+                    <span class="text-slate-400">Espacio usado: <span id="storageUsed" class="text-white font-bold">0 MB</span></span>
+                    <button onclick="descargarTodosDocumentos()" class="text-blue-400 hover:text-blue-300 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Descargar todos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+
+        let userId = null
+        let token = null
+        let userData = null
+        let documentos = []
+
+        // Verificar sesión
+        async function checkSession() {
+            token = localStorage.getItem('supabase_token')
+            userId = localStorage.getItem('user_id')
+            
+            if (!token || !userId) {
+                window.location.href = 'login.html'
+                return
+            }
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+
+                if (!response.ok) throw new Error('Sesión inválida')
+
+                userData = await response.json()
+                
+                // Mostrar datos del usuario
+                const fullName = userData.user_metadata?.full_name || userData.email?.split('@')[0] || 'Usuario'
+                const email = userData.email || 'Email no disponible'
+                
+                document.getElementById('userFullName').innerHTML = fullName
+                document.getElementById('userEmail').innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    ${email}
+                `
+                
+                // Actualizar avatar con iniciales
+                document.getElementById('avatarImage').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=3B82F6&color=fff&size=200&bold=true`
+                
+                // Calcular fecha de membresía
+                const joinDate = new Date(userData.created_at)
+                document.getElementById('memberSince').textContent = `Miembro desde ${joinDate.getFullYear()}`
+                
+                // Cargar créditos y documentos
+                await cargarCreditos()
+                await cargarEstadisticas()
+                await cargarHistorialCreditos()
+                await cargarDocumentosDesdeStorage()
+                
+            } catch (error) {
+                console.error('Error de sesión:', error)
+                localStorage.removeItem('supabase_token')
+                localStorage.removeItem('user_id')
+                window.location.href = 'login.html'
+            }
+        }
+
+        // Cargar créditos
+        async function cargarCreditos() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+
+                if (response.ok) {
+                    const users = await response.json()
+                    if (users && users.length > 0) {
+                        const credits = users[0].credits || 0
+                        document.getElementById('userCredits').textContent = credits
+                        document.getElementById('creditsDisplay').textContent = credits
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error)
+            }
+        }
+
+        // Cargar estadísticas
+        async function cargarEstadisticas() {
+            try {
+                // Estadísticas de créditos
+                const historyResponse = await fetch(`${SUPABASE_URL}/rest/v1/credit_history?user_id=eq.${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+
+                if (historyResponse.ok) {
+                    const history = await historyResponse.json()
+                    
+                    let purchased = 0
+                    let used = 0
+                    
+                    history.forEach(item => {
+                        if (item.amount > 0) {
+                            purchased += item.amount
+                        } else {
+                            used += Math.abs(item.amount)
+                        }
+                    })
+                    
+                    document.getElementById('totalPurchased').textContent = purchased
+                    document.getElementById('totalUsage').textContent = used
+                }
+
+                // Calcular días como miembro
+                const joinDate = new Date(userData.created_at)
+                const today = new Date()
+                const diffTime = Math.abs(today - joinDate)
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                document.getElementById('memberDays').textContent = diffDays
+
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error)
+            }
+        }
+
+        // ============================================================
+        // FUNCIÓN CORREGIDA: Cargar documentos DIRECTAMENTE del STORAGE
+        // ============================================================
+        async function cargarDocumentosDesdeStorage() {
+            try {
+                console.log('📂 Cargando documentos del bucket para usuario:', userId)
+                
+                // Listar archivos en la carpeta del usuario
+                const response = await fetch(`${SUPABASE_URL}/storage/v1/object/list/pdf_generados`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prefix: `${userId}/`,
+                        limit: 100,
+                        sortBy: { column: 'created_at', order: 'desc' }
+                    })
+                })
+
+                if (!response.ok) {
+                    throw new Error('Error al cargar documentos')
+                }
+
+                const files = await response.json()
+                console.log('📄 Archivos encontrados:', files.length)
+                
+                // Transformar los archivos al formato que usa el modal
+                documentos = files.map(file => {
+                    // Extraer el nombre del archivo sin la carpeta
+                    const fileName = file.name.split('/').pop() || file.name
+                    
+                    // Determinar el tipo por el prefijo del nombre
+                    let tipo = 'documento'
+                    if (fileName.includes('planeacion')) tipo = 'planeacion'
+                    else if (fileName.includes('correccion')) tipo = 'correccion'
+                    else if (fileName.includes('observacion')) tipo = 'observacion'
+                    else if (fileName.includes('herramienta')) tipo = 'herramienta'
+                    
+                    return {
+                        id: file.id,
+                        name: fileName,
+                        tipo: tipo,
+                        created_at: file.created_at,
+                        size: file.metadata?.size || 0,
+                        url: `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${userId}/${fileName}`
+                    }
+                })
+                
+                document.getElementById('totalGenerations').textContent = documentos.length
+                filtrarDocumentos()
+                
+            } catch (error) {
+                console.error('Error cargando documentos:', error)
+                documentos = []
+                document.getElementById('totalGenerations').textContent = '0'
+            }
+        }
+
+        // Abrir modal de documentos
+        function abrirModalDocumentos() {
+            document.getElementById('documentsModal').classList.add('active')
+            cargarDocumentosDesdeStorage() // Recargar cada vez que se abre
+        }
+
+        // Cerrar modal
+        function cerrarModalDocumentos(event) {
+            if (!event || event.target.classList.contains('modal-overlay')) {
+                document.getElementById('documentsModal').classList.remove('active')
+            }
+        }
+
+        // Filtrar documentos por fecha y tipo
+        function filtrarDocumentos() {
+            const filterDate = document.getElementById('filterDate').value
+            const filterType = document.getElementById('filterDocType').value
+            
+            let filtrados = [...documentos]
+            
+            if (filterDate) {
+                const fechaFiltro = new Date(filterDate).toDateString()
+                filtrados = filtrados.filter(doc => 
+                    new Date(doc.created_at).toDateString() === fechaFiltro
+                )
+            }
+            
+            if (filterType !== 'all') {
+                filtrados = filtrados.filter(doc => doc.tipo === filterType)
+            }
+            
+            renderizarDocumentos(filtrados)
+        }
+
+        // Renderizar documentos en el grid
+        function renderizarDocumentos(docs) {
+            const grid = document.getElementById('documentsGrid')
+            
+            if (docs.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center text-slate-500 py-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4 text-slate-600">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                        <p class="mb-2">No hay documentos</p>
+                        <p class="text-sm text-slate-500">Los documentos que generes aparecerán aquí</p>
+                    </div>
+                `
+                document.getElementById('totalDocsCount').textContent = '0'
+                document.getElementById('storageUsed').textContent = '0 MB'
+                return
+            }
+            
+            let html = ''
+            docs.forEach(doc => {
+                const fecha = new Date(doc.created_at).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                })
+                
+                const tipo = doc.tipo || 'documento'
+                const tipoCapitalizado = tipo.charAt(0).toUpperCase() + tipo.slice(1)
+                
+                let iconClass = 'herramienta'
+                let icono = '📄'
+                
+                if (tipo === 'planeacion') {
+                    iconClass = 'planeacion'
+                    icono = '📝'
+                } else if (tipo === 'correccion') {
+                    iconClass = 'correccion'
+                    icono = '✏️'
+                } else if (tipo === 'observacion') {
+                    iconClass = 'observacion'
+                    icono = '👁️'
+                } else if (tipo === 'herramienta') {
+                    iconClass = 'herramienta'
+                    icono = '🎮'
+                }
+                
+                html += `
+                    <div class="document-card" onclick="window.open('${doc.url}', '_blank')">
+                        <div class="flex items-start gap-3">
+                            <div class="document-icon ${iconClass}">
+                                ${icono}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-white font-semibold truncate">${doc.name}</h4>
+                                <p class="text-xs text-slate-400 mt-1">${fecha}</p>
+                                <p class="text-xs text-slate-500">${(doc.size / 1024).toFixed(1)} KB</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex justify-end gap-2">
+                            <span class="badge badge-blue">${tipoCapitalizado}</span>
+                            <button onclick="event.stopPropagation(); descargarDocumento('${doc.url}', '${doc.name}')" class="text-blue-400 hover:text-blue-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `
+            })
+            
+            grid.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${html}</div>`
+            document.getElementById('totalDocsCount').textContent = docs.length
+            
+            // Calcular espacio usado
+            const totalSize = docs.reduce((acc, doc) => acc + (doc.size || 0), 0)
+            document.getElementById('storageUsed').textContent = (totalSize / (1024 * 1024)).toFixed(2) + ' MB'
+        }
+
+        // Descargar documento individual
+        function descargarDocumento(url, filename) {
+            fetch(url)
+                .then(response => response.blob())
+                .then(blob => {
+                    const link = document.createElement('a')
+                    link.href = URL.createObjectURL(blob)
+                    link.download = filename
+                    link.click()
+                    URL.revokeObjectURL(link.href)
+                })
+                .catch(error => {
+                    console.error('Error descargando:', error)
+                    alert('Error al descargar el documento')
+                })
+        }
+
+        // Descargar todos los documentos (simulado)
+        function descargarTodosDocumentos() {
+            alert('Función de descarga múltiple próximamente disponible')
+        }
+
+        // Cargar historial de créditos
+        async function cargarHistorialCreditos() {
+            try {
+                const filter = document.getElementById('filterType').value
+                let url = `${SUPABASE_URL}/rest/v1/credit_history?user_id=eq.${userId}&order=created_at.desc`
+                
+                if (filter !== 'all') {
+                    url += `&type=eq.${filter}`
+                }
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+
+                if (!response.ok) throw new Error('Error al cargar historial')
+
+                const history = await response.json()
+                const historyBody = document.getElementById('historyBody')
+
+                if (history.length === 0) {
+                    historyBody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="text-center text-slate-500 py-12">
+                                <div class="flex flex-col items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mb-4 text-slate-600">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="12" y1="8" x2="12" y2="12"/>
+                                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                                    </svg>
+                                    <p class="mb-3">No hay transacciones</p>
+                                    <button onclick="window.location.href='checkout.html'" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition">
+                                        Comprar créditos
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `
+                    return
+                }
+
+                let html = ''
+                history.forEach(item => {
+                    const date = new Date(item.created_at).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })
+                    
+                    const amountClass = item.amount > 0 ? 'text-green-400' : 'text-red-400'
+                    const amountPrefix = item.amount > 0 ? '+' : ''
+                    
+                    let typeText = ''
+                    let typeIcon = ''
+                    switch(item.type) {
+                        case 'purchase':
+                            typeText = 'Compra'
+                            typeIcon = '🛒'
+                            break
+                        case 'usage':
+                            typeText = 'Uso'
+                            typeIcon = '⚡'
+                            break
+                        case 'bonus':
+                            typeText = 'Bono'
+                            typeIcon = '🎁'
+                            break
+                        default:
+                            typeText = item.type
+                            typeIcon = '📝'
+                    }
+                    
+                    html += `
+                        <tr class="hover:bg-slate-800/30 transition">
+                            <td class="text-slate-300 whitespace-nowrap">${date}</td>
+                            <td class="text-slate-300">${item.description || 'Sin descripción'}</td>
+                            <td><span class="badge ${item.type === 'bonus' ? 'badge-success' : item.type === 'purchase' ? 'badge-warning' : 'bg-slate-700'}">${typeIcon} ${typeText}</span></td>
+                            <td class="text-right font-mono ${amountClass}">${amountPrefix}${item.amount}</td>
+                        </tr>
+                    `
+                })
+                
+                historyBody.innerHTML = html
+                
+            } catch (error) {
+                console.error('Error cargando historial:', error)
+            }
+        }
+
+        // Manejar upload de avatar
+        function triggerFileUpload() {
+            document.getElementById('avatarUpload').click()
+        }
+
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0]
+            if (!file) return
+
+            if (file.size > 2 * 1024 * 1024) {
+                alert('La imagen no puede ser mayor a 2MB')
+                return
+            }
+
+            if (!file.type.startsWith('image/')) {
+                alert('Solo se permiten imágenes')
+                return
+            }
+
+            const reader = new FileReader()
+            reader.onload = function(e) {
+                document.getElementById('avatarImage').src = e.target.result
+                console.log('Avatar actualizado (simulado)')
+            }
+            reader.readAsDataURL(file)
+        }
+
+        // Event listeners
+        document.getElementById('filterType').addEventListener('change', cargarHistorialCreditos)
+        document.getElementById('filterDate').addEventListener('change', filtrarDocumentos)
+        document.getElementById('filterDocType').addEventListener('change', filtrarDocumentos)
+
+        // Cerrar sesión
+        async function cerrarSesion() {
+            if (token) {
+                await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+            }
+            
+            localStorage.clear()
+            window.location.href = 'login.html'
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession()
+            
+            // Agregar botón de logout
+            const header = document.querySelector('header .container .flex:last-child')
+            if (header) {
+                const logoutBtn = document.createElement('button')
+                logoutBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>'
+                logoutBtn.className = 'text-slate-400 hover:text-white transition-all hover:scale-110'
+                logoutBtn.onclick = cerrarSesion
+                logoutBtn.title = 'Cerrar sesión'
+                header.appendChild(logoutBtn)
+            }
+        })
+
+        lucide.createIcons()
+    </script>
+</body>
+</html>

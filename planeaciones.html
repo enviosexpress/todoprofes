@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>TodoProfes - Planeaciones Inteligentes</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        /* [TODOS LOS ESTILOS SE MANTIENEN IGUAL - SIN CAMBIOS] */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .input-field, .form-select {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .input-field:focus, .form-select:focus {
+            border-color: #A855F7;
+            box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+            outline: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #A855F7, #9333EA);
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #A855F7;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #1E293B;
+            border: 1px solid #334155;
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+        }
+        
+        .btn-secondary:hover {
+            background: #2D3A4F;
+            border-color: #475569;
+        }
+        
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #A855F7;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .plan-document {
+            background: white;
+            color: #1E293B;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (min-width: 768px) {
+            .plan-document {
+                padding: 2rem;
+            }
+        }
+        
+        .plan-document.theme-purple {
+            background: linear-gradient(135deg, #ffffff, #faf5ff);
+            border-left: 4px solid #A855F7;
+        }
+        .plan-document.theme-blue {
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+            border-left: 4px solid #3B82F6;
+        }
+        .plan-document.theme-green {
+            background: linear-gradient(135deg, #ffffff, #f0fdf4);
+            border-left: 4px solid #22C55E;
+        }
+        .plan-document.theme-rose {
+            background: linear-gradient(135deg, #ffffff, #fff1f2);
+            border-left: 4px solid #F43F5E;
+        }
+        .plan-document.theme-amber {
+            background: linear-gradient(135deg, #ffffff, #fffbeb);
+            border-left: 4px solid #F59E0B;
+        }
+        
+        .theme-purple .plan-section-title { color: #A855F7; }
+        .theme-purple .day-name { color: #A855F7; }
+        .theme-purple .week-title { background: #A855F7; }
+        .theme-purple .resource-tag { background: #A855F7; }
+        .theme-purple .plan-header { border-bottom-color: #A855F7; }
+        
+        .theme-blue .plan-section-title { color: #3B82F6; }
+        .theme-blue .day-name { color: #3B82F6; }
+        .theme-blue .week-title { background: #3B82F6; }
+        .theme-blue .resource-tag { background: #3B82F6; }
+        .theme-blue .plan-header { border-bottom-color: #3B82F6; }
+        
+        .theme-green .plan-section-title { color: #22C55E; }
+        .theme-green .day-name { color: #22C55E; }
+        .theme-green .week-title { background: #22C55E; }
+        .theme-green .resource-tag { background: #22C55E; }
+        .theme-green .plan-header { border-bottom-color: #22C55E; }
+        
+        .theme-rose .plan-section-title { color: #F43F5E; }
+        .theme-rose .day-name { color: #F43F5E; }
+        .theme-rose .week-title { background: #F43F5E; }
+        .theme-rose .resource-tag { background: #F43F5E; }
+        .theme-rose .plan-header { border-bottom-color: #F43F5E; }
+        
+        .theme-amber .plan-section-title { color: #F59E0B; }
+        .theme-amber .day-name { color: #F59E0B; }
+        .theme-amber .week-title { background: #F59E0B; }
+        .theme-amber .resource-tag { background: #F59E0B; }
+        .theme-amber .plan-header { border-bottom-color: #F59E0B; }
+        
+        .plan-document.formato-estandar {
+            font-size: 1rem;
+        }
+        .plan-document.formato-compacto {
+            font-size: 0.9rem;
+            padding: 1rem;
+        }
+        .plan-document.formato-detallado {
+            font-size: 1.1rem;
+            padding: 2rem;
+        }
+        
+        .plan-document .plan-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (min-width: 640px) {
+            .plan-document .plan-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .plan-document .plan-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .plan-document .days-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        @media (min-width: 640px) {
+            .plan-document .days-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .plan-document .days-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        
+        .plan-document .plan-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid currentColor;
+            word-wrap: break-word;
+        }
+        
+        .plan-document .plan-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, currentColor, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            word-wrap: break-word;
+        }
+        
+        @media (min-width: 768px) {
+            .plan-document .plan-title {
+                font-size: 2rem;
+            }
+        }
+        
+        .plan-document .plan-subtitle {
+            color: #64748B;
+            font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem 1rem;
+        }
+        
+        .plan-document .plan-section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .plan-document .plan-card {
+            background: #F8FAFC;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #E2E8F0;
+            word-wrap: break-word;
+        }
+        
+        .plan-document .plan-card-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748B;
+            margin-bottom: 0.25rem;
+        }
+        
+        .plan-document .plan-card-value {
+            font-weight: 600;
+            color: #1E293B;
+            word-wrap: break-word;
+        }
+        
+        .plan-document .week-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1rem;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            display: inline-block;
+        }
+        
+        .plan-document .day-card {
+            background: #F8FAFC;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            border: 1px solid #E2E8F0;
+            transition: all 0.3s ease;
+            word-wrap: break-word;
+        }
+        
+        .plan-document .day-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed #E2E8F0;
+            word-wrap: break-word;
+        }
+        
+        .plan-document .activity-item {
+            margin-bottom: 0.75rem;
+        }
+        
+        .plan-document .activity-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748B;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .plan-document .activity-text {
+            color: #1E293B;
+            font-size: 0.95rem;
+            margin-top: 0.25rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        
+        .plan-document .resources-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .plan-document .resource-tag {
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+            margin: 0.25rem;
+            word-wrap: break-word;
+        }
+        
+        .plan-document .commitments-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        .plan-document .commitments-list li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+            word-wrap: break-word;
+        }
+        
+        .plan-document .commitments-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .plan-document .commitments-list li::before {
+            content: "✓";
+            color: #22C55E;
+            font-weight: bold;
+            margin-right: 0.5rem;
+        }
+        
+        .plan-document .evaluation-box {
+            background: #F8FAFC;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid #E2E8F0;
+            margin-top: 1.5rem;
+        }
+        
+        .plan-document .footer-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748B;
+            border-top: 1px solid #E2E8F0;
+            word-wrap: break-word;
+        }
+        
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .action-btn {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #94A3B8;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .action-btn:hover {
+            background: #2D3A4F;
+            color: white;
+            border-color: #A855F7;
+        }
+        
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-purple {
+            background: rgba(168, 85, 247, 0.2);
+            color: #A855F7;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+        
+        .preview-card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .preview-card:hover {
+            border-color: #A855F7;
+            transform: translateY(-2px);
+        }
+        
+        .config-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #A855F7;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+        .config-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 10px rgba(168, 85, 247, 0.3);
+        }
+        
+        .config-sidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 350px;
+            height: 100vh;
+            background: #0F172A;
+            border-left: 1px solid #334155;
+            padding: 2rem 1.5rem;
+            transition: right 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+        .config-sidebar.open {
+            right: 0;
+        }
+        
+        @media (min-width: 640px) {
+            .config-sidebar {
+                right: -400px;
+                width: 350px;
+            }
+        }
+        
+        .config-sidebar-close {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            cursor: pointer;
+            color: #94A3B8;
+        }
+        .config-sidebar-close:hover {
+            color: white;
+        }
+        
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        .color-swatch.selected {
+            border-color: white;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        .color-swatch.purple { background: #A855F7; }
+        .color-swatch.blue { background: #3B82F6; }
+        .color-swatch.green { background: #22C55E; }
+        .color-swatch.rose { background: #F43F5E; }
+        .color-swatch.amber { background: #F59E0B; }
+        
+        .format-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            background: #0F172A;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .format-badge:hover {
+            background: #1E293B;
+            border-color: #A855F7;
+        }
+        .format-badge.selected {
+            background: #A855F7;
+            color: white;
+            border-color: #A855F7;
+        }
+        
+        .result-area {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+        
+        .insufficient-credits {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition-all hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <h1 class="text-2xl font-bold text-white">
+                    <span class="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">Planeaciones</span>
+                    <span class="text-white"> Inteligentes</span>
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-yellow-400 flex items-center bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700" id="creditsContainer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="8" cy="8" r="6"/><path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/><path d="m12 12 4 4"/><path d="M12 12v4h4"/><path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/><path d="m16 16-4-4"/><path d="M16 16v-4h-4"/>
+                    </svg>
+                    <span id="creditsDisplay">Cargando...</span>
+                </span>
+                <button onclick="toggleConfigPanel()" class="text-slate-400 hover:text-white relative group" title="Personalizar estilo">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay para sidebar -->
+    <div id="overlay" class="overlay" onclick="toggleConfigPanel()"></div>
+
+    <!-- Sidebar de configuración -->
+    <div id="configSidebar" class="config-sidebar">
+        <div class="config-sidebar-close" onclick="toggleConfigPanel()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </div>
+        
+        <h2 class="text-xl font-bold text-white mb-6 mt-8">Personalizar Estilo</h2>
+        
+        <!-- Selector de color -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">🎨 Color principal</h3>
+            <div class="flex flex-wrap gap-3">
+                <div class="color-swatch purple selected" onclick="selectColor('purple')" data-color="purple"></div>
+                <div class="color-swatch blue" onclick="selectColor('blue')" data-color="blue"></div>
+                <div class="color-swatch green" onclick="selectColor('green')" data-color="green"></div>
+                <div class="color-swatch rose" onclick="selectColor('rose')" data-color="rose"></div>
+                <div class="color-swatch amber" onclick="selectColor('amber')" data-color="amber"></div>
+            </div>
+        </div>
+        
+        <!-- Selector de formato -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">📄 Formato de documento</h3>
+            <div class="space-y-2">
+                <div class="format-badge selected" onclick="selectFormato('estandar')" data-formato="estandar">📏 Estándar (Recomendado)</div>
+                <div class="format-badge" onclick="selectFormato('compacto')" data-formato="compacto">📐 Compacto (Ahorra espacio)</div>
+                <div class="format-badge" onclick="selectFormato('detallado')" data-formato="detallado">📜 Detallado (Muy completo)</div>
+            </div>
+        </div>
+        
+        <!-- Preferencias de IA -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">⚙️ Preferencias de IA</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Estilo de redacción</label>
+                    <select id="estiloRedaccion" class="input-field text-sm">
+                        <option value="equilibrado">Equilibrado</option>
+                        <option value="detallado">Detallado</option>
+                        <option value="conciso">Conciso</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Enfoque pedagógico</label>
+                    <select id="enfoquePedagogico" class="input-field text-sm">
+                        <option value="Flexible/Mixto">Flexible/Mixto</option>
+                        <option value="Constructivista">Constructivista</option>
+                        <option value="Basado en Proyectos">Basado en Proyectos</option>
+                        <option value="Juego como eje principal">Juego como eje principal</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Recursos a priorizar</label>
+                    <select id="recursosPriorizar" class="input-field text-sm">
+                        <option value="sin preferencia">Sin preferencia</option>
+                        <option value="material reciclable">Material reciclable</option>
+                        <option value="tecnológicos">Tecnológicos</option>
+                        <option value="naturales">Elementos naturales</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="incluirFinesSemana" class="form-checkbox h-4 w-4 text-purple-600">
+                    <label for="incluirFinesSemana" class="text-sm text-slate-300">Incluir fines de semana</label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Botón guardar -->
+        <button onclick="savePreferences()" class="btn-primary w-full flex items-center justify-center space-x-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+            </svg>
+            <span>Guardar preferencias</span>
+        </button>
+        
+        <p id="configMessage" class="text-xs text-center mt-3 text-green-400 hidden">✓ Preferencias guardadas</p>
+    </div>
+
+    <main class="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Hero Section -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8 text-center">
+                <div class="inline-block bg-purple-500/20 p-3 md:p-4 rounded-full mb-4">
+                    <svg viewBox="0 0 24 24" fill="currentColor" class="w-10 h-10 md:w-12 md:h-12 text-purple-400">
+                        <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Creador de Planeaciones con IA</h2>
+                <p class="text-sm md:text-base text-slate-400">Genera planeaciones educativas profesionales en segundos</p>
+                
+                <!-- Stats responsive -->
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 mt-6">
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-purple-400" id="costoDisplay">2</div>
+                        <div class="text-xs text-slate-500">Créditos</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-purple-400">100%</div>
+                        <div class="text-xs text-slate-500">Personalizable</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-purple-400">Profesional</div>
+                        <div class="text-xs text-slate-500">Formato</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario Principal -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h3 class="text-xl font-semibold text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2 text-purple-400">
+                            <path d="M12 5v14M5 12h14"/>
+                        </svg>
+                        Datos de la Planeación
+                    </h3>
+                    <button onclick="toggleConfigPanel()" class="text-sm text-purple-400 hover:text-purple-300 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+                        </svg>
+                        Personalizar
+                    </button>
+                </div>
+                
+                <form id="planeacionesForm" class="space-y-6" onsubmit="event.preventDefault(); handleGenerate()">
+                    <!-- Fila 1: Duración y Edad - responsive -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Duración</label>
+                            <select id="duracion" class="input-field">
+                                <option value="1">1 Semana</option>
+                                <option value="2" selected>2 Semanas</option>
+                                <option value="3">3 Semanas</option>
+                                <option value="4">4 Semanas (1 Mes)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Edad de los niños</label>
+                            <input type="text" id="edadNinos" class="input-field" placeholder="Ej: 3-5 años" value="4-5 años">
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Objetivo -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Objetivo principal</label>
+                        <input type="text" id="objetivo" class="input-field" placeholder="Ej: Fomentar la creatividad" value="Fomentar la creatividad a través de la exploración artística">
+                    </div>
+
+                    <!-- Fila 3: Temas -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Temas a tratar</label>
+                        <input type="text" id="temas" class="input-field" placeholder="Ej: Colores, texturas, emociones" value="Colores, texturas, emociones, expresión artística">
+                    </div>
+
+                    <!-- Fila 4: Actividad Rectora y Docente -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Actividad rectora</label>
+                            <select id="actividadRectora" class="input-field">
+                                <option value="Juego">Juego</option>
+                                <option value="Arte" selected>Arte</option>
+                                <option value="Literatura">Literatura</option>
+                                <option value="Exploración">Exploración</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Nombre del docente</label>
+                            <input type="text" id="docente" class="input-field" placeholder="Tu nombre" value="Profesor">
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción responsive -->
+                    <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                        <button type="submit" id="generateBtn" class="btn-primary flex items-center justify-center space-x-2">
+                            <span>✨ Generar</span>
+                            <span class="text-sm opacity-75" id="costoBtn">(2 créditos)</span>
+                        </button>
+                        <button type="button" onclick="loadPreview()" class="btn-secondary flex items-center justify-center space-x-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <span>Vista Previa</span>
+                        </button>
+                    </div>
+
+                    <!-- Mensajes -->
+                    <div id="message" class="text-center text-sm hidden"></div>
+                </form>
+            </div>
+
+            <!-- Resultado con formato profesional y scroll responsive -->
+            <div id="resultContainer" class="glass-card p-4 md:p-8 mb-6 md:mb-8 hidden">
+                <div class="action-toolbar">
+                    <button onclick="copyToClipboard()" class="action-btn" title="Copiar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
+                    <button onclick="downloadWord()" class="action-btn" title="Word">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button onclick="printPlan()" class="action-btn" title="Imprimir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="result" class="result-area"></div>
+            </div>
+
+            <!-- Plantillas Predefinidas - responsive -->
+            <div class="glass-card p-6 md:p-8">
+                <h3 class="text-xl font-semibold text-white mb-6 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-2 text-purple-400">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+                    </svg>
+                    Plantillas Rápidas
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="preview-card" onclick="loadTemplate('animales')">
+                        <span class="badge badge-purple mb-2 inline-block">🐷 Animales</span>
+                        <h4 class="text-white font-semibold">La granja</h4>
+                        <p class="text-xs text-slate-400">3-5 años • 2 semanas</p>
+                    </div>
+                    <div class="preview-card" onclick="loadTemplate('figuras')">
+                        <span class="badge badge-purple mb-2 inline-block">🔷 Figuras</span>
+                        <h4 class="text-white font-semibold">Figuras geométricas</h4>
+                        <p class="text-xs text-slate-400">4-5 años • 1 semana</p>
+                    </div>
+                    <div class="preview-card" onclick="loadTemplate('colores')">
+                        <span class="badge badge-purple mb-2 inline-block">🎨 Colores</span>
+                        <h4 class="text-white font-semibold">Mundo de colores</h4>
+                        <p class="text-xs text-slate-400">2-3 años • 1 semana</p>
+                    </div>
+                    <div class="preview-card" onclick="loadTemplate('familia')">
+                        <span class="badge badge-purple mb-2 inline-block">👪 Familia</span>
+                        <h4 class="text-white font-semibold">Mi familia</h4>
+                        <p class="text-xs text-slate-400">3-4 años • 2 semanas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Botón flotante de configuración -->
+    <div class="config-toggle" onclick="toggleConfigPanel()" title="Personalizar estilo">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+        </svg>
+    </div>
+
+    <footer class="bg-slate-950 text-center p-4 mt-auto border-t border-slate-800">
+        <p class="text-xs md:text-sm text-slate-400">✨ Planeaciones Inteligentes - TodoProfes</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+        
+        let isAuthenticated = false
+        let userId = null
+        let token = null
+        let generatedContent = ''
+        let currentToolCost = 2 // Valor por defecto
+        
+        // Variables de estilo
+        let currentColor = 'purple'
+        let currentFormato = 'estandar'
+
+        // ============================================================
+        // FUNCIONES DE CONFIGURACIÓN Y ESTILO
+        // ============================================================
+        
+        function toggleConfigPanel() {
+            const sidebar = document.getElementById('configSidebar')
+            const overlay = document.getElementById('overlay')
+            sidebar.classList.toggle('open')
+            overlay.classList.toggle('show')
+        }
+        
+        function selectColor(color) {
+            document.querySelectorAll('.color-swatch').forEach(el => {
+                el.classList.remove('selected')
+            })
+            document.querySelector(`.color-swatch.${color}`).classList.add('selected')
+            currentColor = color
+            updateResultTheme()
+        }
+        
+        function selectFormato(formato) {
+            document.querySelectorAll('.format-badge').forEach(el => {
+                el.classList.remove('selected')
+            })
+            document.querySelector(`.format-badge[data-formato="${formato}"]`).classList.add('selected')
+            currentFormato = formato
+            updateResultTheme()
+        }
+        
+        function updateResultTheme() {
+            const resultEl = document.getElementById('result')
+            if (resultEl && resultEl.children.length > 0) {
+                const planDoc = resultEl.querySelector('.plan-document')
+                if (planDoc) {
+                    planDoc.className = planDoc.className.replace(/theme-\w+/g, '').trim()
+                    planDoc.className = planDoc.className.replace(/formato-\w+/g, '').trim()
+                    planDoc.classList.add(`theme-${currentColor}`, `formato-${currentFormato}`)
+                }
+            }
+        }
+        
+        function savePreferences() {
+            const message = document.getElementById('configMessage')
+            message.classList.remove('hidden')
+            setTimeout(() => message.classList.add('hidden'), 2000)
+            toggleConfigPanel()
+        }
+
+        // ============================================================
+        // FUNCIONES DE AUTENTICACIÓN Y CRÉDITOS
+        // ============================================================
+        
+        async function checkSession() {
+            token = localStorage.getItem('supabase_token')
+            userId = localStorage.getItem('user_id')
+
+            if (!token || !userId) {
+                window.location.href = 'login.html'
+                return
+            }
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+
+                if (!response.ok) throw new Error('Token inválido')
+
+                isAuthenticated = true
+                await loadUserCredits()
+                await loadToolCost() // Cargar costo de la herramienta
+                
+            } catch (error) {
+                console.error('Error verificando sesión:', error)
+                localStorage.removeItem('supabase_token')
+                localStorage.removeItem('user_id')
+                window.location.href = 'login.html'
+            }
+        }
+
+        async function loadUserCredits() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                })
+
+                if (response.ok) {
+                    const users = await response.json()
+                    if (users && users.length > 0) {
+                        const credits = users[0].credits || 0
+                        document.getElementById('creditsDisplay').textContent = `${credits} créditos`
+                        
+                        const creditsContainer = document.getElementById('creditsContainer')
+                        if (credits < 10) {
+                            creditsContainer.classList.add('insufficient-credits')
+                        } else {
+                            creditsContainer.classList.remove('insufficient-credits')
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error)
+            }
+        }
+
+        // ============================================================
+        // CARGAR COSTO DE LA HERRAMIENTA DESDE SUPABASE
+        // ============================================================
+        
+        async function loadToolCost() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/tool_costs?tool_key=eq.planeaciones`, {
+                    headers: { 'apikey': SUPABASE_KEY }
+                })
+                
+                if (response.ok) {
+                    const data = await response.json()
+                    if (data && data.length > 0) {
+                        currentToolCost = data[0].credits
+                        
+                        // Actualizar displays
+                        document.getElementById('costoDisplay').textContent = currentToolCost
+                        document.getElementById('costoBtn').textContent = `(${currentToolCost} créditos)`
+                        
+                        console.log(`💰 Costo de planeaciones: ${currentToolCost} créditos`)
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando costo:', error)
+            }
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA GUARDAR EN STORAGE
+        // ============================================================
+        
+        async function guardarDocumentoEnStorage(contenido, titulo, tipo) {
+            try {
+                const userId = localStorage.getItem('user_id')
+                const token = localStorage.getItem('supabase_token')
+                const fecha = new Date().toISOString().split('T')[0]
+                const timestamp = Date.now()
+                const nombreArchivo = `${userId}/planeacion_${fecha}_${timestamp}.docx`
+                
+                console.log('📤 Guardando documento en bucket:', nombreArchivo)
+                
+                const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+                
+                const formData = new FormData()
+                formData.append('file', blob, nombreArchivo.split('/').pop())
+                
+                const uploadResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: formData
+                })
+
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text()
+                    console.error('Error respuesta storage:', errorText)
+                    throw new Error(`Error al subir: ${uploadResponse.status}`)
+                }
+
+                const urlDocumento = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
+                console.log('✅ Documento guardado en:', urlDocumento)
+
+                const referenciaResponse = await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        tipo: 'planeacion',
+                        titulo: titulo.substring(0, 100),
+                        url_documento: urlDocumento,
+                        creditos_usados: currentToolCost,
+                        created_at: new Date().toISOString()
+                    })
+                })
+
+                if (!referenciaResponse.ok) {
+                    console.error('Error guardando referencia:', await referenciaResponse.text())
+                } else {
+                    console.log('✅ Referencia guardada en contenidos_generados')
+                }
+
+                return urlDocumento
+            } catch (error) {
+                console.error('❌ Error en guardarDocumentoEnStorage:', error)
+                return null
+            }
+        }
+
+        function showMessage(text, isSuccess = false) {
+            const msgEl = document.getElementById('message')
+            msgEl.textContent = text
+            msgEl.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`
+            msgEl.classList.remove('hidden')
+            
+            setTimeout(() => {
+                msgEl.classList.add('hidden')
+            }, 3000)
+        }
+
+        // ============================================================
+        // FUNCIONES DE PLANTILLAS Y PREVIEW
+        // ============================================================
+        
+        function loadTemplate(template) {
+            const templates = {
+                animales: {
+                    objetivo: 'Conocer los animales de la granja y sus características',
+                    temas: 'Animales de la granja, Sonidos de animales, Cuidado de animales',
+                    edad: '3-5 años',
+                    actividad: 'Juego'
+                },
+                figuras: {
+                    objetivo: 'Identificar figuras geométricas básicas',
+                    temas: 'Círculo, Cuadrado, Triángulo',
+                    edad: '4-5 años',
+                    actividad: 'Arte'
+                },
+                colores: {
+                    objetivo: 'Reconocer y nombrar colores primarios',
+                    temas: 'Rojo, Azul, Amarillo',
+                    edad: '2-3 años',
+                    actividad: 'Arte'
+                },
+                familia: {
+                    objetivo: 'Valorar el núcleo familiar y sus integrantes',
+                    temas: 'Miembros de la familia, Roles, Convivencia',
+                    edad: '3-4 años',
+                    actividad: 'Literatura'
+                }
+            }
+            
+            const tpl = templates[template]
+            if (tpl) {
+                document.getElementById('objetivo').value = tpl.objetivo
+                document.getElementById('temas').value = tpl.temas
+                document.getElementById('edadNinos').value = tpl.edad
+                document.getElementById('actividadRectora').value = tpl.actividad
+                showMessage('✅ Plantilla cargada', true)
+            }
+        }
+
+        function loadPreview() {
+            const objetivo = document.getElementById('objetivo').value
+            const temas = document.getElementById('temas').value
+            const edad = document.getElementById('edadNinos').value
+            const duracion = document.getElementById('duracion').value
+            const actividad = document.getElementById('actividadRectora').value
+            const docente = document.getElementById('docente').value
+            
+            const previewHTML = `
+            <div class="plan-document theme-${currentColor} formato-${currentFormato}" style="opacity: 0.9;">
+                <div class="plan-header">
+                    <h1 class="plan-title">📋 Vista Previa</h1>
+                    <div class="plan-subtitle">
+                        <span>📅 ${duracion} semana(s)</span>
+                        <span>👥 ${edad}</span>
+                        <span>👩‍🏫 ${docente}</span>
+                    </div>
+                </div>
+
+                <div class="plan-section">
+                    <h2 class="plan-section-title">📋 Datos Generales</h2>
+                    <div class="plan-grid">
+                        <div class="plan-card">
+                            <div class="plan-card-label">Objetivo</div>
+                            <div class="plan-card-value">${objetivo}</div>
+                        </div>
+                        <div class="plan-card">
+                            <div class="plan-card-label">Temas</div>
+                            <div class="plan-card-value">${temas}</div>
+                        </div>
+                        <div class="plan-card">
+                            <div class="plan-card-label">Actividad</div>
+                            <div class="plan-card-value">${actividad}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plan-section">
+                    <h2 class="plan-section-title">📝 Resumen</h2>
+                    <div class="evaluation-box">
+                        <p><strong>🎯 Objetivo:</strong> ${objetivo}</p>
+                        <p class="mt-2"><strong>📚 Temas:</strong> ${temas}</p>
+                        <p class="mt-2"><strong>⏱️ Duración:</strong> ${duracion} semana(s)</p>
+                        <div class="flex justify-center gap-2 mt-4">
+                            <span class="resource-tag">${currentToolCost} créditos</span>
+                            <span class="resource-tag">Formato profesional</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-note">
+                    Vista previa · Haz clic en "Generar" para la planeación completa
+                </div>
+            </div>
+            `
+            
+            document.getElementById('result').innerHTML = previewHTML
+            document.getElementById('resultContainer').classList.remove('hidden')
+            showMessage('👆 Vista previa', true)
+        }
+
+        // ============================================================
+        // FUNCIÓN PRINCIPAL DE GENERACIÓN CON DEEPSEEK
+        // ============================================================
+        
+        async function handleGenerate() {
+            if (!isAuthenticated) {
+                window.location.href = 'login.html'
+                return
+            }
+
+            const objetivo = document.getElementById('objetivo').value.trim()
+            const temas = document.getElementById('temas').value.trim()
+            const edad = document.getElementById('edadNinos').value.trim()
+            const duracion = document.getElementById('duracion').value
+            const actividad = document.getElementById('actividadRectora').value
+            const docente = document.getElementById('docente').value.trim() || 'el docente'
+
+            if (!objetivo || !temas || !edad) {
+                showMessage('❌ Completa los campos obligatorios')
+                return
+            }
+
+            const btn = document.getElementById('generateBtn')
+            const originalText = btn.innerHTML
+            btn.innerHTML = '<span class="loader"></span><span class="ml-2">Conectando con IA...</span>'
+            btn.disabled = true
+
+            try {
+                // Construir prompt para DeepSeek
+                const prompt = `Genera una planeación educativa profesional con formato HTML usando las clases CSS existentes.
+
+DATOS DE ENTRADA:
+- Objetivo: ${objetivo}
+- Temas: ${temas}
+- Edad de los niños: ${edad}
+- Duración: ${duracion} semana(s)
+- Actividad rectora: ${actividad}
+- Docente: ${docente}
+
+REQUERIMIENTOS:
+1. Título creativo
+2. Datos generales en tarjetas
+3. Objetivos específicos
+4. Plan diario por semanas (cada día con actividad, recursos y desarrollo)
+5. Recursos necesarios (con etiquetas)
+6. Evaluación
+7. Compromisos
+
+FORMATO:
+- Usa las clases: plan-document, plan-header, plan-title, plan-section, plan-section-title, plan-grid, plan-card, week-section, week-title, days-grid, day-card, day-name, activity-item, activity-label, activity-text, resources-list, resource-tag, evaluation-box, commitments-list, footer-note
+- El contenedor principal debe tener clase "plan-document theme-${currentColor} formato-${currentFormato}"
+- Genera SOLO el HTML, sin explicaciones adicionales`
+
+                // Llamar a la Edge Function de DeepSeek
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/deepseek-proxy`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        tool: 'planeacion'
+                    })
+                })
+
+                const data = await response.json()
+
+                if (!response.ok) {
+                    if (data.error === 'insufficient_credits') {
+                        showMessage('❌ No tienes suficientes créditos. Por favor, recarga.')
+                    } else {
+                        showMessage(`❌ Error: ${data.message || 'Error al generar'}`)
+                    }
+                    return
+                }
+
+                // Mostrar contenido generado
+                const generatedHTML = data.content
+                generatedContent = generatedHTML
+                document.getElementById('result').innerHTML = generatedHTML
+                document.getElementById('resultContainer').classList.remove('hidden')
+                
+                // Actualizar créditos mostrados
+                document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
+                
+                // Guardar en Storage
+                await guardarDocumentoEnStorage(generatedHTML, objetivo, 'planeacion')
+                
+                showMessage(`✅ Planeación generada (${data.credits_used} créditos usados)`, true)
+                
+            } catch (error) {
+                console.error('Error:', error)
+                showMessage('❌ Error de conexión. Intenta de nuevo.')
+            } finally {
+                btn.innerHTML = originalText
+                btn.disabled = false
+            }
+        }
+
+        function copyToClipboard() {
+            const content = document.getElementById('result').innerHTML
+            const tempDiv = document.createElement('div')
+            tempDiv.innerHTML = content
+            const text = tempDiv.innerText || tempDiv.textContent
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showMessage('✅ Copiado', true)
+            }).catch(() => {
+                showMessage('❌ Error al copiar')
+            })
+        }
+
+        function downloadWord() {
+            if (!generatedContent) {
+                showMessage('❌ No hay contenido')
+                return
+            }
+
+            const tempDiv = document.createElement('div')
+            tempDiv.innerHTML = generatedContent
+            const plainText = tempDiv.innerText || tempDiv.textContent
+
+            const doc = new docx.Document({
+                sections: [{
+                    properties: {},
+                    children: [
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({ text: "Planeación Educativa", bold: true, size: 32 }),
+                            ],
+                            alignment: docx.AlignmentType.CENTER,
+                        }),
+                        new docx.Paragraph({ text: "" }),
+                        new docx.Paragraph({
+                            children: [
+                                new docx.TextRun({ text: plainText, size: 22 }),
+                            ],
+                        }),
+                    ],
+                }],
+            })
+
+            docx.Packer.toBlob(doc).then(blob => {
+                saveAs(blob, "Planeacion_TodoProfes.docx")
+                showMessage('✅ Documento descargado', true)
+            }).catch(error => {
+                console.error('Error:', error)
+                showMessage('❌ Error al descargar')
+            })
+        }
+
+        function printPlan() {
+            const content = document.getElementById('result').innerHTML
+            const printWindow = window.open('', '_blank')
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Planeación TodoProfes</title>
+                        <style>
+                            body { font-family: 'Inter', sans-serif; padding: 1rem; }
+                            @media print { body { padding: 0; } }
+                            ${document.querySelector('style').innerHTML}
+                        </style>
+                    </head>
+                    <body>
+                        ${content}
+                    </body>
+                </html>
+            `)
+            printWindow.document.close()
+            printWindow.print()
+        }
+
+        // Modificar event listener para cargar costo
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession()
+            // Ajustar tamaño del slider (si existe)
+            const slider = document.getElementById('tamanio')
+            if (slider) {
+                slider.addEventListener('input', function() {
+                    document.getElementById('tamanioDisplay').textContent = `${this.value} x ${this.value}`
+                })
+            }
+        })
+        
+        lucide.createIcons()
+    </script>
+</body>
+</html>

@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>TodoProfes - Herramientas Didácticas</title>
+    <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Estilos existentes - mantener igual */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+            overflow-x: hidden;
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        /* Inputs */
+        .input-field, .form-select, textarea.input-field {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+        }
+        
+        .input-field:focus, .form-select:focus, textarea.input-field:focus {
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+            outline: none;
+        }
+        
+        /* Botones */
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            font-size: 1rem;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #8B5CF6;
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: #1E293B;
+            border: 1px solid #334155;
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            width: 100%;
+        }
+        
+        .btn-secondary:hover {
+            background: #2D3A4F;
+            border-color: #475569;
+        }
+        
+        /* Loader */
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #8B5CF6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Fullscreen Loader */
+        .fullscreen-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .loader-spinner {
+            border: 4px solid rgba(139, 92, 246, 0.3);
+            border-top: 4px solid #8B5CF6;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Estilos profesionales para las herramientas didácticas */
+        .herramienta-document {
+            background: white;
+            color: #1E293B;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            font-family: 'Inter', sans-serif;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        @media (min-width: 768px) {
+            .herramienta-document {
+                padding: 2.5rem;
+            }
+        }
+        
+        /* Temas de color */
+        .herramienta-document.theme-violet {
+            background: linear-gradient(135deg, #ffffff, #f5f3ff);
+            border: 2px solid #8B5CF6;
+        }
+        .herramienta-document.theme-purple {
+            background: linear-gradient(135deg, #ffffff, #faf5ff);
+            border: 2px solid #A855F7;
+        }
+        .herramienta-document.theme-blue {
+            background: linear-gradient(135deg, #ffffff, #eff6ff);
+            border: 2px solid #3B82F6;
+        }
+        .herramienta-document.theme-green {
+            background: linear-gradient(135deg, #ffffff, #f0fdf4);
+            border: 2px solid #22C55E;
+        }
+        .herramienta-document.theme-amber {
+            background: linear-gradient(135deg, #ffffff, #fffbeb);
+            border: 2px solid #F59E0B;
+        }
+        
+        .theme-violet .herramienta-header { background: linear-gradient(135deg, #ede9fe, #ffffff); }
+        .theme-violet .palabra-icon { background: #8B5CF6; color: white; }
+        
+        .theme-purple .herramienta-header { background: linear-gradient(135deg, #faf5ff, #ffffff); }
+        .theme-purple .palabra-icon { background: #A855F7; color: white; }
+        
+        .theme-blue .herramienta-header { background: linear-gradient(135deg, #eff6ff, #ffffff); }
+        .theme-blue .palabra-icon { background: #3B82F6; color: white; }
+        
+        .theme-green .herramienta-header { background: linear-gradient(135deg, #f0fdf4, #ffffff); }
+        .theme-green .palabra-icon { background: #22C55E; color: white; }
+        
+        .theme-amber .herramienta-header { background: linear-gradient(135deg, #fffbeb, #ffffff); }
+        .theme-amber .palabra-icon { background: #F59E0B; color: white; }
+        
+        /* Encabezado decorativo */
+        .herramienta-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border-radius: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .herramienta-header::before {
+            content: "🎨";
+            position: absolute;
+            font-size: 5rem;
+            opacity: 0.1;
+            right: 0;
+            bottom: -20px;
+            transform: rotate(10deg);
+        }
+        
+        .herramienta-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #8B5CF6, #C084FC);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        @media (min-width: 768px) {
+            .herramienta-title {
+                font-size: 2.5rem;
+            }
+        }
+        
+        .herramienta-subtitle {
+            color: #64748B;
+            font-size: 0.9rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem 1rem;
+        }
+        
+        /* Grid del crucigrama */
+        .crucigrama-grid {
+            display: grid;
+            gap: 2px;
+            background: #e2e8f0;
+            padding: 2px;
+            border-radius: 0.5rem;
+            margin: 2rem 0;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .crucigrama-cell {
+            aspect-ratio: 1;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-radius: 4px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .crucigrama-cell.black {
+            background: #1E293B;
+            color: white;
+        }
+        
+        /* Sopa de letras */
+        .sopa-grid {
+            display: grid;
+            gap: 4px;
+            background: #f8fafc;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin: 2rem 0;
+            border: 2px solid #e2e8f0;
+        }
+        
+        @media (min-width: 640px) {
+            .sopa-grid {
+                padding: 1.5rem;
+            }
+        }
+        
+        .sopa-cell {
+            aspect-ratio: 1;
+            background: white;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        @media (min-width: 768px) {
+            .sopa-cell {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Lista de palabras */
+        .palabras-lista {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 1rem;
+        }
+        
+        .palabra-item {
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .palabra-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        
+        /* Instrucciones */
+        .instrucciones-box {
+            background: #f8fafc;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 4px solid #8B5CF6;
+        }
+        
+        /* Panel de dibujos */
+        .dibujos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+        
+        @media (min-width: 640px) {
+            .dibujos-grid {
+                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            }
+        }
+        
+        .dibujo-item {
+            text-align: center;
+            padding: 0.75rem;
+            background: #f8fafc;
+            border-radius: 1rem;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .dibujo-emoji {
+            font-size: 2rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        @media (min-width: 768px) {
+            .dibujo-emoji {
+                font-size: 2.5rem;
+            }
+        }
+        
+        .dibujo-label {
+            font-size: 0.7rem;
+            color: #475569;
+            font-weight: 500;
+        }
+        
+        /* Panel de configuración */
+        .color-swatch {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .color-swatch:hover {
+            transform: scale(1.1);
+        }
+        .color-swatch.selected {
+            border-color: white;
+            box-shadow: 0 0 0 2px currentColor;
+        }
+        .color-swatch.violet { background: #8B5CF6; }
+        .color-swatch.purple { background: #A855F7; }
+        .color-swatch.blue { background: #3B82F6; }
+        .color-swatch.green { background: #22C55E; }
+        .color-swatch.amber { background: #F59E0B; }
+        
+        .format-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            background: #0F172A;
+            border: 1px solid #334155;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .format-badge:hover {
+            background: #1E293B;
+            border-color: #8B5CF6;
+        }
+        .format-badge.selected {
+            background: #8B5CF6;
+            color: white;
+            border-color: #8B5CF6;
+        }
+        
+        .action-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .action-btn {
+            background: #1E293B;
+            border: 1px solid #334155;
+            color: #94A3B8;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .action-btn:hover {
+            background: #2D3A4F;
+            color: white;
+            border-color: #8B5CF6;
+        }
+        
+        .badge-violet {
+            background: rgba(139, 92, 246, 0.2);
+            color: #8B5CF6;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            display: inline-block;
+        }
+        
+        .insufficient-credits {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+        
+        .config-toggle {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: #8B5CF6;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            z-index: 40;
+        }
+        .config-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 10px rgba(139, 92, 246, 0.3);
+        }
+        
+        .config-sidebar {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 350px;
+            height: 100vh;
+            background: #0F172A;
+            border-left: 1px solid #334155;
+            padding: 2rem 1.5rem;
+            transition: right 0.3s ease;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.3);
+        }
+        .config-sidebar.open {
+            right: 0;
+        }
+        
+        @media (min-width: 640px) {
+            .config-sidebar {
+                right: -400px;
+                width: 350px;
+            }
+        }
+        
+        .config-sidebar-close {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            cursor: pointer;
+            color: #94A3B8;
+        }
+        .config-sidebar-close:hover {
+            color: white;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+            display: none;
+        }
+        .overlay.show {
+            display: block;
+        }
+        
+        .tipo-juego-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .tipo-juego-card {
+            flex: 1 1 200px;
+            background: #1E293B;
+            border: 2px solid #334155;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .tipo-juego-card:hover {
+            border-color: #8B5CF6;
+            transform: translateY(-5px);
+        }
+        .tipo-juego-card.selected {
+            border-color: #8B5CF6;
+            background: linear-gradient(135deg, #2e1a4a, #1E293B);
+        }
+        .tipo-juego-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        @media (min-width: 768px) {
+            .tipo-juego-icon {
+                font-size: 3rem;
+            }
+        }
+        
+        .tamanio-slider {
+            width: 100%;
+            margin: 1rem 0;
+        }
+        
+        .tema-tag {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 2rem;
+            margin: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+        .tema-tag:hover {
+            background: #8B5CF6;
+            color: white;
+            border-color: #8B5CF6;
+        }
+        .tema-tag.selected {
+            background: #8B5CF6;
+            color: white;
+            border-color: #8B5CF6;
+        }
+        
+        .preview-card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .preview-card:hover {
+            border-color: #8B5CF6;
+            transform: translateY(-2px);
+        }
+        
+        .result-area {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .footer-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748B;
+            border-top: 1px solid #E2E8F0;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1E293B;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748B;
+        }
+        
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22C55E;
+            color: #22C55E;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
+    </style>
+</head>
+<body>
+    <!-- Fullscreen Loader -->
+    <div id="fullscreenLoader" class="fullscreen-loader" style="display: none;">
+        <div class="loader-spinner"></div>
+        <div class="text-violet-400 font-semibold">Generando juego educativo con IA...</div>
+        <div class="text-slate-400 text-sm">Creando sopas de letras y crucigramas personalizados</div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition-all hover:scale-110">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <h1 class="text-xl md:text-2xl font-bold text-white">
+                    <span class="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Herramientas</span>
+                    <span class="text-white"> Didácticas</span>
+                </h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-yellow-400 flex items-center bg-slate-800/50 px-2 md:px-3 py-1.5 rounded-full border border-slate-700 text-sm" id="creditsContainer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="8" cy="8" r="6"/><path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/><path d="m12 12 4 4"/><path d="M12 12v4h4"/><path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/><path d="m16 16-4-4"/><path d="M16 16v-4h-4"/>
+                    </svg>
+                    <span id="creditsDisplay">Cargando...</span>
+                </span>
+                <button onclick="toggleConfigPanel()" class="text-slate-400 hover:text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay para sidebar -->
+    <div id="overlay" class="overlay" onclick="toggleConfigPanel()"></div>
+
+    <!-- Sidebar de configuración -->
+    <div id="configSidebar" class="config-sidebar">
+        <div class="config-sidebar-close" onclick="toggleConfigPanel()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+        </div>
+        
+        <h2 class="text-xl font-bold text-white mb-6 mt-8">Personalizar Estilo</h2>
+        
+        <!-- Selector de color -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">🎨 Color principal</h3>
+            <div class="flex flex-wrap gap-3">
+                <div class="color-swatch violet selected" onclick="selectColor('violet')"></div>
+                <div class="color-swatch purple" onclick="selectColor('purple')"></div>
+                <div class="color-swatch blue" onclick="selectColor('blue')"></div>
+                <div class="color-swatch green" onclick="selectColor('green')"></div>
+                <div class="color-swatch amber" onclick="selectColor('amber')"></div>
+            </div>
+        </div>
+        
+        <!-- Selector de formato -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">📄 Formato del juego</h3>
+            <div class="space-y-2">
+                <div class="format-badge selected" onclick="selectFormato('estandar')" data-formato="estandar">📏 Estándar</div>
+                <div class="format-badge" onclick="selectFormato('compacto')" data-formato="compacto">📐 Compacto</div>
+                <div class="format-badge" onclick="selectFormato('detallado')" data-formato="detallado">📜 Detallado</div>
+            </div>
+        </div>
+        
+        <!-- Preferencias del juego -->
+        <div class="mb-8">
+            <h3 class="text-sm font-medium text-slate-400 mb-3">⚙️ Configuración</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Incluir dibujos</label>
+                    <select id="incluirDibujos" class="input-field text-sm">
+                        <option value="si">Sí, incluir dibujos</option>
+                        <option value="no">No incluir dibujos</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="incluirInstrucciones" class="form-checkbox h-4 w-4 text-violet-600" checked>
+                    <label for="incluirInstrucciones" class="text-sm text-slate-300">Incluir instrucciones</label>
+                </div>
+                
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="incluirSolucion" class="form-checkbox h-4 w-4 text-violet-600" checked>
+                    <label for="incluirSolucion" class="text-sm text-slate-300">Incluir soluciones</label>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="savePreferences()" class="btn-primary w-full">Guardar</button>
+        <p id="configMessage" class="text-xs text-center mt-3 text-green-400 hidden">✓ Guardado</p>
+    </div>
+
+    <main class="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8">
+        <div class="max-w-6xl mx-auto">
+            <!-- Hero Section -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8 text-center">
+                <div class="inline-block bg-violet-500/20 p-3 md:p-4 rounded-full mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-10 h-10 md:w-12 md:h-12 text-violet-400">
+                        <rect x="2" y="2" width="20" height="20" rx="2.18"/><path d="M7 2v20M17 2v20M2 12h20M2 7h5M2 17h5M17 17h5M17 7h5"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Creador de Juegos Educativos con IA</h2>
+                <p class="text-sm md:text-base text-slate-400">Genera sopas de letras y crucigramas profesionales con inteligencia artificial</p>
+                
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 mt-6">
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-violet-400">3</div>
+                        <div class="text-xs text-slate-500">Créditos por juego</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-violet-400">🎨</div>
+                        <div class="text-xs text-slate-500">Con dibujos incluidos</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-violet-400">IA</div>
+                        <div class="text-xs text-slate-500">Diseño inteligente</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selector de tipo de juego -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8">
+                <h3 class="text-xl font-semibold text-white mb-6">¿Qué quieres crear?</h3>
+                <div class="tipo-juego-selector">
+                    <div class="tipo-juego-card selected" onclick="selectTipoJuego('sopa')" id="tipo-sopa">
+                        <div class="tipo-juego-icon">🔍</div>
+                        <h4 class="text-lg font-semibold text-white mb-2">Sopa de Letras</h4>
+                        <p class="text-sm text-slate-400">Encuentra palabras ocultas en la cuadrícula</p>
+                    </div>
+                    <div class="tipo-juego-card" onclick="selectTipoJuego('crucigrama')" id="tipo-crucigrama">
+                        <div class="tipo-juego-icon">📝</div>
+                        <h4 class="text-lg font-semibold text-white mb-2">Crucigrama</h4>
+                        <p class="text-sm text-slate-400">Con pistas y definiciones</p>
+                    </div>
+                </div>
+                <input type="hidden" id="tipoJuego" value="sopa">
+            </div>
+
+            <!-- Formulario Principal -->
+            <div class="glass-card p-6 md:p-8 mb-6 md:mb-8">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <h3 class="text-xl font-semibold text-white">⚙️ Configura tu juego</h3>
+                    <button onclick="toggleConfigPanel()" class="text-sm text-violet-400 hover:text-violet-300">Personalizar</button>
+                </div>
+                
+                <form id="juegoForm" class="space-y-4" onsubmit="event.preventDefault(); handleGenerate()">
+                    <!-- Tema del juego -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Tema del juego *</label>
+                        <div class="flex flex-wrap">
+                            <span class="tema-tag selected" onclick="selectTema('animales')">🐾 Animales</span>
+                            <span class="tema-tag" onclick="selectTema('colores')">🎨 Colores</span>
+                            <span class="tema-tag" onclick="selectTema('numeros')">🔢 Números</span>
+                            <span class="tema-tag" onclick="selectTema('frutas')">🍎 Frutas</span>
+                            <span class="tema-tag" onclick="selectTema('profesiones')">👨‍⚕️ Profesiones</span>
+                        </div>
+                        <input type="hidden" id="tema" value="animales">
+                    </div>
+
+                    <!-- Palabras a incluir -->
+                    <div id="palabrasContainer">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Palabras a incluir (separadas por comas) *</label>
+                        <textarea id="palabras" rows="3" class="input-field" placeholder="Ej: perro, gato, pájaro, pez, conejo" required>perro, gato, pájaro, pez, conejo</textarea>
+                    </div>
+
+                    <!-- Pistas (para crucigrama) -->
+                    <div id="pistasContainer" class="hidden">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Pistas (una por línea)</label>
+                        <textarea id="pistas" rows="4" class="input-field" placeholder="Ej: Animal que ladra: perro"></textarea>
+                    </div>
+
+                    <!-- Tamaño del grid -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Tamaño del grid</label>
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm text-slate-400">8x8</span>
+                            <input type="range" id="tamanio" class="tamanio-slider flex-1" min="8" max="20" value="12">
+                            <span class="text-sm text-slate-400">20x20</span>
+                        </div>
+                        <div class="text-center mt-2">
+                            <span id="tamanioDisplay" class="text-sm text-violet-400">12 x 12</span>
+                        </div>
+                    </div>
+
+                    <!-- Dificultad -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Dificultad</label>
+                        <select id="dificultad" class="input-field">
+                            <option value="facil">Fácil - Palabras en horizontal y vertical</option>
+                            <option value="media" selected>Media - Palabras en todas direcciones</option>
+                            <option value="dificil">Difícil - Palabras en todas direcciones + inversas</option>
+                        </select>
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                        <button type="submit" id="generateBtn" class="btn-primary flex items-center justify-center space-x-2">
+                            <span>✨ Generar Juego con IA</span>
+                            <span class="text-sm">(3 créditos)</span>
+                        </button>
+                        <button type="button" onclick="loadPreview()" class="btn-secondary">Vista Previa</button>
+                    </div>
+
+                    <div id="message" class="text-center text-sm hidden"></div>
+                </form>
+            </div>
+
+            <!-- Resultado -->
+            <div id="resultContainer" class="glass-card p-4 md:p-8 mb-6 md:mb-8 hidden">
+                <div class="action-toolbar">
+                    <button onclick="copyToClipboard()" class="action-btn" title="Copiar">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
+                    <button onclick="downloadPDF()" class="action-btn" title="PDF Profesional">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </button>
+                    <button onclick="downloadWord()" class="action-btn" title="Word">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                    <button onclick="printDocument()" class="action-btn" title="Imprimir">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                    </button>
+                </div>
+                <div id="result" class="result-area"></div>
+                <div id="creditsInfo" class="text-xs text-slate-500 text-right mt-2"></div>
+            </div>
+
+            <!-- Ejemplos -->
+            <div class="glass-card p-6 md:p-8">
+                <h3 class="text-lg md:text-xl font-semibold text-white mb-6">📚 Ejemplos</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="preview-card" onclick="loadEjemplo('animales')">
+                        <span class="badge-violet inline-block mb-2">🐾 Animales</span>
+                        <p class="text-sm text-slate-300">5 palabras, 12x12</p>
+                    </div>
+                    <div class="preview-card" onclick="loadEjemplo('colores')">
+                        <span class="badge-violet inline-block mb-2">🎨 Colores</span>
+                        <p class="text-sm text-slate-300">6 palabras, 10x10</p>
+                    </div>
+                    <div class="preview-card" onclick="loadEjemplo('numeros')">
+                        <span class="badge-violet inline-block mb-2">🔢 Números</span>
+                        <p class="text-sm text-slate-300">5 palabras, 8x8</p>
+                    </div>
+                    <div class="preview-card" onclick="loadEjemplo('frutas')">
+                        <span class="badge-violet inline-block mb-2">🍎 Frutas</span>
+                        <p class="text-sm text-slate-300">7 palabras, 12x12</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Botón flotante -->
+    <div class="config-toggle" onclick="toggleConfigPanel()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H5.78a1.65 1.65 0 0 0-1.51 1 1.65 1.65 0 0 0 .33 1.82l.1.1A10 10 0 0 0 12 17.66a10 10 0 0 0 6.37-2.56z"/>
+        </svg>
+    </div>
+
+    <footer class="bg-slate-950 text-center p-4 mt-auto border-t border-slate-800">
+        <p class="text-xs text-slate-400">✨ Herramientas Didácticas - TodoProfes</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`
+
+        let isAuthenticated = false
+        let userId = null
+        let token = null
+        let generatedContent = ''
+        let currentColor = 'violet'
+        let currentFormato = 'estandar'
+        let currentTipoJuego = 'sopa'
+        let currentTema = 'animales'
+
+        // ============================================================
+        // FUNCIONES DE CONFIGURACIÓN
+        // ============================================================
+        
+        function toggleConfigPanel() {
+            document.getElementById('configSidebar').classList.toggle('open')
+            document.getElementById('overlay').classList.toggle('show')
+        }
+        
+        function selectColor(color) {
+            document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.color-swatch.${color}`).classList.add('selected')
+            currentColor = color
+            updateResultTheme()
+        }
+        
+        function selectFormato(formato) {
+            document.querySelectorAll('.format-badge').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.format-badge[data-formato="${formato}"]`).classList.add('selected')
+            currentFormato = formato
+            updateResultTheme()
+        }
+        
+        function updateResultTheme() {
+            const resultEl = document.getElementById('result')
+            if (resultEl && resultEl.children.length > 0) {
+                const doc = resultEl.querySelector('.herramienta-document')
+                if (doc) {
+                    doc.className = doc.className.replace(/theme-\w+/g, '').trim()
+                    doc.className = doc.className.replace(/formato-\w+/g, '').trim()
+                    doc.classList.add(`theme-${currentColor}`, `formato-${currentFormato}`)
+                }
+            }
+        }
+        
+        function savePreferences() {
+            document.getElementById('configMessage').classList.remove('hidden')
+            setTimeout(() => document.getElementById('configMessage').classList.add('hidden'), 2000)
+        }
+        
+        function selectTipoJuego(tipo) {
+            currentTipoJuego = tipo
+            document.getElementById('tipo-sopa').classList.remove('selected')
+            document.getElementById('tipo-crucigrama').classList.remove('selected')
+            document.getElementById(`tipo-${tipo}`).classList.add('selected')
+            
+            if (tipo === 'sopa') {
+                document.getElementById('palabrasContainer').classList.remove('hidden')
+                document.getElementById('pistasContainer').classList.add('hidden')
+            } else {
+                document.getElementById('palabrasContainer').classList.add('hidden')
+                document.getElementById('pistasContainer').classList.remove('hidden')
+            }
+        }
+        
+        function selectTema(tema) {
+            currentTema = tema
+            document.getElementById('tema').value = tema
+            document.querySelectorAll('.tema-tag').forEach(el => el.classList.remove('selected'))
+            document.querySelector(`.tema-tag[onclick*="${tema}"]`).classList.add('selected')
+        }
+
+        // ============================================================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ============================================================
+        
+        async function checkSession() {
+            token = localStorage.getItem('supabase_token')
+            userId = localStorage.getItem('user_id')
+            if (!token || !userId) window.location.href = 'login.html'
+            try {
+                await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                }).then(res => { if (!res.ok) throw new Error() })
+                isAuthenticated = true
+                await loadUserCredits()
+                await checkIAFunction()
+            } catch {
+                localStorage.clear()
+                window.location.href = 'login.html'
+            }
+        }
+
+        async function loadUserCredits() {
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                })
+                if (res.ok) {
+                    const users = await res.json()
+                    const credits = users[0]?.credits || 0
+                    document.getElementById('creditsDisplay').textContent = `${credits} créditos`
+                    
+                    const container = document.getElementById('creditsContainer')
+                    if (credits < 10) {
+                        container.classList.add('insufficient-credits')
+                    } else {
+                        container.classList.remove('insufficient-credits')
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error)
+            }
+        }
+
+        async function checkIAFunction() {
+            try {
+                await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ prompt: "test", tool: "herramientas" })
+                })
+                console.log('✅ IA disponible')
+            } catch (error) {
+                console.warn('⚠️ IA no disponible:', error)
+            }
+        }
+
+        async function deductCredits(amount) {
+            try {
+                const getRes = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                })
+                const users = await getRes.json()
+                if (!users[0] || users[0].credits < amount) throw new Error('Créditos insuficientes')
+                
+                const newCredits = users[0].credits - amount
+                await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({ credits: newCredits })
+                })
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({
+                        user_id: userId, amount: -amount, balance_after: newCredits,
+                        type: 'usage', description: 'Herramientas Didácticas', feature_used: 'herramientas'
+                    })
+                }).catch(err => console.log('Error registrando historial:', err))
+                
+                return newCredits
+            } catch (error) {
+                console.error('Error descontando créditos:', error)
+                throw error
+            }
+        }
+
+        function showMessage(text, isSuccess = false) {
+            const msg = document.getElementById('message')
+            msg.textContent = text
+            msg.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'success-message' : 'error-message'}`
+            msg.classList.remove('hidden')
+            setTimeout(() => msg.classList.add('hidden'), 3000)
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA GUARDAR EN STORAGE
+        // ============================================================
+        
+        async function guardarDocumentoEnStorage(contenido, titulo, tipo) {
+            try {
+                const fecha = new Date().toISOString().split('T')[0]
+                const timestamp = Date.now()
+                const nombreArchivo = `${userId}/herramienta_${fecha}_${timestamp}.docx`
+                
+                const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+                const formData = new FormData()
+                formData.append('file', blob, nombreArchivo.split('/').pop())
+                
+                const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: formData
+                })
+                
+                if (!uploadRes.ok) throw new Error('Error al subir')
+                
+                const url = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({
+                        user_id: userId, tipo: 'herramienta', titulo: titulo.substring(0, 100),
+                        url_documento: url, creditos_usados: 3, created_at: new Date().toISOString()
+                    })
+                }).catch(err => console.log('Error guardando referencia:', err))
+                
+                return url
+            } catch (error) {
+                console.error('Error guardando:', error)
+                return null
+            }
+        }
+
+        // ============================================================
+        // FUNCIONES DE EJEMPLOS
+        // ============================================================
+        
+        function loadEjemplo(tema) {
+            selectTema(tema)
+            const ejemplos = {
+                animales: { palabras: 'perro, gato, pájaro, pez, conejo', tamanio: 12 },
+                colores: { palabras: 'rojo, azul, verde, amarillo, naranja, morado', tamanio: 10 },
+                numeros: { palabras: 'uno, dos, tres, cuatro, cinco', tamanio: 8 },
+                frutas: { palabras: 'manzana, pera, plátano, uva, fresa, naranja, limón', tamanio: 12 }
+            }
+            if (ejemplos[tema]) {
+                document.getElementById('palabras').value = ejemplos[tema].palabras
+                document.getElementById('tamanio').value = ejemplos[tema].tamanio
+                document.getElementById('tamanioDisplay').textContent = `${ejemplos[tema].tamanio} x ${ejemplos[tema].tamanio}`
+                showMessage('✅ Ejemplo cargado', true)
+            }
+        }
+
+        function loadPreview() {
+            const tipo = currentTipoJuego
+            const palabras = document.getElementById('palabras').value
+            const tamanio = document.getElementById('tamanio').value
+            
+            if (!palabras && tipo === 'sopa') {
+                return showMessage('❌ Ingresa las palabras')
+            }
+            
+            const palabrasList = palabras.split(',').map(p => p.trim())
+            
+            const preview = `
+            <div class="herramienta-document theme-${currentColor} formato-${currentFormato}" style="opacity:0.9">
+                <div class="herramienta-header">
+                    <h1 class="herramienta-title">📋 Vista Previa</h1>
+                    <div class="herramienta-subtitle">
+                        <span>${tipo === 'sopa' ? '🔍 Sopa de Letras' : '📝 Crucigrama'}</span>
+                        <span>${tamanio} x ${tamanio}</span>
+                        <span>${palabrasList.length} palabras</span>
+                    </div>
+                </div>
+                <div class="text-center py-8 text-slate-500">
+                    <p>Haz clic en "Generar Juego con IA" para obtener el juego completo</p>
+                    <p class="text-sm mt-2 text-violet-500">Se usarán 3 créditos</p>
+                </div>
+                <div class="footer-note">Vista previa · TodoProfes</div>
+            </div>
+            `
+            document.getElementById('result').innerHTML = preview
+            document.getElementById('resultContainer').classList.remove('hidden')
+            showMessage('👆 Vista previa', true)
+        }
+
+        // ============================================================
+        // FUNCIÓN PRINCIPAL CON IA (CORREGIDA)
+        // ============================================================
+        
+        async function handleGenerate() {
+            if (!isAuthenticated) return window.location.href = 'login.html'
+            
+            const tipo = currentTipoJuego
+            const tema = currentTema
+            const palabrasInput = document.getElementById('palabras').value.trim()
+            const tamanio = parseInt(document.getElementById('tamanio').value)
+            const dificultad = document.getElementById('dificultad').value
+            const incluirDibujos = document.getElementById('incluirDibujos').value
+            const incluirInstrucciones = document.getElementById('incluirInstrucciones').checked
+            const incluirSolucion = document.getElementById('incluirSolucion').checked
+
+            if (tipo === 'sopa' && !palabrasInput) {
+                return showMessage('❌ Ingresa las palabras')
+            }
+
+            document.getElementById('fullscreenLoader').style.display = 'flex'
+
+            const btn = document.getElementById('generateBtn')
+            const originalText = btn.innerHTML
+            btn.innerHTML = '<span class="loader"></span> Generando juego...'
+            btn.disabled = true
+
+            try {
+                const newCredits = await deductCredits(3)
+                document.getElementById('creditsDisplay').textContent = `${newCredits} créditos`
+
+                const palabrasList = palabrasInput.split(',').map(p => p.trim()).filter(p => p)
+
+                // Crear prompt para Gemini - versión mejorada para evitar errores JSON
+                let dificultadTexto = ''
+                if (dificultad === 'facil') {
+                    dificultadTexto = 'horizontal y vertical'
+                } else if (dificultad === 'media') {
+                    dificultadTexto = 'horizontal, vertical y diagonal'
+                } else {
+                    dificultadTexto = 'horizontal, vertical, diagonal y en orden inverso'
+                }
+
+                const prompt = `Actúa como un experto en diseño de juegos educativos para niños.
+
+DATOS DEL JUEGO:
+- Tipo de juego: ${tipo === 'sopa' ? 'Sopa de letras' : 'Crucigrama'}
+- Tema: ${tema}
+- Palabras: ${palabrasList.join(', ')}
+- Tamaño del grid: ${tamanio} x ${tamanio}
+- Dificultad: ${dificultadTexto}
+- Incluir dibujos: ${incluirDibujos === 'si' ? 'Sí' : 'No'}
+
+INSTRUCCIONES IMPORTANTES:
+- Diseña un juego educativo profesional y atractivo
+- Las palabras deben estar distribuidas de manera equilibrada en el grid
+- Asegura que no haya solapamientos problemáticos
+- El grid debe ser completamente llenado con letras aleatorias
+- ${tipo === 'crucigrama' ? 'Incluye pistas claras para cada palabra' : ''}
+
+RESPUESTA EN FORMATO JSON (sin texto adicional, solo JSON válido):
+{
+  "juego": {
+    "titulo": "Título atractivo del juego",
+    "grid": [],
+    "palabras": [],
+    "pistas": [],
+    "dibujos": []
+  }
+}
+
+IMPORTANTE: El JSON debe ser válido, sin caracteres especiales no escapados. Escapa las comillas dentro de strings con \\".`
+
+                console.log('Llamando a función IA para herramientas didácticas')
+                
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        tool: 'herramientas',
+                        format: 'json'
+                    })
+                })
+
+                const data = await response.json()
+                console.log('Respuesta de IA:', data)
+
+                if (!response.ok) {
+                    if (data.error === 'insufficient_credits') {
+                        throw new Error(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}`)
+                    }
+                    throw new Error(data.message || 'Error al generar el juego')
+                }
+
+                // Procesar la respuesta de manera más robusta
+                let resultado = null
+                let contenidoLimpio = data.content || ''
+                
+                // Intentar extraer JSON de la respuesta si viene como string
+                if (typeof contenidoLimpio === 'string') {
+                    // Eliminar posibles caracteres de control y espacios
+                    contenidoLimpio = contenidoLimpio.trim()
+                    
+                    // Si empieza y termina con comillas, quitarlas
+                    if (contenidoLimpio.startsWith('"') && contenidoLimpio.endsWith('"')) {
+                        try {
+                            contenidoLimpio = JSON.parse(contenidoLimpio)
+                        } catch (e) {
+                            console.log('Error al parsear comillas, continuando...')
+                        }
+                    }
+                    
+                    // Intentar encontrar JSON entre llaves
+                    const matchJSON = contenidoLimpio.match(/\{[\s\S]*\}/)
+                    if (matchJSON) {
+                        try {
+                            resultado = JSON.parse(matchJSON[0])
+                        } catch (e) {
+                            console.error('Error parseando JSON extraído:', e)
+                        }
+                    }
+                    
+                    // Si no se pudo extraer, intentar parsear directamente
+                    if (!resultado) {
+                        try {
+                            resultado = JSON.parse(contenidoLimpio)
+                        } catch (e) {
+                            console.error('Error parseando JSON directamente:', e)
+                        }
+                    }
+                } else if (typeof contenidoLimpio === 'object') {
+                    resultado = contenidoLimpio
+                }
+                
+                // Si aún no hay resultado, crear uno por defecto
+                if (!resultado || !resultado.juego) {
+                    console.warn('No se pudo obtener JSON válido, usando valores por defecto')
+                    resultado = {
+                        juego: {
+                            titulo: tipo === 'sopa' ? 'Sopa de Letras' : 'Crucigrama',
+                            grid: [],
+                            palabras: [],
+                            pistas: [],
+                            dibujos: []
+                        }
+                    }
+                }
+
+                // Generar HTML profesional con los datos de la IA
+                let gridHTML = ''
+                if (tipo === 'sopa') {
+                    gridHTML = '<div class="sopa-grid" style="grid-template-columns: repeat(' + tamanio + ', 1fr);">'
+                    
+                    // Usar grid de la IA o generar uno aleatorio
+                    const iaGrid = resultado.juego?.grid
+                    
+                    for (let i = 0; i < tamanio; i++) {
+                        for (let j = 0; j < tamanio; j++) {
+                            let letra = ''
+                            if (iaGrid && iaGrid[i] && iaGrid[i][j]) {
+                                letra = iaGrid[i][j]
+                            } else {
+                                letra = String.fromCharCode(65 + Math.floor(Math.random() * 26))
+                            }
+                            gridHTML += `<div class="sopa-cell">${letra}</div>`
+                        }
+                    }
+                    gridHTML += '</div>'
+                } else {
+                    gridHTML = '<div class="crucigrama-grid" style="grid-template-columns: repeat(' + tamanio + ', 1fr);">'
+                    
+                    const iaGrid = resultado.juego?.grid
+                    
+                    for (let i = 0; i < tamanio; i++) {
+                        for (let j = 0; j < tamanio; j++) {
+                            const esNegro = Math.random() > 0.7
+                            let letra = ''
+                            
+                            if (iaGrid && iaGrid[i] && iaGrid[i][j]) {
+                                letra = iaGrid[i][j]
+                            } else if (!esNegro) {
+                                letra = String.fromCharCode(65 + Math.floor(Math.random() * 26))
+                            }
+                            
+                            gridHTML += `<div class="crucigrama-cell ${esNegro ? 'black' : ''}">${letra}</div>`
+                        }
+                    }
+                    gridHTML += '</div>'
+                }
+                
+                let resultadoHTML = `
+                <div class="herramienta-document theme-${currentColor} formato-${currentFormato}">
+                    <div class="herramienta-header">
+                        <h1 class="herramienta-title">${tipo === 'sopa' ? '🔍' : '📝'} ${resultado.juego?.titulo || (tipo === 'sopa' ? 'Sopa de Letras' : 'Crucigrama')} - ${tema}</h1>
+                        <div class="herramienta-subtitle">
+                            <span>${tamanio} x ${tamanio}</span>
+                            <span>Dificultad: ${dificultad}</span>
+                            <span>${palabrasList.length} palabras</span>
+                        </div>
+                    </div>
+                `
+                
+                if (incluirInstrucciones) {
+                    resultadoHTML += `
+                    <div class="instrucciones-box">
+                        <p class="font-semibold text-violet-600 mb-2">📌 Instrucciones:</p>
+                        <p>${tipo === 'sopa' ? 'Encuentra las siguientes palabras en la sopa de letras. Pueden estar en horizontal, vertical o diagonal.' : 'Completa el crucigrama usando las pistas proporcionadas. Cada número corresponde a una palabra.'}</p>
+                    </div>
+                    `
+                }
+                
+                if (incluirDibujos === 'si') {
+                    resultadoHTML += '<div class="dibujos-grid">'
+                    
+                    // Usar dibujos de la IA o generar por defecto
+                    const dibujosIA = resultado.juego?.dibujos || []
+                    
+                    if (dibujosIA.length > 0) {
+                        dibujosIA.slice(0, 6).forEach(d => {
+                            resultadoHTML += `
+                            <div class="dibujo-item">
+                                <div class="dibujo-emoji">${d.emoji || '📝'}</div>
+                                <div class="dibujo-label">${d.palabra || ''}</div>
+                            </div>
+                            `
+                        })
+                    } else {
+                        // Dibujos por defecto
+                        const emojisPorTema = {
+                            animales: { perro: '🐕', gato: '🐈', pájaro: '🐦', pez: '🐟', conejo: '🐇' },
+                            colores: { rojo: '🔴', azul: '🔵', verde: '🟢', amarillo: '🟡', naranja: '🟠', morado: '🟣' },
+                            numeros: { uno: '1️⃣', dos: '2️⃣', tres: '3️⃣', cuatro: '4️⃣', cinco: '5️⃣' },
+                            frutas: { manzana: '🍎', pera: '🍐', plátano: '🍌', uva: '🍇', fresa: '🍓', naranja: '🍊', limón: '🍋' }
+                        }
+                        
+                        const emojis = emojisPorTema[tema] || {}
+                        
+                        palabrasList.slice(0, 6).forEach(p => {
+                            resultadoHTML += `
+                            <div class="dibujo-item">
+                                <div class="dibujo-emoji">${emojis[p] || '📝'}</div>
+                                <div class="dibujo-label">${p}</div>
+                            </div>
+                            `
+                        })
+                    }
+                    resultadoHTML += '</div>'
+                }
+                
+                resultadoHTML += `
+                    <div class="palabras-lista">
+                        ${palabrasList.map(p => `<span class="palabra-item"><span class="palabra-icon">✓</span>${p}</span>`).join('')}
+                    </div>
+                    
+                    ${gridHTML}
+                `
+                
+                if (tipo === 'crucigrama') {
+                    const pistasIA = resultado.juego?.pistas || []
+                    
+                    if (pistasIA.length > 0) {
+                        resultadoHTML += `
+                        <div class="mt-4 p-4 bg-violet-50 rounded-lg">
+                            <h3 class="font-semibold text-violet-600 mb-2">📝 Pistas:</h3>
+                            <ul class="list-decimal pl-5 space-y-1">
+                                ${pistasIA.map(p => `<li>${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                        `
+                    }
+                }
+                
+                if (incluirSolucion) {
+                    resultadoHTML += `
+                    <div class="mt-4 p-4 bg-amber-50 rounded-lg border-2 border-amber-200">
+                        <h3 class="font-semibold text-amber-600 text-center">🔍 Solución para el docente</h3>
+                        <p class="text-sm text-center text-amber-700">Las palabras están ubicadas estratégicamente en el grid.</p>
+                    </div>
+                    `
+                }
+                
+                resultadoHTML += `
+                    <div class="footer-note">
+                        Juego educativo generado con IA · ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </div>
+                </div>
+                `
+                
+                generatedContent = resultadoHTML
+                document.getElementById('result').innerHTML = resultadoHTML
+                document.getElementById('resultContainer').classList.remove('hidden')
+                
+                if (data.credits_left !== undefined) {
+                    document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
+                    document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Restantes: ${data.credits_left}`
+                } else {
+                    await loadUserCredits()
+                }
+                
+                await guardarDocumentoEnStorage(resultadoHTML, `${tipo}_${tema}`, 'herramienta')
+                showMessage('✅ Juego generado con IA', true)
+                
+            } catch (error) {
+                console.error('Error:', error)
+                
+                if (error.message.includes('Créditos insuficientes')) {
+                    showMessage('❌ Créditos insuficientes. Necesitas recargar.', false)
+                } else {
+                    // Fallback con generación local
+                    const palabrasList = palabrasInput.split(',').map(p => p.trim()).filter(p => p)
+                    const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+                    
+                    let gridHTML = ''
+                    if (tipo === 'sopa') {
+                        gridHTML = '<div class="sopa-grid" style="grid-template-columns: repeat(' + tamanio + ', 1fr);">'
+                        for (let i = 0; i < tamanio * tamanio; i++) {
+                            gridHTML += `<div class="sopa-cell">${letras[Math.floor(Math.random() * letras.length)]}</div>`
+                        }
+                        gridHTML += '</div>'
+                    } else {
+                        gridHTML = '<div class="crucigrama-grid" style="grid-template-columns: repeat(' + tamanio + ', 1fr);">'
+                        for (let i = 0; i < tamanio; i++) {
+                            for (let j = 0; j < tamanio; j++) {
+                                const esNegro = Math.random() > 0.7
+                                gridHTML += `<div class="crucigrama-cell ${esNegro ? 'black' : ''}">${esNegro ? '' : letras[Math.floor(Math.random() * letras.length)]}</div>`
+                            }
+                        }
+                        gridHTML += '</div>'
+                    }
+                    
+                    const fallbackHTML = `
+                    <div class="herramienta-document theme-${currentColor} formato-${currentFormato}">
+                        <div class="herramienta-header">
+                            <h1 class="herramienta-title">${tipo === 'sopa' ? '🔍 Sopa de Letras' : '📝 Crucigrama'} - ${tema}</h1>
+                            <div class="herramienta-subtitle">
+                                <span>${tamanio} x ${tamanio}</span>
+                                <span>Dificultad: ${dificultad}</span>
+                                <span>${palabrasList.length} palabras</span>
+                            </div>
+                        </div>
+                        
+                        ${incluirInstrucciones ? `
+                        <div class="instrucciones-box">
+                            <p class="font-semibold text-violet-600 mb-2">📌 Instrucciones:</p>
+                            <p>${tipo === 'sopa' ? 'Encuentra las siguientes palabras en la sopa de letras.' : 'Completa el crucigrama con las pistas.'}</p>
+                        </div>
+                        ` : ''}
+                        
+                        ${incluirDibujos === 'si' ? `
+                        <div class="dibujos-grid">
+                            ${palabrasList.slice(0, 4).map(p => `
+                            <div class="dibujo-item">
+                                <div class="dibujo-emoji">📝</div>
+                                <div class="dibujo-label">${p}</div>
+                            </div>
+                            `).join('')}
+                        </div>
+                        ` : ''}
+                        
+                        <div class="palabras-lista">
+                            ${palabrasList.map(p => `<span class="palabra-item"><span class="palabra-icon">✓</span>${p}</span>`).join('')}
+                        </div>
+                        
+                        ${gridHTML}
+                        
+                        ${incluirSolucion ? `
+                        <div class="mt-4 p-4 bg-yellow-50 rounded-lg">
+                            <h3 class="font-semibold text-center">🔍 Solución (docente)</h3>
+                            <p class="text-sm text-center">Las palabras están ocultas en el grid.</p>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="footer-note">
+                            ⚠️ Modo offline - Juego de ejemplo · ${new Date().toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    `
+                    
+                    document.getElementById('result').innerHTML = fallbackHTML
+                    document.getElementById('resultContainer').classList.remove('hidden')
+                    showMessage('⚠️ Modo offline - Juego de ejemplo', false)
+                }
+            } finally {
+                document.getElementById('fullscreenLoader').style.display = 'none'
+                btn.innerHTML = originalText
+                btn.disabled = false
+            }
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA DESCARGAR PDF PROFESIONAL
+        // ============================================================
+        
+        async function downloadPDF() {
+            if (!generatedContent && document.getElementById('result').children.length === 0) {
+                showMessage('❌ No hay contenido para descargar', false)
+                return
+            }
+            
+            showMessage('📄 Generando PDF profesional...', true)
+            
+            try {
+                // Obtener el elemento del resultado
+                const resultElement = document.getElementById('result')
+                const originalHTML = resultElement.innerHTML
+                
+                // Crear un contenedor para el PDF con el mismo contenido exacto
+                const pdfContainer = document.createElement('div')
+                pdfContainer.innerHTML = originalHTML
+                
+                // Aplicar estilos para mantener el mismo diseño
+                pdfContainer.style.width = '800px'
+                pdfContainer.style.padding = '30px'
+                pdfContainer.style.backgroundColor = 'white'
+                pdfContainer.style.fontFamily = 'Inter, Arial, sans-serif'
+                pdfContainer.style.margin = '0 auto'
+                pdfContainer.style.position = 'absolute'
+                pdfContainer.style.left = '-9999px'
+                pdfContainer.style.top = '0'
+                
+                // Copiar todos los estilos CSS necesarios
+                const styles = document.querySelectorAll('style')
+                styles.forEach(style => {
+                    const styleClone = style.cloneNode(true)
+                    pdfContainer.appendChild(styleClone)
+                })
+                
+                // Asegurar que las celdas del grid mantengan su proporción
+                const gridItems = pdfContainer.querySelectorAll('.sopa-cell, .crucigrama-cell')
+                gridItems.forEach(item => {
+                    item.style.display = 'flex'
+                    item.style.alignItems = 'center'
+                    item.style.justifyContent = 'center'
+                    item.style.aspectRatio = '1'
+                })
+                
+                document.body.appendChild(pdfContainer)
+                
+                // Esperar a que se rendericen las fuentes
+                await document.fonts.ready
+                
+                // Capturar con html2canvas con la máxima calidad
+                const canvas = await html2canvas(pdfContainer, { 
+                    scale: 2.5,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    allowTaint: true,
+                    useCORS: true,
+                    windowWidth: 800,
+                    windowHeight: pdfContainer.scrollHeight
+                })
+                
+                document.body.removeChild(pdfContainer)
+                
+                // Crear PDF con jsPDF
+                const { jsPDF } = window.jspdf
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                })
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth()
+                const pdfHeight = pdf.internal.pageSize.getHeight()
+                const imgWidth = canvas.width
+                const imgHeight = canvas.height
+                const ratio = pdfWidth / imgWidth
+                const calculatedHeight = imgHeight * ratio
+                
+                // Si el contenido es más largo que una página, crear múltiples páginas
+                if (calculatedHeight > pdfHeight) {
+                    let heightLeft = calculatedHeight
+                    let position = 0
+                    
+                    pdf.addImage(canvas, 'PNG', 0, position, pdfWidth, calculatedHeight, undefined, 'FAST')
+                    
+                    while (heightLeft > pdfHeight) {
+                        position = position - pdfHeight
+                        pdf.addPage()
+                        pdf.addImage(canvas, 'PNG', 0, position, pdfWidth, calculatedHeight, undefined, 'FAST')
+                        heightLeft -= pdfHeight
+                    }
+                } else {
+                    // Centrar verticalmente si el contenido es más corto
+                    const yPos = (pdfHeight - calculatedHeight) / 2
+                    pdf.addImage(canvas, 'PNG', 0, yPos, pdfWidth, calculatedHeight, undefined, 'FAST')
+                }
+                
+                // Obtener título para el nombre del archivo
+                const tema = document.getElementById('tema')?.value || currentTema || 'juego'
+                const tipo = currentTipoJuego === 'sopa' ? 'sopa' : 'crucigrama'
+                const fecha = new Date().toISOString().split('T')[0]
+                
+                pdf.save(`juego_${tipo}_${tema}_${fecha}.pdf`)
+                
+                showMessage('✅ PDF descargado con el diseño original', true)
+                
+            } catch (error) {
+                console.error('Error generando PDF:', error)
+                showMessage('❌ Error al generar el PDF', false)
+                
+                // Fallback: método alternativo simple
+                try {
+                    const { jsPDF } = window.jspdf
+                    const pdf = new jsPDF()
+                    
+                    pdf.setFontSize(16)
+                    pdf.text('Juego Educativo', 20, 20)
+                    pdf.setFontSize(11)
+                    
+                    const text = document.getElementById('result').innerText
+                    const lines = pdf.splitTextToSize(text, 170)
+                    pdf.text(lines, 20, 30)
+                    
+                    const tema = document.getElementById('tema')?.value || currentTema || 'juego'
+                    const fecha = new Date().toISOString().split('T')[0]
+                    pdf.save(`juego_${tema}_${fecha}.pdf`)
+                    
+                    showMessage('✅ PDF descargado (formato texto)', true)
+                } catch (fallbackError) {
+                    showMessage('❌ Error en la descarga', false)
+                }
+            }
+        }
+
+        // Funciones auxiliares
+        function copyToClipboard() {
+            const text = document.getElementById('result').innerText
+            navigator.clipboard.writeText(text).then(() => showMessage('✅ Copiado al portapapeles', true))
+        }
+
+        function downloadWord() {
+            if (!generatedContent) return showMessage('❌ No hay contenido para descargar')
+            const text = document.getElementById('result').innerText
+            const doc = new docx.Document({
+                sections: [{
+                    children: [
+                        new docx.Paragraph({ children: [new docx.TextRun({ text: "Juego Educativo", bold: true, size: 32 })] }),
+                        new docx.Paragraph({ text: "" }),
+                        new docx.Paragraph({ children: [new docx.TextRun({ text: text, size: 22 })] })
+                    ]
+                }]
+            })
+            docx.Packer.toBlob(doc).then(blob => saveAs(blob, `Juego_TodoProfes_${new Date().toISOString().split('T')[0]}.docx`))
+        }
+
+        function printDocument() {
+            if (!generatedContent) return showMessage('❌ No hay contenido para imprimir')
+            const w = window.open('', '_blank')
+            w.document.write(`
+                <html>
+                    <head>
+                        <title>Juego Educativo - TodoProfes</title>
+                        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                        <style>
+                            body { 
+                                font-family: 'Inter', sans-serif; 
+                                padding: 2rem; 
+                                max-width: 1200px; 
+                                margin: 0 auto;
+                            }
+                        </style>
+                    </head>
+                    <body>${document.getElementById('result').innerHTML}</body>
+                </html>
+            `)
+            w.document.close()
+            setTimeout(() => {
+                w.print()
+                w.close()
+            }, 500)
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession()
+            lucide.createIcons()
+            
+            document.getElementById('tamanio').addEventListener('input', function() {
+                document.getElementById('tamanioDisplay').textContent = `${this.value} x ${this.value}`
+            })
+            
+            document.querySelectorAll('.format-badge').forEach(el => {
+                const texto = el.textContent.toLowerCase()
+                if (texto.includes('estándar')) el.setAttribute('data-formato', 'estandar')
+                else if (texto.includes('compacto')) el.setAttribute('data-formato', 'compacto')
+                else if (texto.includes('detallado')) el.setAttribute('data-formato', 'detallado')
+            })
+        })
+    </script>
+</body>
+</html>
