@@ -155,9 +155,24 @@
             console.log("🔍 ===== INICIANDO VERIFICACIÓN DE TRANSACCIÓN =====");
             
             const urlParams = new URLSearchParams(window.location.search);
-            let refPayco = urlParams.get('ref_payco');
             
-            console.log("📌 ref_payco de URL:", refPayco);
+            // ePayco puede enviar diferentes nombres de parámetros
+            const possibleParams = ['ref_payco', 'x_ref_payco', 'transaction_id', 'x_transaction_id'];
+            let refPayco = null;
+            
+            for (const param of possibleParams) {
+                const value = urlParams.get(param);
+                if (value) {
+                    refPayco = value;
+                    console.log(`📌 Encontrado parámetro ${param}:`, value);
+                    break;
+                }
+            }
+            
+            if (!refPayco) {
+                console.log("⚠️ No se encontró ningún parámetro de referencia en la URL");
+                // Intentar buscar la última transacción del usuario
+            }
             
             const token = localStorage.getItem('supabase_token');
             const userId = localStorage.getItem('user_id');
@@ -176,37 +191,68 @@
             }
             
             try {
-                // Construir consulta CORRECTA
-                let query = `${SUPABASE_URL}/rest/v1/transacciones?user_id=eq.${userId}&select=*`;
+                let transacciones = [];
                 
+                // ESTRATEGIA 1: Buscar por transaction_id si tenemos refPayco
                 if (refPayco) {
-                    query += `&transaction_id=eq.${refPayco}`;
-                    console.log("🔎 Consulta específica:", query);
-                } else {
-                    query += `&order=created_at.desc&limit=1`;
-                    console.log("🔎 Consulta última transacción:", query);
-                }
-                
-                console.log("📡 Enviando consulta a Supabase...");
-                
-                const response = await fetch(query, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'apikey': SUPABASE_KEY
+                    console.log("🔎 Estrategia 1: Buscando por transaction_id exacto");
+                    
+                    // Intentar con el valor exacto
+                    let query = `${SUPABASE_URL}/rest/v1/transacciones?user_id=eq.${userId}&select=*&transaction_id=eq.${refPayco}`;
+                    console.log("📡 Consulta 1:", query);
+                    
+                    let response = await fetch(query, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'apikey': SUPABASE_KEY
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        transacciones = await response.json();
+                        console.log("📦 Resultado consulta 1:", transacciones);
                     }
-                });
-                
-                console.log("📡 Respuesta status:", response.status);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error("❌ Error respuesta:", errorText);
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                    
+                    // Si no encuentra, intentar con el valor como string (por si acaso)
+                    if (!transacciones || transacciones.length === 0) {
+                        console.log("🔄 Reintentando con transaction_id como string exacto");
+                        query = `${SUPABASE_URL}/rest/v1/transacciones?user_id=eq.${userId}&select=*&transaction_id=eq.${refPayco}`;
+                        
+                        response = await fetch(query, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'apikey': SUPABASE_KEY
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            transacciones = await response.json();
+                            console.log("📦 Resultado reintento:", transacciones);
+                        }
+                    }
                 }
                 
-                const transacciones = await response.json();
-                console.log("📦 Transacciones encontradas:", transacciones);
+                // ESTRATEGIA 2: Si no encontramos, buscar la última transacción del usuario
+                if (!transacciones || transacciones.length === 0) {
+                    console.log("🔎 Estrategia 2: Buscando última transacción del usuario");
+                    
+                    const query = `${SUPABASE_URL}/rest/v1/transacciones?user_id=eq.${userId}&select=*&order=created_at.desc&limit=1`;
+                    console.log("📡 Consulta 2:", query);
+                    
+                    const response = await fetch(query, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'apikey': SUPABASE_KEY
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        transacciones = await response.json();
+                        console.log("📦 Resultado consulta 2:", transacciones);
+                    }
+                }
                 
+                // Verificar si encontramos alguna transacción
                 if (!transacciones || transacciones.length === 0) {
                     console.log("⚠️ No se encontraron transacciones");
                     document.getElementById('loadingState').classList.add('hidden');
@@ -232,7 +278,6 @@
                     document.getElementById('loadingState').classList.add('hidden');
                     document.getElementById('successState').classList.remove('hidden');
                     
-                    // Formatear fecha
                     const fecha = new Date(t.created_at).toLocaleString('es-CO', {
                         year: 'numeric',
                         month: 'long',
@@ -262,6 +307,10 @@
                         <div class="detail-row">
                             <span class="text-slate-400">Fecha:</span> 
                             <span class="text-white font-semibold">${fecha}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="text-slate-400">Estado:</span> 
+                            <span class="text-white font-semibold text-green-400">Completado</span>
                         </div>
                     `;
                     
@@ -297,7 +346,6 @@
         
         async function loadUserCredits(token, userId) {
             try {
-                console.log("💰 Cargando créditos del usuario...");
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}&select=credits`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -308,15 +356,11 @@
                 if (res.ok) {
                     const users = await res.json();
                     if (users && users.length > 0) {
-                        const credits = users[0].credits || 0;
-                        document.getElementById('creditsDisplay').textContent = `${credits} créditos`;
-                        console.log("💰 Créditos actuales:", credits);
+                        document.getElementById('creditsDisplay').textContent = `${users[0].credits || 0} créditos`;
                     }
-                } else {
-                    console.log("⚠️ Error cargando créditos:", res.status);
                 }
             } catch (e) {
-                console.log("❌ Error cargando créditos:", e);
+                console.log("Error cargando créditos:", e);
             }
         }
         
