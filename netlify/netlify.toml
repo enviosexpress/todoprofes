@@ -3,7 +3,7 @@
   publish = "."
 
 [build.environment]
-  SUPABASE_URL = "https://zicowjlhaopgamhesqcz.supabase.co"
-  SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MTAwMjYwNiwiZXhwIjoyMDg2NTc4NjA2fQ.rbjRO-GgjyRz5_KE02sFLemNhpT3uaoxusGWUsvYZn4"
-  EPAYCO_CUST_ID_CLIENTE = "1553117"
-  EPAYCO_P_KEY = "d8ca9f5b0995cd5053443a004fdd2b89554a4eee"
+  SUPABASE_URL = ""
+  SUPABASE_SERVICE_KEY = ""
+  EPAYCO_CUST_ID_CLIENTE = ""
+  EPAYCO_P_KEY = ""

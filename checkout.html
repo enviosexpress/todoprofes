@@ -437,7 +437,10 @@
             const token = localStorage.getItem('supabase_token');
             const userIdStored = localStorage.getItem('user_id');
             
-            console.log('🔍 Verificando sesión:', { token: !!token, userId: userIdStored });
+            console.log('🔍 Verificando sesión:', { 
+                token: token ? '✅ presente' : '❌ ausente', 
+                userId: userIdStored || '❌ ausente' 
+            });
             
             // Mostrar/ocultar elementos según sesión
             const sessionError = document.getElementById('sessionError');
@@ -473,10 +476,9 @@
                 // Cargar créditos del usuario
                 await loadUserCredits();
                 
-                // Actualizar botones con userId (con un pequeño retraso para asegurar que los scripts de ePayco se carguen)
-                setTimeout(() => {
-                    updateEpaycoButtonsWithUserId(userId);
-                }, 500);
+                // Actualizar botones con userId - SIN TIMEOUT
+                console.log('🎯 Llamando a updateEpaycoButtonsWithUserId con userId:', userId);
+                updateEpaycoButtonsWithUserId(userId);
                 
                 return true;
                 
@@ -515,26 +517,75 @@
             }
         }
 
-        // Actualizar los botones con el ID del usuario y mostrarlos
+        // Función MEJORADA para actualizar los botones con verificación
         function updateEpaycoButtonsWithUserId(userId) {
             if (!userId) {
                 console.error('❌ No hay userId disponible');
                 return;
             }
             
+            console.log('🔄 Iniciando actualización de botones con userId:', userId);
+            
             // Mostrar los contenedores de los botones
             document.getElementById('btn-basico-container').style.display = 'flex';
             document.getElementById('btn-estandar-container').style.display = 'flex';
             document.getElementById('btn-premium-container').style.display = 'flex';
             
-            // Actualizar el data-epayco-extra1 de cada script
+            // Obtener TODOS los scripts de ePayco
             const scripts = document.querySelectorAll('script.epayco-button');
-            console.log(`🔄 Encontrados ${scripts.length} botones de ePayco para actualizar`);
+            console.log(`📦 Encontrados ${scripts.length} botones de ePayco`);
             
+            if (scripts.length === 0) {
+                console.error('❌ No se encontraron scripts de ePayco');
+                return;
+            }
+            
+            // Actualizar CADA script
             scripts.forEach((script, index) => {
+                // Obtener valores actuales para debug
+                const oldExtra1 = script.getAttribute('data-epayco-extra1');
+                const packageType = script.getAttribute('data-epayco-extra2');
+                
+                console.log(`\n🔧 Procesando botón ${index + 1} (${packageType}):`);
+                console.log(`  - Antes: extra1 = "${oldExtra1}"`);
+                
+                // ASIGNAR EL NUEVO USERID
                 script.setAttribute('data-epayco-extra1', userId);
-                console.log(`✅ Botón ${index + 1} (${script.getAttribute('data-epayco-extra2')}) actualizado con userId: ${userId}`);
+                
+                // Verificar que se asignó correctamente
+                const newExtra1 = script.getAttribute('data-epayco-extra1');
+                console.log(`  - Después: extra1 = "${newExtra1}"`);
+                
+                if (newExtra1 !== userId) {
+                    console.error(`  ❌ Error: No se pudo asignar el userId al botón ${index + 1}`);
+                    // Intentar de nuevo
+                    script.setAttribute('data-epayco-extra1', userId);
+                    const retryExtra1 = script.getAttribute('data-epayco-extra1');
+                    console.log(`  - Reintento: extra1 = "${retryExtra1}"`);
+                } else {
+                    console.log(`  ✅ Botón ${index + 1} actualizado correctamente`);
+                }
             });
+            
+            // Verificación final después de 1 segundo
+            setTimeout(() => {
+                console.log('\n🔍 VERIFICACIÓN FINAL (1 segundo después):');
+                const verifyScripts = document.querySelectorAll('script.epayco-button');
+                verifyScripts.forEach((script, i) => {
+                    const finalExtra1 = script.getAttribute('data-epayco-extra1');
+                    const packageType = script.getAttribute('data-epayco-extra2');
+                    console.log(`  Botón ${i+1} (${packageType}): extra1 = "${finalExtra1}"`);
+                    
+                    if (finalExtra1 !== userId) {
+                        console.error(`  ❌ El botón ${i+1} perdió el userId!`);
+                        // Reasignar
+                        script.setAttribute('data-epayco-extra1', userId);
+                        console.log(`  ✅ Reasignado botón ${i+1}`);
+                    } else {
+                        console.log(`  ✅ Botón ${i+1} OK`);
+                    }
+                });
+            }, 1000);
         }
 
         // Seleccionar paquete (para efecto visual)
@@ -550,7 +601,7 @@
 
         // Mostrar modal al hacer clic en cualquier botón de pago
         document.addEventListener('click', (e) => {
-            // Verificar si el clic fue en un botón de ePayco o en su contenedor
+            // Verificar si el clic fue en un botón de ePayco
             const isEpaycoButton = e.target.closest('.epayco-button') || e.target.closest('.epayco-button-container button');
             
             if (isEpaycoButton) {
@@ -562,6 +613,17 @@
                     alert('Debes iniciar sesión para realizar una compra');
                     window.location.href = 'login.html?redirect=checkout.html';
                     return;
+                }
+                
+                // Verificar que el userId esté en el botón
+                const script = document.querySelector('script.epayco-button');
+                const extra1 = script ? script.getAttribute('data-epayco-extra1') : null;
+                console.log('📤 Enviando pago con userId:', extra1);
+                
+                if (!extra1 || extra1 === '') {
+                    console.error('❌ El userId está vacío en el botón!');
+                    // Intentar reasignar
+                    updateEpaycoButtonsWithUserId(userId);
                 }
                 
                 const modal = document.getElementById('paymentModal');
@@ -599,6 +661,8 @@
 
         // Inicializar todo cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Página cargada, iniciando verificación de sesión...');
+            
             // Verificar sesión primero
             const hasSession = await checkSession();
             
@@ -608,14 +672,13 @@
             }
         });
 
-        // Verificar si hay parámetros de error en la URL (cuando ePayco redirige con error)
+        // Verificar si hay parámetros de error en la URL
         window.addEventListener('load', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const errorCode = urlParams.get('cod_error');
             
             if (errorCode) {
                 console.log('⚠️ Error en pago detectado:', errorCode);
-                // Podrías mostrar un mensaje de error aquí
             }
         });
     </script>
