@@ -214,6 +214,16 @@
             background: #DC2626;
             transform: scale(1.05);
         }
+        
+        /* Estilo para créditos */
+        .credits-container {
+            display: flex;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            border-radius: 2rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -283,7 +293,7 @@
                             </ul>
                         </div>
                         
-                        <!-- BOTÓN BÁSICO (oculto hasta que se cargue el userId) -->
+                        <!-- BOTÓN BÁSICO -->
                         <div class="epayco-button-container" id="btn-basico-container" style="display: none;">
                             <form>
                                 <script src='https://checkout.epayco.co/checkout.js'
@@ -322,7 +332,7 @@
                             </ul>
                         </div>
                         
-                        <!-- BOTÓN ESTÁNDAR (oculto hasta que se cargue el userId) -->
+                        <!-- BOTÓN ESTÁNDAR -->
                         <div class="epayco-button-container" id="btn-estandar-container" style="display: none;">
                             <form>
                                 <script src='https://checkout.epayco.co/checkout.js'
@@ -360,7 +370,7 @@
                             </ul>
                         </div>
                         
-                        <!-- BOTÓN PREMIUM (oculto hasta que se cargue el userId) -->
+                        <!-- BOTÓN PREMIUM -->
                         <div class="epayco-button-container" id="btn-premium-container" style="display: none;">
                             <form>
                                 <script src='https://checkout.epayco.co/checkout.js'
@@ -391,7 +401,7 @@
                     <h3 class="text-2xl font-bold text-white mb-6 text-center">Métodos de pago aceptados</h3>
                     
                     <div class="payment-image-container flex justify-center">
-                        <img src="C:\Users\Familia jaimes\Desktop\Todo profes\imagenes\pagos.png" 
+                        <img src="imagenes/pagos.png" 
                              alt="Métodos de pago" 
                              class="max-w-full h-auto rounded-lg shadow-lg"
                              onerror="this.onerror=null; this.src='https://placehold.co/800x200/1E293B/3B82F6?text=Visa+Mastercard+Amex+PSE+Efecty+Baloto'">
@@ -476,9 +486,9 @@
                 // Cargar créditos del usuario
                 await loadUserCredits();
                 
-                // Actualizar botones con userId - SIN TIMEOUT
-                console.log('🎯 Llamando a updateEpaycoButtonsWithUserId con userId:', userId);
-                updateEpaycoButtonsWithUserId(userId);
+                // Actualizar botones con userId - CON VERIFICACIÓN MEJORADA
+                console.log('🎯 Llamando a updateEpaycoButtons con userId:', userId);
+                updateEpaycoButtons(userId);
                 
                 return true;
                 
@@ -517,78 +527,66 @@
             }
         }
 
-        // Función MEJORADA para actualizar los botones con verificación
-        function updateEpaycoButtonsWithUserId(userId) {
+        // Función ACTUALIZADA para inyectar userId en los botones (versión simplificada pero robusta)
+        function updateEpaycoButtons(userId) {
             if (!userId) {
                 console.error('❌ No hay userId disponible');
                 return;
             }
             
-            console.log('🔄 Iniciando actualización de botones con userId:', userId);
+            console.log('🔄 Inyectando userId en botones ePayco:', userId);
             
-            // Mostrar los contenedores de los botones
+            // Mostrar contenedores
             document.getElementById('btn-basico-container').style.display = 'flex';
             document.getElementById('btn-estandar-container').style.display = 'flex';
             document.getElementById('btn-premium-container').style.display = 'flex';
             
-            // Obtener TODOS los scripts de ePayco
+            // Obtener todos los scripts
             const scripts = document.querySelectorAll('script.epayco-button');
-            console.log(`📦 Encontrados ${scripts.length} botones de ePayco`);
+            console.log(`📦 Encontrados ${scripts.length} scripts de ePayco`);
             
             if (scripts.length === 0) {
                 console.error('❌ No se encontraron scripts de ePayco');
                 return;
             }
             
-            // Actualizar CADA script
+            // Asignar userId a cada script
             scripts.forEach((script, index) => {
-                // Obtener valores actuales para debug
                 const oldExtra1 = script.getAttribute('data-epayco-extra1');
-                const packageType = script.getAttribute('data-epayco-extra2');
+                const packageType = script.getAttribute('data-epayco-extra2') || 'desconocido';
                 
-                console.log(`\n🔧 Procesando botón ${index + 1} (${packageType}):`);
-                console.log(`  - Antes: extra1 = "${oldExtra1}"`);
-                
-                // ASIGNAR EL NUEVO USERID
                 script.setAttribute('data-epayco-extra1', userId);
                 
-                // Verificar que se asignó correctamente
-                const newExtra1 = script.getAttribute('data-epayco-extra1');
-                console.log(`  - Después: extra1 = "${newExtra1}"`);
-                
-                if (newExtra1 !== userId) {
-                    console.error(`  ❌ Error: No se pudo asignar el userId al botón ${index + 1}`);
-                    // Intentar de nuevo
-                    script.setAttribute('data-epayco-extra1', userId);
-                    const retryExtra1 = script.getAttribute('data-epayco-extra1');
-                    console.log(`  - Reintento: extra1 = "${retryExtra1}"`);
-                } else {
-                    console.log(`  ✅ Botón ${index + 1} actualizado correctamente`);
-                }
+                console.log(`✅ Botón ${index + 1} (${packageType}): extra1 = "${oldExtra1}" → "${userId}"`);
             });
             
-            // Verificación final después de 1 segundo
+            // Verificación adicional: después de 2 segundos, revisar si se mantienen
             setTimeout(() => {
-                console.log('\n🔍 VERIFICACIÓN FINAL (1 segundo después):');
+                console.log('🔍 Verificando que los userId se mantengan...');
                 const verifyScripts = document.querySelectorAll('script.epayco-button');
+                let allOk = true;
+                
                 verifyScripts.forEach((script, i) => {
-                    const finalExtra1 = script.getAttribute('data-epayco-extra1');
-                    const packageType = script.getAttribute('data-epayco-extra2');
-                    console.log(`  Botón ${i+1} (${packageType}): extra1 = "${finalExtra1}"`);
+                    const currentExtra1 = script.getAttribute('data-epayco-extra1');
+                    const packageType = script.getAttribute('data-epayco-extra2') || 'desconocido';
                     
-                    if (finalExtra1 !== userId) {
-                        console.error(`  ❌ El botón ${i+1} perdió el userId!`);
-                        // Reasignar
+                    if (currentExtra1 !== userId) {
+                        console.error(`❌ El botón ${i+1} (${packageType}) perdió el userId: "${currentExtra1}"`);
                         script.setAttribute('data-epayco-extra1', userId);
-                        console.log(`  ✅ Reasignado botón ${i+1}`);
+                        console.log(`✅ Reasignado botón ${i+1}`);
+                        allOk = false;
                     } else {
-                        console.log(`  ✅ Botón ${i+1} OK`);
+                        console.log(`✅ Botón ${i+1} (${packageType}) OK`);
                     }
                 });
-            }, 1000);
+                
+                if (allOk) {
+                    console.log('🎉 Todos los botones tienen el userId correctamente');
+                }
+            }, 2000);
         }
 
-        // Seleccionar paquete (para efecto visual)
+        // Seleccionar paquete (efecto visual)
         function selectPackage(pkg) {
             document.querySelectorAll('.package-card').forEach(card => {
                 card.classList.remove('selected', 'border-blue-500');
@@ -599,15 +597,16 @@
             }
         }
 
-        // Mostrar modal al hacer clic en cualquier botón de pago
-        document.addEventListener('click', (e) => {
-            // Verificar si el clic fue en un botón de ePayco
-            const isEpaycoButton = e.target.closest('.epayco-button') || e.target.closest('.epayco-button-container button');
+        // Manejador de clic en botones de pago (VERSIÓN MEJORADA)
+        document.addEventListener('click', function(e) {
+            const isEpaycoButton = e.target.closest('.epayco-button') || 
+                                   e.target.closest('.epayco-button-container button') ||
+                                   e.target.closest('.epayco-button-container');
             
             if (isEpaycoButton) {
-                console.log('💰 Iniciando proceso de pago...');
+                console.log('💰 Detected click on ePayco payment button');
                 
-                // Verificar que haya sesión antes de proceder
+                // Verificar sesión
                 if (!userId) {
                     e.preventDefault();
                     alert('Debes iniciar sesión para realizar una compra');
@@ -615,22 +614,27 @@
                     return;
                 }
                 
-                // Verificar que el userId esté en el botón
-                const script = document.querySelector('script.epayco-button');
-                const extra1 = script ? script.getAttribute('data-epayco-extra1') : null;
-                console.log('📤 Enviando pago con userId:', extra1);
-                
-                if (!extra1 || extra1 === '') {
-                    console.error('❌ El userId está vacío en el botón!');
-                    // Intentar reasignar
-                    updateEpaycoButtonsWithUserId(userId);
+                // Buscar el script asociado a este botón
+                const form = e.target.closest('form');
+                if (form) {
+                    const script = form.querySelector('script.epayco-button');
+                    if (script) {
+                        const currentExtra1 = script.getAttribute('data-epayco-extra1');
+                        console.log('📤 Verificando extra1 antes de enviar:', currentExtra1);
+                        
+                        if (!currentExtra1 || currentExtra1 === '') {
+                            console.warn('⚠️ extra1 vacío, reasignando userId...');
+                            script.setAttribute('data-epayco-extra1', userId);
+                            console.log('✅ Reasignado:', script.getAttribute('data-epayco-extra1'));
+                        }
+                    }
                 }
                 
+                // Mostrar modal
                 const modal = document.getElementById('paymentModal');
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
                 
-                // Ocultar modal después de 8 segundos (por si algo falla)
                 setTimeout(() => {
                     if (modal.classList.contains('flex')) {
                         modal.classList.add('hidden');
@@ -640,11 +644,10 @@
             }
         });
 
-        // Ocultar modal cuando ePayco abre su ventana (el usuario cambia de foco)
+        // Ocultar modal cuando ePayco abre su ventana
         window.addEventListener('blur', () => {
             const modal = document.getElementById('paymentModal');
             if (modal.classList.contains('flex')) {
-                // Pequeño retraso para asegurar que la ventana de ePayco ya se abrió
                 setTimeout(() => {
                     modal.classList.add('hidden');
                     modal.classList.remove('flex');
@@ -652,34 +655,28 @@
             }
         });
 
-        // Si el usuario vuelve a la página sin completar el pago, asegurar que el modal esté oculto
         window.addEventListener('focus', () => {
             const modal = document.getElementById('paymentModal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         });
 
-        // Inicializar todo cuando el DOM esté listo
+        // Inicializar
         document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🚀 Página cargada, iniciando verificación de sesión...');
-            
-            // Verificar sesión primero
+            console.log('🚀 Inicializando checkout...');
             const hasSession = await checkSession();
             
             if (hasSession) {
-                // Seleccionar paquete estándar por defecto
                 setTimeout(() => selectPackage('estandar'), 100);
             }
-        });
-
-        // Verificar si hay parámetros de error en la URL
-        window.addEventListener('load', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const errorCode = urlParams.get('cod_error');
             
-            if (errorCode) {
-                console.log('⚠️ Error en pago detectado:', errorCode);
-            }
+            // Escuchar cambios en localStorage (por si otra pestaña modifica la sesión)
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'user_id' || e.key === 'supabase_token') {
+                    console.log('🔄 Detectado cambio en localStorage, recargando...');
+                    window.location.reload();
+                }
+            });
         });
     </script>
 </body>
