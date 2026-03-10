@@ -99,9 +99,7 @@
                         <h2 class="text-3xl md:text-4xl font-extrabold text-white mb-2">¡Pago exitoso!</h2>
                         <p class="text-lg text-slate-400">Tu transacción se ha completado correctamente</p>
                     </div>
-                    <div id="successDetails" class="bg-slate-800/50 rounded-xl p-6 mb-6">
-                        <!-- Detalles se llenarán con JS -->
-                    </div>
+                    <div id="successDetails" class="bg-slate-800/50 rounded-xl p-6 mb-6"></div>
                     <div class="flex flex-col sm:flex-row gap-4">
                         <button onclick="window.location.href='perfil.html'" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 px-6 rounded-xl hover:opacity-90">Ir a mi perfil</button>
                         <button onclick="window.location.href='checkout.html'" class="flex-1 bg-slate-700 text-white font-semibold py-3 px-6 rounded-xl hover:bg-slate-600">Comprar más créditos</button>
@@ -154,13 +152,20 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA';
 
         async function checkTransaction() {
+            console.log("🔍 ===== INICIANDO VERIFICACIÓN DE TRANSACCIÓN =====");
+            
             const urlParams = new URLSearchParams(window.location.search);
             let refPayco = urlParams.get('ref_payco');
             
-            console.log("🔍 Buscando transacción:", refPayco);
+            console.log("📌 ref_payco de URL:", refPayco);
             
             const token = localStorage.getItem('supabase_token');
             const userId = localStorage.getItem('user_id');
+            
+            console.log("👤 Usuario:", { 
+                token: token ? '✅ presente' : '❌ ausente', 
+                userId: userId || '❌ ausente' 
+            });
             
             if (!token || !userId) {
                 console.log("⚠️ Usuario no autenticado");
@@ -171,16 +176,18 @@
             }
             
             try {
-                // Buscar por transaction_id específico o última del usuario
+                // Construir consulta CORRECTA
                 let query = `${SUPABASE_URL}/rest/v1/transacciones?user_id=eq.${userId}&select=*`;
                 
                 if (refPayco) {
                     query += `&transaction_id=eq.${refPayco}`;
-                    console.log("🔎 Buscando por ref_payco:", refPayco);
+                    console.log("🔎 Consulta específica:", query);
                 } else {
                     query += `&order=created_at.desc&limit=1`;
-                    console.log("🔎 Buscando última transacción del usuario");
+                    console.log("🔎 Consulta última transacción:", query);
                 }
+                
+                console.log("📡 Enviando consulta a Supabase...");
                 
                 const response = await fetch(query, {
                     headers: {
@@ -189,41 +196,88 @@
                     }
                 });
                 
+                console.log("📡 Respuesta status:", response.status);
+                
                 if (!response.ok) {
-                    throw new Error(`Error ${response.status}`);
+                    const errorText = await response.text();
+                    console.error("❌ Error respuesta:", errorText);
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
                 }
                 
                 const transacciones = await response.json();
                 console.log("📦 Transacciones encontradas:", transacciones);
                 
                 if (!transacciones || transacciones.length === 0) {
+                    console.log("⚠️ No se encontraron transacciones");
                     document.getElementById('loadingState').classList.add('hidden');
                     document.getElementById('notFoundState').classList.remove('hidden');
                     return;
                 }
                 
                 const t = transacciones[0];
+                console.log("📊 Transacción seleccionada:", t);
+                
+                // Verificar que la transacción pertenezca al usuario
+                if (t.user_id !== userId) {
+                    console.error("❌ La transacción no pertenece al usuario");
+                    document.getElementById('loadingState').classList.add('hidden');
+                    document.getElementById('errorState').classList.remove('hidden');
+                    document.getElementById('errorMessage').textContent = 'Error de seguridad: la transacción no corresponde a tu cuenta';
+                    return;
+                }
                 
                 // Mostrar según estado
                 if (t.status === 'completado') {
+                    console.log("✅ Transacción COMPLETADA");
                     document.getElementById('loadingState').classList.add('hidden');
                     document.getElementById('successState').classList.remove('hidden');
                     
+                    // Formatear fecha
+                    const fecha = new Date(t.created_at).toLocaleString('es-CO', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
                     document.getElementById('successDetails').innerHTML = `
                         <h3 class="text-xl font-bold text-white mb-4">Detalles de la transacción</h3>
-                        <div class="detail-row"><span class="text-slate-400">Referencia:</span> <span class="text-white font-semibold">${t.transaction_id}</span></div>
-                        <div class="detail-row"><span class="text-slate-400">Paquete:</span> <span class="text-white font-semibold">${t.package_type} (${t.credits_amount} créditos)</span></div>
-                        <div class="detail-row"><span class="text-slate-400">Valor pagado:</span> <span class="text-white font-semibold">$${t.amount_paid.toLocaleString('es-CO')} ${t.currency}</span></div>
-                        <div class="detail-row"><span class="text-slate-400">Método de pago:</span> <span class="text-white font-semibold">${t.payment_method || 'No especificado'}</span></div>
-                        <div class="detail-row"><span class="text-slate-400">Fecha:</span> <span class="text-white font-semibold">${new Date(t.created_at).toLocaleString('es-CO')}</span></div>
+                        <div class="detail-row">
+                            <span class="text-slate-400">Referencia:</span> 
+                            <span class="text-white font-semibold">${t.transaction_id}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="text-slate-400">Paquete:</span> 
+                            <span class="text-white font-semibold">${t.package_type} (${t.credits_amount} créditos)</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="text-slate-400">Valor pagado:</span> 
+                            <span class="text-white font-semibold">$${Number(t.amount_paid).toLocaleString('es-CO')} ${t.currency}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="text-slate-400">Método de pago:</span> 
+                            <span class="text-white font-semibold">${t.payment_method || 'No especificado'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="text-slate-400">Fecha:</span> 
+                            <span class="text-white font-semibold">${fecha}</span>
+                        </div>
                     `;
                     
                 } else if (t.status === 'rechazado') {
+                    console.log("❌ Transacción RECHAZADA");
                     document.getElementById('loadingState').classList.add('hidden');
                     document.getElementById('errorState').classList.remove('hidden');
                     document.getElementById('errorMessage').textContent = 'La transacción fue rechazada por el banco';
                     
+                } else if (t.status === 'pending') {
+                    console.log("⏳ Transacción PENDIENTE");
+                    document.getElementById('loadingState').classList.add('hidden');
+                    document.getElementById('pendingState').classList.remove('hidden');
+                    
                 } else {
+                    console.log("⚠️ Estado desconocido:", t.status);
                     document.getElementById('loadingState').classList.add('hidden');
                     document.getElementById('pendingState').classList.remove('hidden');
                 }
@@ -232,29 +286,37 @@
                 await loadUserCredits(token, userId);
                 
             } catch (error) {
-                console.error("❌ Error:", error);
+                console.error("❌ Error general:", error);
                 document.getElementById('loadingState').classList.add('hidden');
                 document.getElementById('errorState').classList.remove('hidden');
-                document.getElementById('errorMessage').textContent = 'Error al consultar la transacción';
+                document.getElementById('errorMessage').textContent = 'Error al consultar la transacción: ' + error.message;
             }
+            
+            console.log("🔍 ===== FIN VERIFICACIÓN =====\n");
         }
         
         async function loadUserCredits(token, userId) {
             try {
+                console.log("💰 Cargando créditos del usuario...");
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}&select=credits`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'apikey': SUPABASE_KEY
                     }
                 });
+                
                 if (res.ok) {
                     const users = await res.json();
                     if (users && users.length > 0) {
-                        document.getElementById('creditsDisplay').textContent = `${users[0].credits || 0} créditos`;
+                        const credits = users[0].credits || 0;
+                        document.getElementById('creditsDisplay').textContent = `${credits} créditos`;
+                        console.log("💰 Créditos actuales:", credits);
                     }
+                } else {
+                    console.log("⚠️ Error cargando créditos:", res.status);
                 }
             } catch (e) {
-                console.log("Error cargando créditos:", e);
+                console.log("❌ Error cargando créditos:", e);
             }
         }
         
