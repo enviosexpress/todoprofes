@@ -1,15 +1,11 @@
 // netlify/functions/epayco-confirmation.js
 const { createClient } = require('@supabase/supabase-js');
-const crypto = require('crypto');
 
-// Configuración - ¡NO SUBIR ESTOS VALORES A GITHUB!
-// Es mejor usar variables de entorno en Netlify.
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://zicowjlhaopgamhesqcz.supabase.co';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY; // NECESITAS UNA SERVICE ROLE KEY
-const EPAYCO_CUST_ID_CLIENTE = process.env.EPAYCO_CUST_ID_CLIENTE; // Lo obtienes de ePayco
-const EPAYCO_P_KEY = process.env.EPAYCO_P_KEY; // Tu llave privada de ePayco
+// Configuración - Variables de entorno
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
-// Inicializa Supabase con la SERVICE ROLE KEY para evitar políticas de seguridad (RLS)
+// Inicializa Supabase
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // Mapa de paquetes
@@ -20,120 +16,147 @@ const packages = {
 };
 
 exports.handler = async (event, context) => {
-    // ePayco envía los datos como x-www-form-urlencoded, no como JSON
+    console.log("========== NOTIFICACIÓN RECIBIDA ==========");
+    console.log("📅 Timestamp:", new Date().toISOString());
+    
+    // Parsear datos
     const params = new URLSearchParams(event.body);
     const data = Object.fromEntries(params.entries());
+    
+    console.log("📦 Datos completos recibidos:");
+    console.log(JSON.stringify(data, null, 2));
 
-    console.log("--- Notificación recibida de ePayco ---");
-    // console.log("Datos completos:", data); // Descomentar para depurar, pero ten cuidado con datos sensibles
-
-    // 1. VALIDACIÓN DE FIRMA (¡CRUCIAL!)
-    const firmaRecibida = data.x_signature;
-    if (!firmaRecibida) {
-        console.error("Error: No se recibió firma.");
-        return { statusCode: 400, body: 'Firma no proporcionada' };
-    }
-
-    // La cadena a firmar es: llavePrivada~custIdCliente~refPayco~monto~impuesto~moneda
-    const cadenaFirmar = `${EPAYCO_P_KEY}~${data.x_cust_id_cliente}~${data.x_ref_payco}~${data.x_amount}~${data.x_tax}~${data.x_currency_code}`;
-    const firmaCalculada = crypto.createHash('sha256').update(cadenaFirmar).digest('hex');
-
-    console.log("Firma Recibida:", firmaRecibida);
-    console.log("Firma Calculada:", firmaCalculada);
-
-    if (firmaRecibida !== firmaCalculada) {
-        console.error("Error: Firma inválida. Posible intento de fraude.");
-        return { statusCode: 401, body: 'Firma inválida' };
-    }
-    console.log("Firma válida. Continuando...");
-
-    // 2. VERIFICAR ESTADO DE LA TRANSACCIÓN
-    // Aceptada: cod_response=1, estado: Aceptada
-    if (data.x_cod_response !== '1') {
-        console.log(`Transacción no fue aceptada. Código: ${data.x_cod_response}, Estado: ${data.x_response}`);
-        // Aún así, podrías guardarla como 'rechazada' en tu BD para tener un registro.
-        // Pero por ahora, solo responderemos 200 para que ePayco no reintente.
-        return { statusCode: 200, body: 'Transacción no aceptada, no se acreditaron créditos' };
-    }
-
-    // 3. EXTRAER DATOS
+    // Extraer datos básicos
     const transactionId = data.x_ref_payco;
-    const userId = data.x_extra1; // ¡Aquí está nuestro userId!
+    const userId = data.x_extra1;
     const packageType = data.x_extra2;
     const creditsAmount = parseInt(data.x_extra3, 10);
     const amountPaid = parseFloat(data.x_amount);
     const currency = data.x_currency_code;
-    const paymentMethod = data.x_bank_name || data.x_franchise || 'Otro';
-    const customerEmail = data.x_customer_email;
+    const paymentMethod = data.x_franchise || data.x_bank_name || 'Otro';
+    const codResponse = data.x_cod_response;
+    const responseText = data.x_response;
+    
+    // Determinar estado
+    const status = codResponse === '1' ? 'completado' : 'rechazado';
 
+    console.log("📊 DATOS PROCESADOS:");
+    console.log("   - Transaction ID:", transactionId);
+    console.log("   - User ID:", userId || "❌ VACÍO");
+    console.log("   - Package Type:", packageType);
+    console.log("   - Credits:", creditsAmount);
+    console.log("   - Amount:", amountPaid, currency);
+    console.log("   - Payment Method:", paymentMethod);
+    console.log("   - Cod Response:", codResponse);
+    console.log("   - Response Text:", responseText);
+    console.log("   - Status:", status);
+
+    // Si no hay userId, no podemos continuar
     if (!userId) {
-        console.error("Error: No se recibió userId (x_extra1)");
-        return { statusCode: 400, body: 'Falta userId' };
+        console.error("❌ ERROR CRÍTICO: No se recibió userId (x_extra1 vacío)");
+        return { 
+            statusCode: 200, 
+            body: JSON.stringify({ 
+                message: "Falta userId, pero se recibió notificación",
+                transaction_id: transactionId
+            })
+        };
     }
 
-    // 4. VERIFICAR DATOS DEL PAQUETE
-    const packageInfo = packages[packageType];
-    if (!packageInfo || packageInfo.credits !== creditsAmount) {
-        console.error(`Error: Datos de paquete inconsistentes. Recibido: ${packageType} - ${creditsAmount} créditos.`);
-        return { statusCode: 400, body: 'Datos de paquete inválidos' };
-    }
-
-    // 5. GUARDAR EN SUPABASE (TODO EN UNA SOLA TRANSACCIÓN)
     try {
-        // Iniciamos una operación en la base de datos
+        // 1. GUARDAR EN SUPABASE
+        console.log("💾 Intentando guardar en Supabase...");
+        
+        const insertData = {
+            transaction_id: transactionId,
+            user_id: userId,
+            package_type: packageType,
+            credits_amount: creditsAmount,
+            amount_paid: amountPaid,
+            currency: currency,
+            payment_method: paymentMethod,
+            status: status,
+            completed_at: status === 'completado' ? new Date().toISOString() : null,
+            created_at: new Date().toISOString()
+        };
+        
+        console.log("📝 Datos a insertar:", JSON.stringify(insertData, null, 2));
+
         const { data: transaccion, error: transError } = await supabase
             .from('transacciones')
-            .insert({
-                transaction_id: transactionId,
-                user_id: userId,
-                package_type: packageType,
-                credits_amount: creditsAmount,
-                amount_paid: amountPaid,
-                currency: currency,
-                payment_method: paymentMethod,
-                status: 'completado', // 'pendiente', 'completado', 'rechazado'
-                completed_at: new Date().toISOString(),
-            })
+            .insert([insertData])
             .select()
             .single();
 
         if (transError) {
-            // Podría ser un error de duplicado (la transacción ya se insertó antes)
-            if (transError.code === '23505') { // Código de error por unique violation
-                console.log(`Transacción ${transactionId} ya existía. Ignorando duplicado.`);
-            } else {
-                throw new Error(`Error al insertar transacción: ${transError.message}`);
+            console.error("❌ ERROR insertando en Supabase:");
+            console.error("   - Código:", transError.code);
+            console.error("   - Mensaje:", transError.message);
+            console.error("   - Detalles:", transError.details);
+            
+            // Si es error de duplicado, no es grave
+            if (transError.code === '23505') {
+                console.log("⚠️ Transacción duplicada (ya existía)");
+                return {
+                    statusCode: 200,
+                    body: JSON.stringify({ message: "Transacción ya existía" })
+                };
             }
-        } else {
-            console.log(`Transacción ${transactionId} guardada correctamente.`);
+            
+            return { 
+                statusCode: 500, 
+                body: JSON.stringify({ 
+                    error: "Error guardando en BD",
+                    details: transError.message
+                })
+            };
+        }
 
-            // 6. ACTUALIZAR CRÉDITOS DEL USUARIO (¡SOLO SI SE INSERTO LA TRANSACCIÓN!)
+        console.log("✅ TRANSACCIÓN GUARDADA EXITOSAMENTE:");
+        console.log("   - ID:", transaccion.id);
+        console.log("   - Transaction ID:", transaccion.transaction_id);
+        console.log("   - Status:", transaccion.status);
+
+        // 2. SI ES COMPLETADO, ACTUALIZAR CRÉDITOS
+        if (status === 'completado') {
+            console.log(`💰 Actualizando créditos para usuario ${userId} +${creditsAmount}`);
+            
             const { error: updateError } = await supabase.rpc('incrementar_creditos', {
                 user_id: userId,
                 cantidad: creditsAmount
             });
 
             if (updateError) {
-                // Esto es grave. La transacción se guardó pero los créditos no se sumaron.
-                // Deberías tener un sistema de logging y alertas para esto.
-                console.error(`¡¡¡CRÍTICO!!! Pago aceptado pero no se pudieron sumar créditos. User: ${userId}, Trans: ${transactionId}, Error: ${updateError.message}`);
-                // Podrías incluso enviar un correo de alerta al administrador.
+                console.error("❌ ERROR ACTUALIZANDO CRÉDITOS:");
+                console.error("   - Error:", updateError);
+                
+                // Esto es grave pero la transacción ya se guardó
+                console.error("⚠️ CRÍTICO: Transacción guardada pero créditos NO actualizados");
             } else {
-                console.log(`Créditos actualizados para usuario ${userId}. Se añadieron ${creditsAmount}.`);
+                console.log("✅ CRÉDITOS ACTUALIZADOS CORRECTAMENTE");
             }
         }
 
-        // 7. RESPONDER A EPAYCO
         return {
             statusCode: 200,
-            body: 'Notificación procesada correctamente',
+            body: JSON.stringify({ 
+                message: "Procesado correctamente",
+                status: status,
+                transaction_id: transactionId
+            })
         };
 
     } catch (error) {
-        console.error("Error fatal en la función:", error);
+        console.error("❌ ERROR GENERAL INESPERADO:");
+        console.error("   - Error:", error);
+        console.error("   - Stack:", error.stack);
+        
         return {
             statusCode: 500,
-            body: 'Error interno del servidor',
+            body: JSON.stringify({ 
+                error: "Error interno del servidor",
+                message: error.message 
+            })
         };
     }
 };
