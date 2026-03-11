@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -77,6 +79,32 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        /* Fullscreen Loader */
+        .fullscreen-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .loader-spinner {
+            border: 4px solid rgba(14, 165, 233, 0.3);
+            border-top: 4px solid #0EA5E9;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
         }
         
         /* Estilos profesionales para las observaciones */
@@ -324,6 +352,9 @@
             border-radius: 0.5rem;
             transition: all 0.2s ease;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
         }
         
         .action-btn:hover {
@@ -441,9 +472,28 @@
             margin-right: 0.5rem;
             margin-bottom: 0.5rem;
         }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22C55E;
+            color: #22C55E;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body>
+    <!-- Fullscreen Loader -->
+    <div id="fullscreenLoader" class="fullscreen-loader" style="display: none;">
+        <div class="loader-spinner"></div>
+        <div class="text-sky-400 font-semibold">Generando observación con IA...</div>
+        <div class="text-slate-400 text-sm">Analizando la situación y creando recomendaciones personalizadas</div>
+    </div>
+
     <!-- Header -->
     <header class="bg-slate-950 p-4 shadow-md sticky top-0 z-50 border-b border-slate-800">
         <div class="container mx-auto flex justify-between items-center">
@@ -665,7 +715,7 @@
                     <!-- Botones de acción -->
                     <div class="flex flex-col sm:flex-row gap-4 pt-4">
                         <button type="submit" id="generateBtn" class="btn-primary flex-1 flex items-center justify-center space-x-2">
-                            <span>✨ Generar Observación</span>
+                            <span>✨ Generar Observación con IA</span>
                             <span class="text-sm opacity-75">(3 créditos)</span>
                         </button>
                         <button type="button" onclick="loadPreview()" class="btn-secondary flex items-center justify-center space-x-2 px-6">
@@ -689,6 +739,15 @@
                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                         </svg>
                     </button>
+                    <button onclick="downloadPDF()" class="action-btn" title="Descargar PDF">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </button>
                     <button onclick="downloadWord()" class="action-btn" title="Descargar como Word">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
@@ -701,6 +760,7 @@
                     </button>
                 </div>
                 <div id="result" class="result-area"></div>
+                <div id="creditsInfo" class="text-xs text-slate-500 text-right mt-2"></div>
             </div>
 
             <!-- Plantillas de observaciones -->
@@ -746,6 +806,7 @@
     <script>
         const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`
         
         let isAuthenticated = false
         let userId = null
@@ -844,6 +905,7 @@
 
                 isAuthenticated = true
                 await loadUserCredits()
+                await checkIAFunction()
                 
             } catch (error) {
                 console.error('Error verificando sesión:', error)
@@ -878,6 +940,25 @@
                 }
             } catch (error) {
                 console.error('Error cargando créditos:', error)
+            }
+        }
+
+        async function checkIAFunction() {
+            try {
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: "test",
+                        tool: "observaciones"
+                    })
+                })
+                console.log('✅ IA disponible:', response.ok)
+            } catch (error) {
+                console.warn('⚠️ IA no disponible:', error)
             }
         }
 
@@ -941,7 +1022,7 @@
         function showMessage(text, isSuccess = false) {
             const msgEl = document.getElementById('message')
             msgEl.textContent = text
-            msgEl.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`
+            msgEl.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'success-message' : 'error-message'}`
             msgEl.classList.remove('hidden')
             
             setTimeout(() => {
@@ -1036,7 +1117,7 @@
                 <div class="observacion-section">
                     <h2 class="observacion-section-title">✨ Vista previa de la observación</h2>
                     <div class="observacion-card" style="text-align: center;">
-                        <p class="text-lg mb-4">Haz clic en "Generar Observación" para obtener</p>
+                        <p class="text-lg mb-4">Haz clic en "Generar Observación con IA" para obtener</p>
                         <p class="text-sm text-slate-600 mb-4">una observación profesional personalizada con IA</p>
                         <div class="flex justify-center gap-2">
                             <span class="enfoque-tag">Basado en ${enfoques.length} enfoque(s)</span>
@@ -1057,7 +1138,7 @@
         }
 
         // ============================================================
-        // FUNCIÓN PRINCIPAL DE GENERACIÓN
+        // FUNCIÓN PRINCIPAL DE GENERACIÓN CON IA
         // ============================================================
         
         async function handleGenerate() {
@@ -1071,7 +1152,7 @@
             const observador = document.getElementById('observador').value.trim()
             const fecha = document.getElementById('fechaObservacion').value
             const descripcion = document.getElementById('descripcionObservacion').value.trim()
-            const enfoque = document.getElementById('enfoqueObservacion').value
+            const enfoqueObservacion = document.getElementById('enfoqueObservacion').value
             const longitud = document.getElementById('longitudObservacion').value
             const tipoSugerencias = document.getElementById('tipoSugerencias').value
             const incluirCompromisos = document.getElementById('incluirCompromisos').checked
@@ -1081,6 +1162,8 @@
                 showMessage('❌ Por favor completa el nombre y la descripción')
                 return
             }
+
+            document.getElementById('fullscreenLoader').style.display = 'flex'
 
             const btn = document.getElementById('generateBtn')
             const originalText = btn.innerHTML
@@ -1093,70 +1176,188 @@
                 
                 btn.innerHTML = '<span class="loader"></span><span class="ml-2">Generando observación con IA...</span>'
                 
-                // ============================================================
-                // SIMULACIÓN (reemplazar con Gemini cuando esté listo)
-                // ============================================================
-                await new Promise(resolve => setTimeout(resolve, 2000))
-                
                 const fechaFormateada = new Date(fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
                 
-                // Generar observación según el enfoque
-                let observacionTexto = ''
-                let recomendaciones = ''
+                // Crear prompt para Gemini
+                let enfoqueTexto = ''
+                switch(enfoqueObservacion) {
+                    case 'socioemocional':
+                        enfoqueTexto = 'socioemocional, destacando habilidades sociales, emociones y relaciones con pares'
+                        break
+                    case 'cognitivo':
+                        enfoqueTexto = 'cognitivo, enfocándose en procesos de pensamiento, resolución de problemas y aprendizajes'
+                        break
+                    case 'motricidad':
+                        enfoqueTexto = 'motricidad, tanto fina como gruesa, coordinación y desarrollo físico'
+                        break
+                    case 'lenguaje':
+                        enfoqueTexto = 'lenguaje y comunicación, expresión oral, vocabulario y comprensión'
+                        break
+                    default:
+                        enfoqueTexto = 'integral, considerando todos los aspectos del desarrollo'
+                }
+
+                let longitudTexto = ''
+                switch(longitud) {
+                    case 'breve':
+                        longitudTexto = 'breve (2-3 párrafos)'
+                        break
+                    case 'equilibrado':
+                        longitudTexto = 'equilibrada (4-5 párrafos)'
+                        break
+                    case 'detallado':
+                        longitudTexto = 'detallada (6-8 párrafos)'
+                        break
+                }
+
+                let sugerenciasTexto = ''
+                switch(tipoSugerencias) {
+                    case 'generales':
+                        sugerenciasTexto = 'sugerencias generales para el desarrollo'
+                        break
+                    case 'especificas':
+                        sugerenciasTexto = 'sugerencias específicas para aplicar en el aula'
+                        break
+                    case 'hogar':
+                        sugerenciasTexto = 'sugerencias para trabajar en casa con la familia'
+                        break
+                    case 'ambos':
+                        sugerenciasTexto = 'sugerencias tanto para el aula como para el hogar'
+                        break
+                }
+
+                const prompt = `Actúa como un experto en educación infantil y desarrollo pedagógico.
+
+DATOS DE LA OBSERVACIÓN:
+- Estudiante: ${nombre}
+- Edad: ${edad}
+- Observador: ${observador}
+- Fecha: ${fechaFormateada}
+- Descripción de lo observado: ${descripcion}
+- Enfoque principal: ${enfoqueTexto}
+- Longitud deseada: ${longitudTexto}
+- Tipo de sugerencias: ${sugerenciasTexto}
+- Lenguaje técnico: ${lenguajeTecnico ? 'Usar lenguaje técnico-pedagógico apropiado' : 'Usar lenguaje claro y accesible'}
+- Incluir compromisos: ${incluirCompromisos ? 'Sí' : 'No'}
+
+INSTRUCCIONES:
+1. Genera una observación pedagógica profesional basada en la descripción proporcionada
+2. Incluye un análisis pedagógico que interprete lo observado desde la perspectiva del desarrollo infantil
+3. Proporciona recomendaciones prácticas y personalizadas
+4. ${incluirCompromisos ? 'Incluye una sección de compromisos para el hogar y la escuela' : ''}
+5. Usa un tono profesional, respetuoso y constructivo
+6. Adapta el lenguaje a la edad del estudiante
+
+RESPUESTA EN FORMATO JSON:
+{
+  "observacion": {
+    "analisis": "texto del análisis pedagógico",
+    "fortalezas": ["fortaleza 1", "fortaleza 2", "fortaleza 3"],
+    "aspectos_mejorar": ["aspecto 1", "aspecto 2", "aspecto 3"],
+    "recomendaciones": [
+      {
+        "icono": "🤝",
+        "titulo": "título de la recomendación",
+        "descripcion": "descripción detallada"
+      }
+    ],
+    "compromisos": [
+      {
+        "descripcion": "descripción del compromiso"
+      }
+    ]
+  }
+}`
+
+                console.log('Llamando a función IA para observaciones')
                 
-                if (enfoque === 'socioemocional') {
-                    observacionTexto = `Durante la jornada de hoy, se observó a ${nombre} en diferentes momentos de interacción social. En el juego libre, mostró iniciativa para unirse a grupos de pares, aunque en ocasiones presentó dificultades para respetar turnos y compartir materiales. Cuando se le recordaron las normas, logró regular su comportamiento con ayuda de la docente. Se destaca su capacidad para expresar sus emociones, identificando cuando está enojado o frustrado.`
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        tool: 'observaciones',
+                        format: 'json'
+                    })
+                })
+
+                const data = await response.json()
+                console.log('Respuesta de IA:', data)
+
+                if (!response.ok) {
+                    if (data.error === 'insufficient_credits') {
+                        throw new Error(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}`)
+                    }
+                    throw new Error(data.message || 'Error al generar la observación')
+                }
+
+                // Procesar la respuesta JSON
+                let resultado = null
+                let contenidoLimpio = data.content || ''
+                
+                // Intentar extraer JSON de la respuesta
+                if (typeof contenidoLimpio === 'string') {
+                    contenidoLimpio = contenidoLimpio.trim()
                     
-                    recomendaciones = `
-                    <div class="recomendacion-item">
-                        <span class="recomendacion-icon">🤝</span>
-                        <div>
-                            <strong>Fortalecer habilidades sociales:</strong> Implementar juegos cooperativos donde se requiera compartir y trabajar en equipo.
-                        </div>
-                    </div>
-                    <div class="recomendacion-item">
-                        <span class="recomendacion-icon">🧘</span>
-                        <div>
-                            <strong>Autorregulación emocional:</strong> Practicar ejercicios de respiración y pausas activas antes de actividades que requieran espera.
-                        </div>
-                    </div>
-                    `
-                } else if (enfoque === 'cognitivo') {
-                    observacionTexto = `${nombre} demostró un notable interés y avance en las actividades cognitivas propuestas. Durante la resolución de problemas, utilizó estrategias de ensayo y error para encontrar soluciones. En la actividad de clasificación, logró agrupar objetos por color, forma y tamaño, mostrando flexibilidad para cambiar el criterio de clasificación. Su capacidad de atención se mantuvo durante 20 minutos continuos.`
+                    if (contenidoLimpio.startsWith('"') && contenidoLimpio.endsWith('"')) {
+                        try {
+                            contenidoLimpio = JSON.parse(contenidoLimpio)
+                        } catch (e) {
+                            console.log('Error al parsear comillas, continuando...')
+                        }
+                    }
                     
-                    recomendaciones = `
-                    <div class="recomendacion-item">
-                        <span class="recomendacion-icon">🧩</span>
-                        <div>
-                            <strong>Desafíos cognitivos:</strong> Proporcionar rompecabezas y juegos de memoria con nivel creciente de dificultad.
-                        </div>
-                    </div>
-                    <div class="recomendacion-item">
-                        <span class="recomendacion-icon">📚</span>
-                        <div>
-                            <strong>Pensamiento crítico:</strong> Plantear preguntas abiertas durante las actividades que inviten a la reflexión.
-                        </div>
-                    </div>
-                    `
-                } else {
-                    observacionTexto = `Se observó a ${nombre} durante las actividades de motricidad. En el área de motricidad gruesa, participó con entusiasmo en juegos de equilibrio y coordinación, logrando saltar en un pie y caminar sobre una línea. En motricidad fina, presenta avances en el trazo de líneas y figuras simples, aunque aún necesita apoyo para el agarre correcto del lápiz.`
+                    const matchJSON = contenidoLimpio.match(/\{[\s\S]*\}/)
+                    if (matchJSON) {
+                        try {
+                            resultado = JSON.parse(matchJSON[0])
+                        } catch (e) {
+                            console.error('Error parseando JSON extraído:', e)
+                        }
+                    }
                     
-                    recomendaciones = `
-                    <div class="recomendacion-item">
-                        <span class="recomendacion-icon">✍️</span>
-                        <div>
-                            <strong>Motricidad fina:</strong> Actividades de modelado con plastilina y ensartado de cuentas para fortalecer los dedos.
-                        </div>
-                    </div>
-                    <div class="recomendacion-item">
-                        <span class="recomendacion-icon">🏃</span>
-                        <div>
-                            <strong>Motricidad gruesa:</strong> Circuitos de psicomotricidad con obstáculos y juegos de equilibrio.
-                        </div>
-                    </div>
-                    `
+                    if (!resultado) {
+                        try {
+                            resultado = JSON.parse(contenidoLimpio)
+                        } catch (e) {
+                            console.error('Error parseando JSON directamente:', e)
+                        }
+                    }
+                } else if (typeof contenidoLimpio === 'object') {
+                    resultado = contenidoLimpio
                 }
                 
+                // Si no hay resultado, usar valores por defecto
+                if (!resultado || !resultado.observacion) {
+                    console.warn('No se pudo obtener JSON válido, usando valores por defecto')
+                    resultado = {
+                        observacion: {
+                            analisis: `Se observa que ${nombre} presenta un desarrollo acorde a su edad. Durante la actividad, mostró interés y participó activamente. Se destacan avances significativos en las áreas trabajadas.`,
+                            fortalezas: ['Interés y motivación', 'Participación activa', 'Creatividad'],
+                            aspectos_mejorar: ['Atención sostenida', 'Seguimiento de instrucciones', 'Trabajo en equipo'],
+                            recomendaciones: [
+                                {
+                                    icono: "🎯",
+                                    titulo: "Fortalecer atención",
+                                    descripcion: "Implementar actividades cortas y variadas que mantengan su interés."
+                                },
+                                {
+                                    icono: "🤝",
+                                    titulo: "Trabajo colaborativo",
+                                    descripcion: "Promover juegos en pareja para desarrollar habilidades sociales."
+                                }
+                            ],
+                            compromisos: [
+                                { descripcion: "Reforzar en casa las actividades trabajadas en clase" }
+                            ]
+                        }
+                    }
+                }
+
+                // Construir el HTML con los datos de la IA
                 let resultadoHTML = `
                 <div class="observacion-document theme-${currentColor} formato-${currentFormato}">
                     <div class="observacion-header">
@@ -1198,36 +1399,51 @@
                     <div class="observacion-section">
                         <h2 class="observacion-section-title">📝 Análisis pedagógico</h2>
                         <div class="observacion-card">
-                            <p class="observacion-texto">${observacionTexto}</p>
-                            <p class="observacion-destacado">${lenguajeTecnico ? 'Se evidencia un proceso de desarrollo acorde a su edad evolutiva, con fortalezas en el área socioemocional y aspectos a fortalecer en la regulación de turnos.' : 'Se nota que está aprendiendo y mejorando, especialmente en compartir con sus compañeros.'}</p>
+                            <p class="observacion-texto">${resultado.observacion.analisis}</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <div>
+                                    <p class="font-semibold text-green-600 mb-2">✅ Fortalezas observadas:</p>
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        ${resultado.observacion.fortalezas.map(f => `<li>${f}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-amber-600 mb-2">📌 Aspectos a fortalecer:</p>
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        ${resultado.observacion.aspectos_mejorar.map(a => `<li>${a}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="observacion-section">
                         <h2 class="observacion-section-title">💡 Recomendaciones</h2>
                         <div class="observacion-card">
-                            ${recomendaciones}
+                            ${resultado.observacion.recomendaciones.map(rec => `
+                            <div class="recomendacion-item">
+                                <span class="recomendacion-icon">${rec.icono}</span>
+                                <div>
+                                    <strong>${rec.titulo}:</strong> ${rec.descripcion}
+                                </div>
+                            </div>
+                            `).join('')}
                         </div>
                     </div>
                 `
                 
-                if (incluirCompromisos) {
+                if (incluirCompromisos && resultado.observacion.compromisos) {
                     resultadoHTML += `
                     <div class="observacion-section">
                         <h2 class="observacion-section-title">🤝 Compromisos</h2>
                         <div class="observacion-card">
+                            ${resultado.observacion.compromisos.map(comp => `
                             <div class="compromiso-item">
                                 <span class="compromiso-check">✓</span>
-                                <div>Reforzar en casa las normas de compartir a través de juegos familiares</div>
+                                <div>${comp.descripcion}</div>
                             </div>
-                            <div class="compromiso-item">
-                                <span class="compromiso-check">✓</span>
-                                <div>La docente mediará en situaciones de conflicto para guiar la resolución pacífica</div>
-                            </div>
-                            <div class="compromiso-item">
-                                <span class="compromiso-check">✓</span>
-                                <div>Reunión en 15 días para evaluar avances</div>
-                            </div>
+                            `).join('')}
                         </div>
                     </div>
                     `
@@ -1244,8 +1460,14 @@
                 document.getElementById('result').innerHTML = resultadoHTML
                 document.getElementById('resultContainer').classList.remove('hidden')
                 
-                showMessage('✅ Observación generada exitosamente', true)
+                if (data.credits_left !== undefined) {
+                    document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
+                    document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Restantes: ${data.credits_left}`
+                } else {
+                    await loadUserCredits()
+                }
                 
+                // Guardar en contenidos_generados
                 await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
                     method: 'POST',
                     headers: {
@@ -1257,22 +1479,119 @@
                         user_id: userId,
                         tipo: 'observacion',
                         titulo: `Observación de ${nombre}`,
-                        contenido: resultadoHTML.substring(0, 500),
+                        url_documento: '',
                         creditos_usados: 3,
-                        prompt: `Observación para ${nombre}`
+                        created_at: new Date().toISOString()
                     })
                 }).catch(err => console.log('Error guardando contenido:', err))
                 
+                showMessage('✅ Observación generada exitosamente con IA', true)
+                
             } catch (error) {
                 console.error('Error:', error)
-                if (error.message === 'Créditos insuficientes') {
+                if (error.message.includes('Créditos insuficientes')) {
                     showMessage('❌ No tienes suficientes créditos. Por favor, recarga.')
                 } else {
-                    showMessage('❌ Error al generar la observación')
+                    showMessage('❌ Error al generar la observación. Intenta de nuevo.')
                 }
             } finally {
+                document.getElementById('fullscreenLoader').style.display = 'none'
                 btn.innerHTML = originalText
                 btn.disabled = false
+            }
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA DESCARGAR PDF
+        // ============================================================
+        
+        async function downloadPDF() {
+            if (!generatedContent && document.getElementById('result').children.length === 0) {
+                showMessage('❌ No hay contenido para descargar', false)
+                return
+            }
+            
+            showMessage('📄 Generando PDF profesional...', true)
+            
+            try {
+                const resultElement = document.getElementById('result')
+                const originalHTML = resultElement.innerHTML
+                
+                const pdfContainer = document.createElement('div')
+                pdfContainer.innerHTML = originalHTML
+                
+                pdfContainer.style.width = '800px'
+                pdfContainer.style.padding = '30px'
+                pdfContainer.style.backgroundColor = 'white'
+                pdfContainer.style.fontFamily = 'Inter, Arial, sans-serif'
+                pdfContainer.style.margin = '0 auto'
+                pdfContainer.style.position = 'absolute'
+                pdfContainer.style.left = '-9999px'
+                pdfContainer.style.top = '0'
+                
+                const styles = document.querySelectorAll('style')
+                styles.forEach(style => {
+                    const styleClone = style.cloneNode(true)
+                    pdfContainer.appendChild(styleClone)
+                })
+                
+                document.body.appendChild(pdfContainer)
+                
+                await document.fonts.ready
+                
+                const canvas = await html2canvas(pdfContainer, { 
+                    scale: 2.5,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    allowTaint: true,
+                    useCORS: true,
+                    windowWidth: 800,
+                    windowHeight: pdfContainer.scrollHeight
+                })
+                
+                document.body.removeChild(pdfContainer)
+                
+                const { jsPDF } = window.jspdf
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                })
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth()
+                const pdfHeight = pdf.internal.pageSize.getHeight()
+                const imgWidth = canvas.width
+                const imgHeight = canvas.height
+                const ratio = pdfWidth / imgWidth
+                const calculatedHeight = imgHeight * ratio
+                
+                if (calculatedHeight > pdfHeight) {
+                    let heightLeft = calculatedHeight
+                    let position = 0
+                    
+                    pdf.addImage(canvas, 'PNG', 0, position, pdfWidth, calculatedHeight, undefined, 'FAST')
+                    
+                    while (heightLeft > pdfHeight) {
+                        position = position - pdfHeight
+                        pdf.addPage()
+                        pdf.addImage(canvas, 'PNG', 0, position, pdfWidth, calculatedHeight, undefined, 'FAST')
+                        heightLeft -= pdfHeight
+                    }
+                } else {
+                    const yPos = (pdfHeight - calculatedHeight) / 2
+                    pdf.addImage(canvas, 'PNG', 0, yPos, pdfWidth, calculatedHeight, undefined, 'FAST')
+                }
+                
+                const nombre = document.getElementById('nombreEstudiante').value || 'estudiante'
+                const fecha = new Date().toISOString().split('T')[0]
+                
+                pdf.save(`observacion_${nombre}_${fecha}.pdf`)
+                
+                showMessage('✅ PDF descargado', true)
+                
+            } catch (error) {
+                console.error('Error generando PDF:', error)
+                showMessage('❌ Error al generar el PDF', false)
             }
         }
 

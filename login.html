@@ -89,7 +89,7 @@
                             <polyline points="22,6 12,13 2,6"></polyline>
                         </svg>
                     </div>
-                    <input type="email" id="email" class="input-field w-full p-3 pl-10" placeholder="tu@correo.com"  required>
+                    <input type="email" id="email" class="input-field w-full p-3 pl-10" placeholder="tu@correo.com" required>
                 </div>
             </div>
 
@@ -102,12 +102,13 @@
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
                     </div>
-<input type="password" 
-       id="password" 
-       class="input-field w-full p-3 pl-10 bg-slate-800/50 border border-slate-700 rounded-lg text-white outline-none focus:ring-2 focus:ring-blue-500" 
-       placeholder="••••••••" 
-       autocomplete="new-password" 
-       required>                </div>
+                    <input type="password" 
+                           id="password" 
+                           class="input-field w-full p-3 pl-10 bg-slate-800/50 border border-slate-700 rounded-lg text-white outline-none focus:ring-2 focus:ring-blue-500" 
+                           placeholder="••••••••" 
+                           autocomplete="new-password" 
+                           required>
+                </div>
             </div>
 
             <div class="flex items-center justify-between text-sm">
@@ -115,7 +116,8 @@
                     <input type="checkbox" class="form-checkbox h-4 w-4 text-blue-500 bg-slate-700 border-slate-600 rounded">
                     <span class="ml-2">Recordarme</span>
                 </label>
-                <a href="recuperar-password.html" class="text-blue-400 hover:text-blue-300">¿Olvidaste tu contraseña?</a>
+                <!-- 👇 CORREGIDO: llama a la función que redirige -->
+                <a href="#" onclick="handleForgotPassword()" class="text-blue-400 hover:text-blue-300">¿Olvidaste tu contraseña?</a>
             </div>
 
             <button type="submit" id="loginBtn" class="btn-primary w-full text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center space-x-2">
@@ -135,13 +137,6 @@
                 <a href="register.html" class="text-blue-400 hover:text-blue-300 font-semibold">Regístrate aquí</a>
             </p>
         </div>
-
-        <!-- Demo credentials 
-        <div class="mt-6 p-4 bg-slate-800/50 rounded-lg">
-            <p class="text-xs text-slate-400 mb-2">Credenciales de prueba:</p>
-            <p class="text-xs text-slate-300">Email: demo@todoprofes.com</p>
-            <p class="text-xs text-slate-300">Contraseña: demo123</p>
-        </div> -->
     </div>
 
     <script>
@@ -157,7 +152,12 @@
             msgEl.classList.remove('hidden')
         }
 
-        // Función para iniciar sesión - CORREGIDA
+        // 👇 FUNCIÓN CORREGIDA: redirige directamente a recuperar-password.html
+        function handleForgotPassword() {
+            window.location.href = 'recuperar-password.html';
+        }
+
+        // Función para iniciar sesión
         async function handleLogin() {
             const email = document.getElementById('email').value.trim()
             const password = document.getElementById('password').value
@@ -258,15 +258,8 @@
             }
         }
 
-        // Rellenar con credenciales de demo para pruebas
         document.addEventListener('DOMContentLoaded', () => {
             checkExistingSession()
-            
-            // Si no hay email, poner demo por defecto
-           // if (!document.getElementById('email').value) {
-           //     document.getElementById('email').value = 'demo@todoprofes.com'
-           //     document.getElementById('password').value = 'demo123'
-           // }
         })
         
         lucide.createIcons()

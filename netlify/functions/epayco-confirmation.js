@@ -64,8 +64,90 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        // 1. GUARDAR EN SUPABASE
-        console.log("💾 Intentando guardar en Supabase...");
+        // 1. VERIFICAR SI LA TRANSACCIÓN YA EXISTE
+        console.log("🔍 Verificando si la transacción ya existe...");
+        
+        const { data: existingTransaction, error: checkError } = await supabase
+            .from('transacciones')
+            .select('id, status, credits_amount, user_id')
+            .eq('transaction_id', transactionId)
+            .maybeSingle();
+
+        if (checkError) {
+            console.error("❌ Error verificando existencia:", checkError);
+        }
+
+        // 2. SI YA EXISTE, MANEJAR SEGÚN EL CASO
+        if (existingTransaction) {
+            console.log("⚠️ Transacción ya existe en BD:");
+            console.log("   - ID existente:", existingTransaction.id);
+            console.log("   - Status existente:", existingTransaction.status);
+            console.log("   - Status nuevo:", status);
+            
+            // Si ya existe y está completada, no hacer nada
+            if (existingTransaction.status === 'completado') {
+                console.log("✅ Transacción ya estaba completada. Ignorando duplicado.");
+                return {
+                    statusCode: 200,
+                    body: JSON.stringify({ 
+                        message: "Transacción ya procesada (duplicado ignorado)",
+                        transaction_id: transactionId,
+                        status: existingTransaction.status
+                    })
+                };
+            }
+            
+            // Si existe pero no está completada (ej: rechazada antes), actualizamos
+            if (existingTransaction.status !== 'completado' && status === 'completado') {
+                console.log("🔄 Actualizando transacción de rechazada a completada...");
+                
+                const { error: updateError } = await supabase
+                    .from('transacciones')
+                    .update({
+                        status: 'completado',
+                        completed_at: new Date().toISOString(),
+                        payment_method: paymentMethod,
+                        amount_paid: amountPaid
+                    })
+                    .eq('id', existingTransaction.id);
+                
+                if (updateError) {
+                    console.error("❌ Error actualizando transacción:", updateError);
+                } else {
+                    console.log("✅ Transacción actualizada correctamente");
+                    
+                    // Si además hay que sumar créditos (si no se sumaron antes)
+                    if (status === 'completado') {
+                        console.log(`💰 Verificando si ya se sumaron créditos...`);
+                        
+                        // Verificar si ya se sumaron (esto es más complejo, podrías tener un campo 'credits_added')
+                        // Por ahora, asumimos que si la transacción existía pero no estaba completada, no se sumaron
+                        
+                        const { error: updateError } = await supabase.rpc('incrementar_creditos', {
+                            user_id: userId,
+                            cantidad: creditsAmount
+                        });
+
+                        if (updateError) {
+                            console.error("❌ Error actualizando créditos:", updateError);
+                        } else {
+                            console.log("✅ Créditos actualizados correctamente");
+                        }
+                    }
+                }
+            }
+            
+            return {
+                statusCode: 200,
+                body: JSON.stringify({ 
+                    message: "Transacción ya existía, procesada según corresponda",
+                    transaction_id: transactionId
+                })
+            };
+        }
+
+        // 3. SI NO EXISTE, INSERTAR NUEVA
+        console.log("💾 Transacción no existe, insertando nueva...");
         
         const insertData = {
             transaction_id: transactionId,
@@ -89,19 +171,21 @@ exports.handler = async (event, context) => {
             .single();
 
         if (transError) {
+            // Si es error de duplicado (código 23505), ya lo manejamos
+            if (transError.code === '23505') {
+                console.log("⚠️ Transacción duplicada detectada en inserción (race condition)");
+                return {
+                    statusCode: 200,
+                    body: JSON.stringify({ 
+                        message: "Transacción ya existía (race condition)",
+                        transaction_id: transactionId
+                    })
+                };
+            }
+            
             console.error("❌ ERROR insertando en Supabase:");
             console.error("   - Código:", transError.code);
             console.error("   - Mensaje:", transError.message);
-            console.error("   - Detalles:", transError.details);
-            
-            // Si es error de duplicado, no es grave
-            if (transError.code === '23505') {
-                console.log("⚠️ Transacción duplicada (ya existía)");
-                return {
-                    statusCode: 200,
-                    body: JSON.stringify({ message: "Transacción ya existía" })
-                };
-            }
             
             return { 
                 statusCode: 500, 
@@ -117,7 +201,7 @@ exports.handler = async (event, context) => {
         console.log("   - Transaction ID:", transaccion.transaction_id);
         console.log("   - Status:", transaccion.status);
 
-        // 2. SI ES COMPLETADO, ACTUALIZAR CRÉDITOS
+        // 4. SI ES COMPLETADO, ACTUALIZAR CRÉDITOS
         if (status === 'completado') {
             console.log(`💰 Actualizando créditos para usuario ${userId} +${creditsAmount}`);
             
@@ -129,9 +213,6 @@ exports.handler = async (event, context) => {
             if (updateError) {
                 console.error("❌ ERROR ACTUALIZANDO CRÉDITOS:");
                 console.error("   - Error:", updateError);
-                
-                // Esto es grave pero la transacción ya se guardó
-                console.error("⚠️ CRÍTICO: Transacción guardada pero créditos NO actualizados");
             } else {
                 console.log("✅ CRÉDITOS ACTUALIZADOS CORRECTAMENTE");
             }

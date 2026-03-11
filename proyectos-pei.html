@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -109,6 +111,32 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Fullscreen Loader */
+        .fullscreen-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .loader-spinner {
+            border: 4px solid rgba(244, 63, 94, 0.3);
+            border-top: 4px solid #F43F5E;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
         /* Estilos para PEI */
         .pei-document {
             background: white;
@@ -201,6 +229,14 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 1rem;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
         }
         
         /* Grid de componentes */
@@ -400,6 +436,9 @@
             border-radius: 0.5rem;
             transition: all 0.2s ease;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
         }
         
         .action-btn:hover {
@@ -539,9 +578,28 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #64748B;
         }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22C55E;
+            color: #22C55E;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
     </style>
 </head>
 <body>
+    <!-- Fullscreen Loader -->
+    <div id="fullscreenLoader" class="fullscreen-loader" style="display: none;">
+        <div class="loader-spinner"></div>
+        <div class="text-rose-400 font-semibold">Diseñando PEI con IA...</div>
+        <div class="text-slate-400 text-sm">Creando el Proyecto Educativo Institucional</div>
+    </div>
+
     <!-- Header -->
     <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
         <div class="container mx-auto flex justify-between items-center">
@@ -601,9 +659,9 @@
         <div class="mb-8">
             <h3 class="text-sm font-medium text-slate-400 mb-3">📄 Formato</h3>
             <div class="space-y-2">
-                <div class="format-badge selected" onclick="selectFormato('estandar')">📏 Estándar</div>
-                <div class="format-badge" onclick="selectFormato('compacto')">📐 Compacto</div>
-                <div class="format-badge" onclick="selectFormato('detallado')">📜 Detallado</div>
+                <div class="format-badge selected" onclick="selectFormato('estandar')" data-formato="estandar">📏 Estándar</div>
+                <div class="format-badge" onclick="selectFormato('compacto')" data-formato="compacto">📐 Compacto</div>
+                <div class="format-badge" onclick="selectFormato('detallado')" data-formato="detallado">📜 Detallado</div>
             </div>
         </div>
         
@@ -643,16 +701,20 @@
                     </svg>
                 </div>
                 <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Diseño de Proyectos PEI</h2>
-                <p class="text-sm md:text-base text-slate-400">Construye el Proyecto Educativo Institucional de tu centro</p>
+                <p class="text-sm md:text-base text-slate-400">Construye el Proyecto Educativo Institucional de tu centro con IA</p>
                 
                 <div class="flex flex-wrap justify-center gap-4 md:gap-8 mt-6">
                     <div class="text-center">
                         <div class="text-xl md:text-2xl font-bold text-rose-400">5</div>
-                        <div class="text-xs text-slate-500">Créditos</div>
+                        <div class="text-xs text-slate-500">Créditos por proyecto</div>
                     </div>
                     <div class="text-center">
                         <div class="text-xl md:text-2xl font-bold text-rose-400">Completo</div>
-                        <div class="text-xs text-slate-500">Documento</div>
+                        <div class="text-xs text-slate-500">Documento institucional</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-rose-400">IA</div>
+                        <div class="text-xs text-slate-500">Diseño inteligente</div>
                     </div>
                 </div>
             </div>
@@ -668,12 +730,12 @@
                     <!-- Datos principales -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-2">Nombre de la institución</label>
-                            <input type="text" id="institucion" class="input-field" placeholder="Ej: Colegio San José" value="Colegio San José">
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Nombre de la institución *</label>
+                            <input type="text" id="institucion" class="input-field" placeholder="Ej: Colegio San José" value="Colegio San José" required>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-2">Nivel educativo</label>
-                            <select id="nivel" class="input-field">
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Nivel educativo *</label>
+                            <select id="nivel" class="input-field" required>
                                 <option value="inicial">Educación Inicial</option>
                                 <option value="primaria" selected>Educación Primaria</option>
                                 <option value="secundaria">Educación Secundaria</option>
@@ -694,18 +756,18 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Misión de la institución</label>
-                        <textarea id="mision" rows="2" class="input-field" placeholder="Describir la misión...">Formar personas íntegras con excelencia académica y valores humanos.</textarea>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Misión de la institución *</label>
+                        <textarea id="mision" rows="2" class="input-field" placeholder="Describir la misión..." required>Formar personas íntegras con excelencia académica y valores humanos.</textarea>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Visión de la institución</label>
-                        <textarea id="vision" rows="2" class="input-field" placeholder="Describir la visión...">Ser reconocidos como una institución educativa líder en innovación pedagógica y formación en valores.</textarea>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Visión de la institución *</label>
+                        <textarea id="vision" rows="2" class="input-field" placeholder="Describir la visión..." required>Ser reconocidos como una institución educativa líder en innovación pedagógica y formación en valores.</textarea>
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Valores institucionales (separados por comas)</label>
-                        <input type="text" id="valores" class="input-field" placeholder="Ej: Respeto, Responsabilidad, Solidaridad" value="Respeto, Responsabilidad, Solidaridad, Honestidad">
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Valores institucionales *</label>
+                        <input type="text" id="valores" class="input-field" placeholder="Ej: Respeto, Responsabilidad, Solidaridad" value="Respeto, Responsabilidad, Solidaridad, Honestidad" required>
                     </div>
                     
                     <div>
@@ -716,7 +778,7 @@
                     <!-- Botones de acción -->
                     <div class="flex flex-col sm:flex-row gap-4 pt-4">
                         <button type="submit" id="generateBtn" class="btn-primary flex items-center justify-center space-x-2">
-                            <span>✨ Diseñar PEI</span>
+                            <span>✨ Diseñar PEI con IA</span>
                             <span class="text-sm">(5 créditos)</span>
                         </button>
                         <button type="button" onclick="loadPreview()" class="btn-secondary">Vista Previa</button>
@@ -734,6 +796,15 @@
                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                         </svg>
                     </button>
+                    <button onclick="downloadPDF()" class="action-btn" title="PDF Profesional">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </button>
                     <button onclick="downloadWord()" class="action-btn" title="Word">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
@@ -746,6 +817,7 @@
                     </button>
                 </div>
                 <div id="result" class="result-area"></div>
+                <div id="creditsInfo" class="text-xs text-slate-500 text-right mt-2"></div>
             </div>
 
             <!-- Ejemplos -->
@@ -783,6 +855,7 @@
     <script>
         const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`
 
         let isAuthenticated = false
         let userId = null
@@ -845,6 +918,7 @@
                 }).then(res => { if (!res.ok) throw new Error() })
                 isAuthenticated = true
                 await loadUserCredits()
+                await checkIAFunction()
             } catch {
                 localStorage.clear()
                 window.location.href = 'login.html'
@@ -852,44 +926,78 @@
         }
 
         async function loadUserCredits() {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
-            })
-            if (res.ok) {
-                const users = await res.json()
-                document.getElementById('creditsDisplay').textContent = `${users[0]?.credits || 0} créditos`
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                })
+                if (res.ok) {
+                    const users = await res.json()
+                    const credits = users[0]?.credits || 0
+                    document.getElementById('creditsDisplay').textContent = `${credits} créditos`
+                    
+                    const container = document.getElementById('creditsContainer')
+                    if (credits < 15) {
+                        container.classList.add('insufficient-credits')
+                    } else {
+                        container.classList.remove('insufficient-credits')
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error)
+            }
+        }
+
+        async function checkIAFunction() {
+            try {
+                await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ prompt: "test", tool: "pei" })
+                })
+                console.log('✅ IA disponible')
+            } catch (error) {
+                console.warn('⚠️ IA no disponible:', error)
             }
         }
 
         async function deductCredits(amount) {
-            const getRes = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
-            })
-            const users = await getRes.json()
-            if (!users[0] || users[0].credits < amount) throw new Error('Créditos insuficientes')
-            
-            const newCredits = users[0].credits - amount
-            await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
-                body: JSON.stringify({ credits: newCredits })
-            })
-            
-            await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
-                body: JSON.stringify({
-                    user_id: userId, amount: -amount, balance_after: newCredits,
-                    type: 'usage', description: 'Diseño de Proyectos PEI'
+            try {
+                const getRes = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
                 })
-            })
-            return newCredits
+                const users = await getRes.json()
+                if (!users[0] || users[0].credits < amount) throw new Error('Créditos insuficientes')
+                
+                const newCredits = users[0].credits - amount
+                await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({ credits: newCredits })
+                })
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({
+                        user_id: userId, amount: -amount, balance_after: newCredits,
+                        type: 'usage', description: 'Diseño de Proyectos PEI', feature_used: 'pei'
+                    })
+                }).catch(err => console.log('Error registrando historial:', err))
+                
+                return newCredits
+            } catch (error) {
+                console.error('Error descontando créditos:', error)
+                throw error
+            }
         }
 
         function showMessage(text, isSuccess = false) {
             const msg = document.getElementById('message')
             msg.textContent = text
-            msg.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`
+            msg.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'success-message' : 'error-message'}`
             msg.classList.remove('hidden')
             setTimeout(() => msg.classList.add('hidden'), 3000)
         }
@@ -899,33 +1007,39 @@
         // ============================================================
         
         async function guardarDocumentoEnStorage(contenido, titulo, tipo) {
-            const fecha = new Date().toISOString().split('T')[0]
-            const timestamp = Date.now()
-            const nombreArchivo = `${userId}/pei_${fecha}_${timestamp}.docx`
-            
-            const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
-            const formData = new FormData()
-            formData.append('file', blob, nombreArchivo.split('/').pop())
-            
-            const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
-                body: formData
-            })
-            
-            if (!uploadRes.ok) throw new Error('Error al subir')
-            
-            const url = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
-            
-            await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
-                body: JSON.stringify({
-                    user_id: userId, tipo: 'pei', titulo: titulo.substring(0, 100),
-                    url_documento: url, creditos_usados: 5, created_at: new Date().toISOString()
+            try {
+                const fecha = new Date().toISOString().split('T')[0]
+                const timestamp = Date.now()
+                const nombreArchivo = `${userId}/pei_${fecha}_${timestamp}.docx`
+                
+                const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+                const formData = new FormData()
+                formData.append('file', blob, nombreArchivo.split('/').pop())
+                
+                const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: formData
                 })
-            })
-            return url
+                
+                if (!uploadRes.ok) throw new Error('Error al subir')
+                
+                const url = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({
+                        user_id: userId, tipo: 'pei', titulo: titulo.substring(0, 100),
+                        url_documento: url, creditos_usados: 5, created_at: new Date().toISOString()
+                    })
+                }).catch(err => console.log('Error guardando referencia:', err))
+                
+                return url
+            } catch (error) {
+                console.error('Error guardando:', error)
+                return null
+            }
         }
 
         // ============================================================
@@ -976,9 +1090,10 @@
                     <h1 class="pei-title">📋 Vista Previa: ${institucion}</h1>
                 </div>
                 <div class="text-center py-8 text-slate-500">
-                    <p>Haz clic en "Diseñar PEI" para obtener el documento completo</p>
+                    <p>Haz clic en "Diseñar PEI con IA" para obtener el documento completo</p>
+                    <p class="text-sm mt-2 text-rose-500">Se usarán 5 créditos</p>
                 </div>
-                <div class="footer-note">Vista previa · 5 créditos</div>
+                <div class="footer-note">Vista previa · TodoProfes</div>
             </div>
             `
             document.getElementById('result').innerHTML = preview
@@ -987,7 +1102,7 @@
         }
 
         // ============================================================
-        // FUNCIÓN PRINCIPAL
+        // FUNCIÓN PRINCIPAL CON IA
         // ============================================================
         
         async function handleGenerate() {
@@ -1001,18 +1116,24 @@
             const vision = document.getElementById('vision').value.trim()
             const valores = document.getElementById('valores').value.trim()
             const enfoque = document.getElementById('enfoque').value.trim()
+            const nivelDetalle = document.getElementById('nivelDetalle').value
+            const incluirAnexos = document.getElementById('anexos').value === 'si'
             
-            if (!institucion) return showMessage('❌ Ingresa el nombre de la institución')
+            if (!institucion || !mision || !vision || !valores) {
+                return showMessage('❌ Completa los campos obligatorios')
+            }
             
+            document.getElementById('fullscreenLoader').style.display = 'flex'
+
             const btn = document.getElementById('generateBtn')
             const originalText = btn.innerHTML
-            btn.innerHTML = '<span class="loader"></span> Generando...'
+            btn.innerHTML = '<span class="loader"></span> Diseñando PEI...'
             btn.disabled = true
 
             try {
-                await deductCredits(5)
-                await new Promise(r => setTimeout(r, 2000))
-                
+                const newCredits = await deductCredits(5)
+                document.getElementById('creditsDisplay').textContent = `${newCredits} créditos`
+
                 const valoresList = valores.split(',').map(v => v.trim())
                 
                 const nivelTexto = {
@@ -1021,10 +1142,163 @@
                     secundaria: 'Educación Secundaria',
                     media: 'Educación Media'
                 }[nivel] || nivel
+
+                // Crear prompt para Gemini
+                let nivelTextoPrompt = ''
+                if (nivelDetalle === 'basico') {
+                    nivelTextoPrompt = 'Proporciona una estructura básica con los componentes principales del PEI.'
+                } else if (nivelDetalle === 'estandar') {
+                    nivelTextoPrompt = 'Proporciona una estructura completa con descripciones detalladas de cada componente.'
+                } else {
+                    nivelTextoPrompt = 'Proporciona un PEI muy detallado con componentes, subcomponentes, ejemplos y anexos.'
+                }
+
+                const prompt = `Actúa como un experto en gestión educativa y diseño de Proyectos Educativos Institucionales (PEI).
+
+DATOS DE LA INSTITUCIÓN:
+- Nombre: ${institucion}
+- Nivel educativo: ${nivelTexto}
+- Ubicación: ${ubicacion || 'No especificada'}
+- Año lectivo: ${anio || 'No especificado'}
+- Misión: ${mision}
+- Visión: ${vision}
+- Valores: ${valores}
+- Enfoque pedagógico: ${enfoque || 'No especificado'}
+
+INSTRUCCIONES:
+- Diseña un PEI profesional y completo
+- ${nivelTextoPrompt}
+- Incluye los siguientes componentes:
+  1. Componente Pedagógico (modelo pedagógico, currículo, evaluación)
+  2. Componente Administrativo (organización, recursos, gestión)
+  3. Componente Comunitario (participación de familias, vínculos)
+- Añade principios institucionales alineados con los valores
+- ${incluirAnexos ? 'Incluye una sección de anexos con documentos sugeridos' : ''}
+
+RESPUESTA EN FORMATO JSON:
+{
+  "pei": {
+    "componentes": [
+      {
+        "nombre": "Componente Pedagógico",
+        "icono": "📚",
+        "descripcion": "descripción general",
+        "elementos": ["elemento 1", "elemento 2", "elemento 3"]
+      },
+      {
+        "nombre": "Componente Administrativo",
+        "icono": "📊",
+        "descripcion": "descripción general",
+        "elementos": ["elemento 1", "elemento 2", "elemento 3"]
+      },
+      {
+        "nombre": "Componente Comunitario",
+        "icono": "👪",
+        "descripcion": "descripción general",
+        "elementos": ["elemento 1", "elemento 2", "elemento 3"]
+      }
+    ],
+    "principios": ["principio 1", "principio 2", "principio 3", "principio 4", "principio 5"],
+    "anexos": ["anexo 1", "anexo 2", "anexo 3", "anexo 4", "anexo 5"]
+  }
+}`
+
+                console.log('Llamando a función IA para PEI')
                 
-                const nivelDetalle = document.getElementById('nivelDetalle').value
-                const incluirAnexos = document.getElementById('anexos').value === 'si'
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        tool: 'pei',
+                        format: 'json'
+                    })
+                })
+
+                const data = await response.json()
+                console.log('Respuesta de IA:', data)
+
+                if (!response.ok) {
+                    if (data.error === 'insufficient_credits') {
+                        throw new Error(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}`)
+                    }
+                    throw new Error(data.message || 'Error al diseñar el PEI')
+                }
+
+                // Procesar la respuesta JSON
+                let resultado = null
+                let contenidoLimpio = data.content || ''
                 
+                if (typeof contenidoLimpio === 'string') {
+                    contenidoLimpio = contenidoLimpio.trim()
+                    
+                    if (contenidoLimpio.startsWith('"') && contenidoLimpio.endsWith('"')) {
+                        try {
+                            contenidoLimpio = JSON.parse(contenidoLimpio)
+                        } catch (e) {}
+                    }
+                    
+                    const matchJSON = contenidoLimpio.match(/\{[\s\S]*\}/)
+                    if (matchJSON) {
+                        try {
+                            resultado = JSON.parse(matchJSON[0])
+                        } catch (e) {}
+                    }
+                    
+                    if (!resultado) {
+                        try {
+                            resultado = JSON.parse(contenidoLimpio)
+                        } catch (e) {}
+                    }
+                } else if (typeof contenidoLimpio === 'object') {
+                    resultado = contenidoLimpio
+                }
+                
+                if (!resultado || !resultado.pei) {
+                    resultado = {
+                        pei: {
+                            componentes: [
+                                {
+                                    nombre: "Componente Pedagógico",
+                                    icono: "📚",
+                                    descripcion: "Define el modelo educativo, el currículo, las estrategias de enseñanza-aprendizaje y los criterios de evaluación.",
+                                    elementos: ["Modelo pedagógico constructivista", "Currículo flexible y contextualizado", "Evaluación formativa y continua"]
+                                },
+                                {
+                                    nombre: "Componente Administrativo",
+                                    icono: "📊",
+                                    descripcion: "Establece la organización institucional, la gestión de recursos humanos y materiales, y los procesos administrativos.",
+                                    elementos: ["Organigrama institucional", "Gestión de talento humano", "Administración de recursos"]
+                                },
+                                {
+                                    nombre: "Componente Comunitario",
+                                    icono: "👪",
+                                    descripcion: "Regula las relaciones con las familias y la comunidad, y promueve la participación en la vida escolar.",
+                                    elementos: ["Escuela de familias", "Proyectos de extensión comunitaria", "Alianzas estratégicas"]
+                                }
+                            ],
+                            principios: [
+                                "Educación integral y de calidad",
+                                "Inclusión y respeto por la diversidad",
+                                "Participación democrática",
+                                "Innovación pedagógica continua",
+                                "Compromiso con la comunidad"
+                            ],
+                            anexos: [
+                                "Reglamento interno",
+                                "Plan de estudios por nivel",
+                                "Proyectos transversales",
+                                "Plan de convivencia escolar",
+                                "Cronograma anual"
+                            ]
+                        }
+                    }
+                }
+
+                // Generar HTML profesional
                 let peiHTML = `
                 <div class="pei-document theme-${currentColor} formato-${currentFormato}">
                     <div class="pei-header">
@@ -1058,14 +1332,14 @@
                     <div class="pei-section">
                         <h2 class="section-title">🎯 Misión</h2>
                         <div class="bg-slate-50 p-4 rounded-lg">
-                            ${mision || 'Misión no especificada'}
+                            ${mision}
                         </div>
                     </div>
                     
                     <div class="pei-section">
                         <h2 class="section-title">👁️ Visión</h2>
                         <div class="bg-slate-50 p-4 rounded-lg">
-                            ${vision || 'Visión no especificada'}
+                            ${vision}
                         </div>
                     </div>
                     
@@ -1078,81 +1352,47 @@
                     
                     <h2 class="section-title">📋 Componentes del PEI</h2>
                     <div class="componentes-grid">
-                        <div class="componente-card">
-                            <div class="componente-header" style="background: ${currentColor === 'rose' ? '#F43F5E' : 
-                                                                       currentColor === 'purple' ? '#A855F7' :
-                                                                       currentColor === 'blue' ? '#3B82F6' :
-                                                                       currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
-                                Componente Pedagógico
-                            </div>
-                            <div class="componente-content">
-                                <p><strong>Enfoque:</strong> ${enfoque || 'Constructivista'}</p>
-                                <ul>
-                                    <li>Aprendizaje significativo</li>
-                                    <li>Evaluación formativa</li>
-                                    <li>Atención a la diversidad</li>
-                                </ul>
-                            </div>
+                `
+                
+                resultado.pei.componentes.forEach(componente => {
+                    peiHTML += `
+                    <div class="componente-card">
+                        <div class="componente-header" style="background: ${currentColor === 'rose' ? '#F43F5E' : 
+                                                                   currentColor === 'purple' ? '#A855F7' :
+                                                                   currentColor === 'blue' ? '#3B82F6' :
+                                                                   currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
+                            ${componente.nombre}
                         </div>
-                        
-                        <div class="componente-card">
-                            <div class="componente-header" style="background: ${currentColor === 'rose' ? '#F43F5E' : 
-                                                                       currentColor === 'purple' ? '#A855F7' :
-                                                                       currentColor === 'blue' ? '#3B82F6' :
-                                                                       currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
-                                Componente Administrativo
-                            </div>
-                            <div class="componente-content">
-                                <ul>
-                                    <li>Gestión participativa</li>
-                                    <li>Organización institucional</li>
-                                    <li>Recursos humanos</li>
-                                    <li>Infraestructura</li>
-                                </ul>
-                            </div>
-                        </div>
-                        
-                        <div class="componente-card">
-                            <div class="componente-header" style="background: ${currentColor === 'rose' ? '#F43F5E' : 
-                                                                       currentColor === 'purple' ? '#A855F7' :
-                                                                       currentColor === 'blue' ? '#3B82F6' :
-                                                                       currentColor === 'green' ? '#22C55E' : '#F59E0B'}">
-                                Componente Comunitario
-                            </div>
-                            <div class="componente-content">
-                                <ul>
-                                    <li>Participación de las familias</li>
-                                    <li>Vínculo con la comunidad</li>
-                                    <li>Proyectos de extensión</li>
-                                    <li>Alianzas estratégicas</li>
-                                </ul>
-                            </div>
+                        <div class="componente-content">
+                            <p>${componente.descripcion}</p>
+                            <ul>
+                                ${componente.elementos.map(el => `<li>${el}</li>`).join('')}
+                            </ul>
                         </div>
                     </div>
-                    
+                    `
+                })
+
+                peiHTML += `</div>`
+
+                if (resultado.pei.principios && resultado.pei.principios.length > 0) {
+                    peiHTML += `
                     <div class="pei-section">
                         <h2 class="section-title">⚖️ Principios institucionales</h2>
                         <ul class="principios-list">
-                            <li>Educación integral y de calidad</li>
-                            <li>Inclusión y respeto por la diversidad</li>
-                            <li>Participación democrática</li>
-                            <li>Innovación pedagógica continua</li>
-                            <li>Compromiso con la comunidad</li>
+                            ${resultado.pei.principios.map(p => `<li>${p}</li>`).join('')}
                         </ul>
                     </div>
-                `
+                    `
+                }
                 
-                if (nivelDetalle === 'profundo' || incluirAnexos) {
+                if (incluirAnexos && resultado.pei.anexos && resultado.pei.anexos.length > 0) {
                     peiHTML += `
                     <div class="pei-section">
                         <h2 class="section-title">📎 Anexos</h2>
                         <div class="bg-slate-50 p-4 rounded-lg">
                             <ul class="list-disc pl-5 space-y-1">
-                                <li>Reglamento interno</li>
-                                <li>Plan de estudios por nivel</li>
-                                <li>Proyectos transversales</li>
-                                <li>Plan de convivencia escolar</li>
-                                <li>Cronograma anual</li>
+                                ${resultado.pei.anexos.map(an => `<li>${an}</li>`).join('')}
                             </ul>
                         </div>
                     </div>
@@ -1161,7 +1401,7 @@
                 
                 peiHTML += `
                     <div class="footer-note">
-                        PEI diseñado por TodoProfes IA · ${new Date().toLocaleDateString('es-ES')}
+                        PEI diseñado con IA · ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                 </div>
                 `
@@ -1170,44 +1410,313 @@
                 document.getElementById('result').innerHTML = peiHTML
                 document.getElementById('resultContainer').classList.remove('hidden')
                 
+                if (data.credits_left !== undefined) {
+                    document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
+                    document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Restantes: ${data.credits_left}`
+                } else {
+                    await loadUserCredits()
+                }
+                
                 await guardarDocumentoEnStorage(peiHTML, institucion, 'pei')
-                showMessage('✅ PEI diseñado', true)
+                showMessage('✅ PEI diseñado con IA', true)
                 
             } catch (error) {
-                showMessage(error.message === 'Créditos insuficientes' ? '❌ Créditos insuficientes' : '❌ Error')
+                console.error('Error:', error)
+                
+                if (error.message.includes('Créditos insuficientes')) {
+                    showMessage('❌ Créditos insuficientes. Necesitas recargar.', false)
+                } else {
+                    // Fallback con diseño estándar
+                    const valoresList = valores.split(',').map(v => v.trim())
+                    
+                    const nivelTexto = {
+                        inicial: 'Educación Inicial',
+                        primaria: 'Educación Primaria',
+                        secundaria: 'Educación Secundaria',
+                        media: 'Educación Media'
+                    }[nivel] || nivel
+
+                    const fallbackHTML = `
+                    <div class="pei-document theme-${currentColor} formato-${currentFormato}">
+                        <div class="pei-header">
+                            <h1 class="pei-title">📚 Proyecto Educativo Institucional</h1>
+                            <div class="pei-subtitle">
+                                <span>🏫 ${institucion}</span>
+                                <span>📍 ${ubicacion || 'Ubicación no especificada'}</span>
+                                <span>📅 ${anio || 'Año lectivo'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <div class="info-label">Nivel educativo</div>
+                                <div class="info-value">${nivelTexto}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Jornada</div>
+                                <div class="info-value">Completa</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Matrícula estimada</div>
+                                <div class="info-value">400 estudiantes</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Personal</div>
+                                <div class="info-value">35 docentes</div>
+                            </div>
+                        </div>
+                        
+                        <div class="pei-section">
+                            <h2 class="section-title">🎯 Misión</h2>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                ${mision}
+                            </div>
+                        </div>
+                        
+                        <div class="pei-section">
+                            <h2 class="section-title">👁️ Visión</h2>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                ${vision}
+                            </div>
+                        </div>
+                        
+                        <div class="pei-section">
+                            <h2 class="section-title">💫 Valores institucionales</h2>
+                            <div class="valores-tags">
+                                ${valoresList.map(v => `<span class="valor-tag">${v}</span>`).join('')}
+                            </div>
+                        </div>
+                        
+                        <h2 class="section-title">📋 Componentes del PEI</h2>
+                        <div class="componentes-grid">
+                            <div class="componente-card">
+                                <div class="componente-header" style="background: #F43F5E">Componente Pedagógico</div>
+                                <div class="componente-content">
+                                    <p><strong>Enfoque:</strong> ${enfoque || 'Constructivista'}</p>
+                                    <ul>
+                                        <li>Aprendizaje significativo</li>
+                                        <li>Evaluación formativa</li>
+                                        <li>Atención a la diversidad</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="componente-card">
+                                <div class="componente-header" style="background: #F43F5E">Componente Administrativo</div>
+                                <div class="componente-content">
+                                    <ul>
+                                        <li>Gestión participativa</li>
+                                        <li>Organización institucional</li>
+                                        <li>Recursos humanos</li>
+                                        <li>Infraestructura</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="componente-card">
+                                <div class="componente-header" style="background: #F43F5E">Componente Comunitario</div>
+                                <div class="componente-content">
+                                    <ul>
+                                        <li>Participación de las familias</li>
+                                        <li>Vínculo con la comunidad</li>
+                                        <li>Proyectos de extensión</li>
+                                        <li>Alianzas estratégicas</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pei-section">
+                            <h2 class="section-title">⚖️ Principios institucionales</h2>
+                            <ul class="principios-list">
+                                <li>Educación integral y de calidad</li>
+                                <li>Inclusión y respeto por la diversidad</li>
+                                <li>Participación democrática</li>
+                                <li>Innovación pedagógica continua</li>
+                                <li>Compromiso con la comunidad</li>
+                            </ul>
+                        </div>
+                        
+                        ${incluirAnexos ? `
+                        <div class="pei-section">
+                            <h2 class="section-title">📎 Anexos</h2>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    <li>Reglamento interno</li>
+                                    <li>Plan de estudios por nivel</li>
+                                    <li>Proyectos transversales</li>
+                                    <li>Plan de convivencia escolar</li>
+                                    <li>Cronograma anual</li>
+                                </ul>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        <div class="footer-note">
+                            ⚠️ Modo offline - PEI estándar · ${new Date().toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    `
+                    
+                    document.getElementById('result').innerHTML = fallbackHTML
+                    document.getElementById('resultContainer').classList.remove('hidden')
+                    showMessage('⚠️ Modo offline - PEI estándar', false)
+                }
             } finally {
+                document.getElementById('fullscreenLoader').style.display = 'none'
                 btn.innerHTML = originalText
                 btn.disabled = false
             }
         }
 
-        // Funciones auxiliares
+        // ============================================================
+        // FUNCIÓN PARA DESCARGAR PDF
+        // ============================================================
+        
+        async function downloadPDF() {
+            if (!generatedContent && document.getElementById('result').children.length === 0) {
+                showMessage('❌ No hay contenido para descargar', false)
+                return
+            }
+            
+            showMessage('📄 Generando PDF profesional...', true)
+            
+            try {
+                const resultElement = document.getElementById('result')
+                const originalHTML = resultElement.innerHTML
+                
+                const pdfContainer = document.createElement('div')
+                pdfContainer.innerHTML = originalHTML
+                
+                pdfContainer.style.width = '800px'
+                pdfContainer.style.padding = '30px'
+                pdfContainer.style.backgroundColor = 'white'
+                pdfContainer.style.fontFamily = 'Inter, Arial, sans-serif'
+                pdfContainer.style.margin = '0 auto'
+                pdfContainer.style.position = 'absolute'
+                pdfContainer.style.left = '-9999px'
+                pdfContainer.style.top = '0'
+                
+                const styles = document.querySelectorAll('style')
+                styles.forEach(style => {
+                    const styleClone = style.cloneNode(true)
+                    pdfContainer.appendChild(styleClone)
+                })
+                
+                document.body.appendChild(pdfContainer)
+                
+                await document.fonts.ready
+                
+                const canvas = await html2canvas(pdfContainer, { 
+                    scale: 2.5,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    allowTaint: true,
+                    useCORS: true,
+                    windowWidth: 800,
+                    windowHeight: pdfContainer.scrollHeight
+                })
+                
+                document.body.removeChild(pdfContainer)
+                
+                const { jsPDF } = window.jspdf
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                })
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth()
+                const pdfHeight = pdf.internal.pageSize.getHeight()
+                const imgWidth = canvas.width
+                const imgHeight = canvas.height
+                const ratio = pdfWidth / imgWidth
+                const calculatedHeight = imgHeight * ratio
+                
+                if (calculatedHeight > pdfHeight) {
+                    let heightLeft = calculatedHeight
+                    let position = 0
+                    
+                    pdf.addImage(canvas, 'PNG', 0, position, pdfWidth, calculatedHeight, undefined, 'FAST')
+                    
+                    while (heightLeft > pdfHeight) {
+                        position = position - pdfHeight
+                        pdf.addPage()
+                        pdf.addImage(canvas, 'PNG', 0, position, pdfWidth, calculatedHeight, undefined, 'FAST')
+                        heightLeft -= pdfHeight
+                    }
+                } else {
+                    const yPos = (pdfHeight - calculatedHeight) / 2
+                    pdf.addImage(canvas, 'PNG', 0, yPos, pdfWidth, calculatedHeight, undefined, 'FAST')
+                }
+                
+                const nombre = document.getElementById('institucion').value || 'pei'
+                const fecha = new Date().toISOString().split('T')[0]
+                
+                pdf.save(`pei_${nombre.substring(0, 20)}_${fecha}.pdf`)
+                
+                showMessage('✅ PDF descargado con el diseño original', true)
+                
+            } catch (error) {
+                console.error('Error generando PDF:', error)
+                showMessage('❌ Error al generar el PDF', false)
+            }
+        }
+
         function copyToClipboard() {
             const text = document.getElementById('result').innerText
-            navigator.clipboard.writeText(text).then(() => showMessage('✅ Copiado', true))
+            navigator.clipboard.writeText(text).then(() => showMessage('✅ Copiado al portapapeles', true))
         }
 
         function downloadWord() {
-            if (!generatedContent) return showMessage('❌ No hay contenido')
+            if (!generatedContent) return showMessage('❌ No hay contenido para descargar')
             const text = document.getElementById('result').innerText
             const doc = new docx.Document({
                 sections: [{
-                    children: [new docx.Paragraph({ children: [new docx.TextRun({ text: "Proyecto Educativo Institucional", bold: true, size: 32 })] }),
-                             new docx.Paragraph({ children: [new docx.TextRun({ text: text, size: 22 })] })]
+                    children: [
+                        new docx.Paragraph({ children: [new docx.TextRun({ text: "Proyecto Educativo Institucional", bold: true, size: 32 })] }),
+                        new docx.Paragraph({ text: "" }),
+                        new docx.Paragraph({ children: [new docx.TextRun({ text: text, size: 22 })] })
+                    ]
                 }]
             })
-            docx.Packer.toBlob(doc).then(blob => saveAs(blob, "PEI_TodoProfes.docx"))
+            docx.Packer.toBlob(doc).then(blob => saveAs(blob, `PEI_TodoProfes_${new Date().toISOString().split('T')[0]}.docx`))
         }
 
         function printDocument() {
+            if (!generatedContent) return showMessage('❌ No hay contenido para imprimir')
             const w = window.open('', '_blank')
-            w.document.write(`<html><head><style>body{font-family:Inter;padding:1rem}</style></head><body>${document.getElementById('result').innerHTML}</body></html>`)
+            w.document.write(`
+                <html>
+                    <head>
+                        <title>PEI - TodoProfes</title>
+                        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                        <style>
+                            body { font-family: 'Inter', sans-serif; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+                        </style>
+                    </head>
+                    <body>${document.getElementById('result').innerHTML}</body>
+                </html>
+            `)
             w.document.close()
-            w.print()
+            setTimeout(() => {
+                w.print()
+                w.close()
+            }, 500)
         }
 
-        document.addEventListener('DOMContentLoaded', checkSession)
-        lucide.createIcons()
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession()
+            lucide.createIcons()
+            
+            document.querySelectorAll('.format-badge').forEach(el => {
+                const texto = el.textContent.toLowerCase()
+                if (texto.includes('estándar')) el.setAttribute('data-formato', 'estandar')
+                else if (texto.includes('compacto')) el.setAttribute('data-formato', 'compacto')
+                else if (texto.includes('detallado')) el.setAttribute('data-formato', 'detallado')
+            })
+        })
     </script>
 </body>
 </html>

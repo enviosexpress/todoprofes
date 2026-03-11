@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
     <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -38,7 +40,7 @@
         }
         
         /* Inputs */
-        .input-field, .form-select {
+        .input-field, .form-select, textarea.input-field {
             background-color: #1E293B;
             border: 1px solid #334155;
             color: #E2E8F0;
@@ -49,7 +51,7 @@
             font-size: 1rem;
         }
         
-        .input-field:focus, .form-select:focus {
+        .input-field:focus, .form-select:focus, textarea.input-field:focus {
             border-color: #22C55E;
             box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
             outline: none;
@@ -107,6 +109,32 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        /* Fullscreen Loader */
+        .fullscreen-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .loader-spinner {
+            border: 4px solid rgba(34, 197, 94, 0.3);
+            border-top: 4px solid #22C55E;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
         }
         
         /* Estilos para talleres */
@@ -170,6 +198,14 @@
         .theme-amber .section-title { color: #F59E0B; }
         .theme-amber .taller-header { border-bottom-color: #F59E0B; }
         .theme-amber .dia-badge { background: #F59E0B; }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #E2E8F0;
+        }
         
         /* Header del taller */
         .taller-header {
@@ -275,6 +311,7 @@
             padding: 1rem;
             color: white;
             font-weight: 600;
+            text-align: center;
         }
         
         .dia-content {
@@ -364,6 +401,9 @@
             border-radius: 0.5rem;
             transition: all 0.2s ease;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
         }
         
         .action-btn:hover {
@@ -503,9 +543,28 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #64748B;
         }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid #22C55E;
+            color: #22C55E;
+        }
+        
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #EF4444;
+            color: #EF4444;
+        }
     </style>
 </head>
 <body>
+    <!-- Fullscreen Loader -->
+    <div id="fullscreenLoader" class="fullscreen-loader" style="display: none;">
+        <div class="loader-spinner"></div>
+        <div class="text-green-400 font-semibold">Diseñando taller con IA...</div>
+        <div class="text-slate-400 text-sm">Creando actividades participativas para familias</div>
+    </div>
+
     <!-- Header -->
     <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
         <div class="container mx-auto flex justify-between items-center">
@@ -565,9 +624,9 @@
         <div class="mb-8">
             <h3 class="text-sm font-medium text-slate-400 mb-3">📄 Formato</h3>
             <div class="space-y-2">
-                <div class="format-badge selected" onclick="selectFormato('estandar')">📏 Estándar</div>
-                <div class="format-badge" onclick="selectFormato('compacto')">📐 Compacto</div>
-                <div class="format-badge" onclick="selectFormato('detallado')">📜 Detallado</div>
+                <div class="format-badge selected" onclick="selectFormato('estandar')" data-formato="estandar">📏 Estándar</div>
+                <div class="format-badge" onclick="selectFormato('compacto')" data-formato="compacto">📐 Compacto</div>
+                <div class="format-badge" onclick="selectFormato('detallado')" data-formato="detallado">📜 Detallado</div>
             </div>
         </div>
         
@@ -576,19 +635,28 @@
             <h3 class="text-sm font-medium text-slate-400 mb-3">⚙️ Preferencias</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-xs text-slate-500 mb-1">Duración del taller</label>
-                    <select id="duracion" class="input-field text-sm">
+                    <label class="block text-xs text-slate-500 mb-1">Duración del taller (horas)</label>
+                    <select id="duracionHoras" class="input-field text-sm">
                         <option value="2">2 horas</option>
-                        <option value="4">4 horas</option>
-                        <option value="8">Jornada completa</option>
+                        <option value="4" selected>4 horas (media jornada)</option>
+                        <option value="8">8 horas (jornada completa)</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-xs text-slate-500 mb-1">Nivel de interactividad</label>
                     <select id="interactividad" class="input-field text-sm">
-                        <option value="bajo">Bajo (expositivo)</option>
-                        <option value="medio" selected>Medio (participativo)</option>
-                        <option value="alto">Alto (talleres prácticos)</option>
+                        <option value="bajo">Bajo (formato expositivo)</option>
+                        <option value="medio" selected>Medio (participativo con dinámicas)</option>
+                        <option value="alto">Alto (talleres vivenciales)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-500 mb-1">Número de sesiones</label>
+                    <select id="numSesiones" class="input-field text-sm">
+                        <option value="1">1 sesión</option>
+                        <option value="2" selected>2 sesiones</option>
+                        <option value="3">3 sesiones</option>
+                        <option value="4">4 sesiones</option>
                     </select>
                 </div>
             </div>
@@ -608,16 +676,20 @@
                     </svg>
                 </div>
                 <h2 class="text-2xl md:text-3xl font-bold text-white mb-2">Diseño de Talleres para Padres</h2>
-                <p class="text-sm md:text-base text-slate-400">Crea talleres participativos para involucrar a las familias</p>
+                <p class="text-sm md:text-base text-slate-400">Crea talleres participativos para involucrar a las familias con IA</p>
                 
                 <div class="flex flex-wrap justify-center gap-4 md:gap-8 mt-6">
                     <div class="text-center">
                         <div class="text-xl md:text-2xl font-bold text-green-400">7</div>
-                        <div class="text-xs text-slate-500">Créditos</div>
+                        <div class="text-xs text-slate-500">Créditos por taller</div>
                     </div>
                     <div class="text-center">
                         <div class="text-xl md:text-2xl font-bold text-green-400">Interactivo</div>
-                        <div class="text-xs text-slate-500">Diseño</div>
+                        <div class="text-xs text-slate-500">Diseño participativo</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-xl md:text-2xl font-bold text-green-400">IA</div>
+                        <div class="text-xs text-slate-500">Diseño inteligente</div>
                     </div>
                 </div>
             </div>
@@ -633,36 +705,36 @@
                     <!-- Datos principales -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-2">Título del taller</label>
-                            <input type="text" id="titulo" class="input-field" placeholder="Ej: Crianza respetuosa" value="Crianza Respetuosa">
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Título del taller *</label>
+                            <input type="text" id="titulo" class="input-field" placeholder="Ej: Crianza respetuosa" value="Crianza Respetuosa" required>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-2">Facilitador</label>
-                            <input type="text" id="facilitador" class="input-field" placeholder="Nombre del facilitador" value="Lic. Ana Pérez">
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Facilitador *</label>
+                            <input type="text" id="facilitador" class="input-field" placeholder="Nombre del facilitador" value="Lic. Ana Pérez" required>
                         </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Objetivos del taller</label>
-                        <textarea id="objetivos" rows="3" class="input-field" placeholder="Describe los objetivos principales...">- Comprender la importancia del juego en el desarrollo infantil
-- Aprender estrategias para establecer límites con respeto
-- Fortalecer el vínculo familiar</textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-slate-300 mb-2">Temas a tratar</label>
-                        <textarea id="temas" rows="2" class="input-field" placeholder="Ej: Disciplina positiva, comunicación efectiva...">Disciplina positiva, Comunicación asertiva, Juego en familia</textarea>
                     </div>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-2">Fecha</label>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Fecha de inicio</label>
                             <input type="date" id="fecha" class="input-field" value="2025-06-15">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-slate-300 mb-2">Lugar</label>
                             <input type="text" id="lugar" class="input-field" placeholder="Salón de usos múltiples" value="Salón de usos múltiples">
                         </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Objetivos del taller *</label>
+                        <textarea id="objetivos" rows="3" class="input-field" placeholder="Describe los objetivos principales..." required>- Comprender la importancia del juego en el desarrollo infantil
+- Aprender estrategias para establecer límites con respeto
+- Fortalecer el vínculo familiar</textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Temas a tratar *</label>
+                        <textarea id="temas" rows="2" class="input-field" placeholder="Ej: Disciplina positiva, comunicación efectiva..." required>Disciplina positiva, Comunicación asertiva, Juego en familia</textarea>
                     </div>
                     
                     <div>
@@ -673,7 +745,7 @@
                     <!-- Botones de acción -->
                     <div class="flex flex-col sm:flex-row gap-4 pt-4">
                         <button type="submit" id="generateBtn" class="btn-primary flex items-center justify-center space-x-2">
-                            <span>✨ Diseñar Taller</span>
+                            <span>✨ Diseñar Taller con IA</span>
                             <span class="text-sm">(7 créditos)</span>
                         </button>
                         <button type="button" onclick="loadPreview()" class="btn-secondary">Vista Previa</button>
@@ -691,6 +763,15 @@
                             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                         </svg>
                     </button>
+                    <button onclick="downloadPDF()" class="action-btn" title="PDF Profesional">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </button>
                     <button onclick="downloadWord()" class="action-btn" title="Word">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
@@ -703,6 +784,7 @@
                     </button>
                 </div>
                 <div id="result" class="result-area"></div>
+                <div id="creditsInfo" class="text-xs text-slate-500 text-right mt-2"></div>
             </div>
 
             <!-- Ejemplos -->
@@ -740,6 +822,7 @@
     <script>
         const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`
 
         let isAuthenticated = false
         let userId = null
@@ -802,6 +885,7 @@
                 }).then(res => { if (!res.ok) throw new Error() })
                 isAuthenticated = true
                 await loadUserCredits()
+                await checkIAFunction()
             } catch {
                 localStorage.clear()
                 window.location.href = 'login.html'
@@ -809,44 +893,78 @@
         }
 
         async function loadUserCredits() {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
-            })
-            if (res.ok) {
-                const users = await res.json()
-                document.getElementById('creditsDisplay').textContent = `${users[0]?.credits || 0} créditos`
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                })
+                if (res.ok) {
+                    const users = await res.json()
+                    const credits = users[0]?.credits || 0
+                    document.getElementById('creditsDisplay').textContent = `${credits} créditos`
+                    
+                    const container = document.getElementById('creditsContainer')
+                    if (credits < 20) {
+                        container.classList.add('insufficient-credits')
+                    } else {
+                        container.classList.remove('insufficient-credits')
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error)
+            }
+        }
+
+        async function checkIAFunction() {
+            try {
+                await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ prompt: "test", tool: "talleres" })
+                })
+                console.log('✅ IA disponible')
+            } catch (error) {
+                console.warn('⚠️ IA no disponible:', error)
             }
         }
 
         async function deductCredits(amount) {
-            const getRes = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
-            })
-            const users = await getRes.json()
-            if (!users[0] || users[0].credits < amount) throw new Error('Créditos insuficientes')
-            
-            const newCredits = users[0].credits - amount
-            await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
-                body: JSON.stringify({ credits: newCredits })
-            })
-            
-            await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
-                body: JSON.stringify({
-                    user_id: userId, amount: -amount, balance_after: newCredits,
-                    type: 'usage', description: 'Diseño de Talleres'
+            try {
+                const getRes = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
                 })
-            })
-            return newCredits
+                const users = await getRes.json()
+                if (!users[0] || users[0].credits < amount) throw new Error('Créditos insuficientes')
+                
+                const newCredits = users[0].credits - amount
+                await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({ credits: newCredits })
+                })
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({
+                        user_id: userId, amount: -amount, balance_after: newCredits,
+                        type: 'usage', description: 'Diseño de Talleres para Padres', feature_used: 'talleres'
+                    })
+                }).catch(err => console.log('Error registrando historial:', err))
+                
+                return newCredits
+            } catch (error) {
+                console.error('Error descontando créditos:', error)
+                throw error
+            }
         }
 
         function showMessage(text, isSuccess = false) {
             const msg = document.getElementById('message')
             msg.textContent = text
-            msg.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`
+            msg.className = `text-center text-sm p-3 rounded-lg ${isSuccess ? 'success-message' : 'error-message'}`
             msg.classList.remove('hidden')
             setTimeout(() => msg.classList.add('hidden'), 3000)
         }
@@ -856,33 +974,39 @@
         // ============================================================
         
         async function guardarDocumentoEnStorage(contenido, titulo, tipo) {
-            const fecha = new Date().toISOString().split('T')[0]
-            const timestamp = Date.now()
-            const nombreArchivo = `${userId}/taller_${fecha}_${timestamp}.docx`
-            
-            const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
-            const formData = new FormData()
-            formData.append('file', blob, nombreArchivo.split('/').pop())
-            
-            const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
-                body: formData
-            })
-            
-            if (!uploadRes.ok) throw new Error('Error al subir')
-            
-            const url = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
-            
-            await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
-                body: JSON.stringify({
-                    user_id: userId, tipo: 'taller', titulo: titulo.substring(0, 100),
-                    url_documento: url, creditos_usados: 7, created_at: new Date().toISOString()
+            try {
+                const fecha = new Date().toISOString().split('T')[0]
+                const timestamp = Date.now()
+                const nombreArchivo = `${userId}/taller_${fecha}_${timestamp}.docx`
+                
+                const blob = new Blob([contenido], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+                const formData = new FormData()
+                formData.append('file', blob, nombreArchivo.split('/').pop())
+                
+                const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/pdf_generados/${nombreArchivo}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: formData
                 })
-            })
-            return url
+                
+                if (!uploadRes.ok) throw new Error('Error al subir')
+                
+                const url = `${SUPABASE_URL}/storage/v1/object/public/pdf_generados/${nombreArchivo}`
+                
+                await fetch(`${SUPABASE_URL}/rest/v1/contenidos_generados`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({
+                        user_id: userId, tipo: 'taller', titulo: titulo.substring(0, 100),
+                        url_documento: url, creditos_usados: 7, created_at: new Date().toISOString()
+                    })
+                }).catch(err => console.log('Error guardando referencia:', err))
+                
+                return url
+            } catch (error) {
+                console.error('Error guardando:', error)
+                return null
+            }
         }
 
         // ============================================================
@@ -925,9 +1049,10 @@
                     <h1 class="taller-title">📋 Vista Previa: ${titulo}</h1>
                 </div>
                 <div class="text-center py-8 text-slate-500">
-                    <p>Haz clic en "Diseñar Taller" para obtener el programa completo</p>
+                    <p>Haz clic en "Diseñar Taller con IA" para obtener el programa completo</p>
+                    <p class="text-sm mt-2 text-green-500">Se usarán 7 créditos</p>
                 </div>
-                <div class="footer-note">Vista previa · 7 créditos</div>
+                <div class="footer-note">Vista previa · TodoProfes</div>
             </div>
             `
             document.getElementById('result').innerHTML = preview
@@ -936,7 +1061,7 @@
         }
 
         // ============================================================
-        // FUNCIÓN PRINCIPAL
+        // FUNCIÓN PRINCIPAL CON IA
         // ============================================================
         
         async function handleGenerate() {
@@ -949,30 +1074,192 @@
             const fecha = document.getElementById('fecha').value
             const lugar = document.getElementById('lugar').value.trim()
             const materiales = document.getElementById('materiales').value.trim()
+            const duracionHoras = document.getElementById('duracionHoras').value
+            const interactividad = document.getElementById('interactividad').value
+            const numSesiones = parseInt(document.getElementById('numSesiones').value)
             
-            if (!titulo) return showMessage('❌ Ingresa un título')
+            if (!titulo || !facilitador || !objetivos || !temas) {
+                return showMessage('❌ Completa los campos obligatorios')
+            }
             
+            document.getElementById('fullscreenLoader').style.display = 'flex'
+
             const btn = document.getElementById('generateBtn')
             const originalText = btn.innerHTML
-            btn.innerHTML = '<span class="loader"></span> Generando...'
+            btn.innerHTML = '<span class="loader"></span> Diseñando taller...'
             btn.disabled = true
 
             try {
-                await deductCredits(7)
-                await new Promise(r => setTimeout(r, 2000))
-                
+                const newCredits = await deductCredits(7)
+                document.getElementById('creditsDisplay').textContent = `${newCredits} créditos`
+
                 const fechaFormateada = new Date(fecha).toLocaleDateString('es-ES', { 
                     year: 'numeric', month: 'long', day: 'numeric' 
                 })
                 
                 const materialesList = materiales.split(',').map(m => m.trim())
+
+                // Crear prompt para Gemini
+                let interactividadTexto = ''
+                if (interactividad === 'bajo') {
+                    interactividadTexto = 'formato principalmente expositivo con espacio para preguntas'
+                } else if (interactividad === 'medio') {
+                    interactividadTexto = 'formato participativo con dinámicas grupales y reflexiones compartidas'
+                } else {
+                    interactividadTexto = 'formato vivencial con actividades prácticas, role playing y trabajo en grupos'
+                }
+
+                const prompt = `Actúa como un experto en diseño de talleres para familias y educación para padres.
+
+DATOS DEL TALLER:
+- Título: ${titulo}
+- Facilitador: ${facilitador}
+- Objetivos: ${objetivos}
+- Temas a tratar: ${temas}
+- Fecha: ${fechaFormateada}
+- Lugar: ${lugar || 'Por definir'}
+- Materiales disponibles: ${materialesList.join(', ')}
+- Duración total: ${duracionHoras} horas
+- Nivel de interactividad: ${interactividadTexto}
+- Número de sesiones: ${numSesiones}
+
+INSTRUCCIONES:
+- Diseña un taller para padres profesional, participativo y pedagógicamente sólido
+- Crea una estructura detallada para cada sesión
+- Para cada sesión, incluye: nombre, duración, actividades y materiales específicos
+- Asegura que las actividades sean apropiadas para padres de familia
+- Incluye una sección de evaluación del taller
+
+RESPUESTA EN FORMATO JSON:
+{
+  "taller": {
+    "descripcion": "breve descripción del taller",
+    "sesiones": [
+      {
+        "nombre": "nombre de la sesión 1",
+        "duracion": "2 horas",
+        "actividades": [
+          {
+            "nombre": "actividad 1",
+            "descripcion": "descripción de la actividad",
+            "tiempo": "30 min",
+            "materiales": ["material 1", "material 2"]
+          }
+        ]
+      }
+    ],
+    "evaluacion": "descripción de cómo se evaluará el taller",
+    "recomendaciones": ["recomendación 1", "recomendación 2", "recomendación 3"]
+  }
+}`
+
+                console.log('Llamando a función IA para talleres')
                 
-                const tallerHTML = `
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        tool: 'talleres',
+                        format: 'json'
+                    })
+                })
+
+                const data = await response.json()
+                console.log('Respuesta de IA:', data)
+
+                if (!response.ok) {
+                    if (data.error === 'insufficient_credits') {
+                        throw new Error(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}`)
+                    }
+                    throw new Error(data.message || 'Error al diseñar el taller')
+                }
+
+                // Procesar la respuesta JSON
+                let resultado = null
+                let contenidoLimpio = data.content || ''
+                
+                if (typeof contenidoLimpio === 'string') {
+                    contenidoLimpio = contenidoLimpio.trim()
+                    
+                    if (contenidoLimpio.startsWith('"') && contenidoLimpio.endsWith('"')) {
+                        try {
+                            contenidoLimpio = JSON.parse(contenidoLimpio)
+                        } catch (e) {}
+                    }
+                    
+                    const matchJSON = contenidoLimpio.match(/\{[\s\S]*\}/)
+                    if (matchJSON) {
+                        try {
+                            resultado = JSON.parse(matchJSON[0])
+                        } catch (e) {}
+                    }
+                    
+                    if (!resultado) {
+                        try {
+                            resultado = JSON.parse(contenidoLimpio)
+                        } catch (e) {}
+                    }
+                } else if (typeof contenidoLimpio === 'object') {
+                    resultado = contenidoLimpio
+                }
+                
+                if (!resultado || !resultado.taller) {
+                    resultado = {
+                        taller: {
+                            descripcion: `Taller diseñado para abordar ${temas} de manera participativa y práctica.`,
+                            sesiones: [
+                                {
+                                    nombre: "Sesión 1: Introducción",
+                                    duracion: "2 horas",
+                                    actividades: [
+                                        {
+                                            nombre: "Bienvenida y presentación",
+                                            descripcion: "Presentación del facilitador y los participantes. Dinámica de presentación.",
+                                            tiempo: "30 min",
+                                            materiales: ["Tarjetas", "Marcadores"]
+                                        },
+                                        {
+                                            nombre: "Expectativas del taller",
+                                            descripcion: "Los participantes comparten sus expectativas y se construyen acuerdos.",
+                                            tiempo: "30 min",
+                                            materiales: ["Post-its", "Papelógrafo"]
+                                        },
+                                        {
+                                            nombre: "Desarrollo del tema principal",
+                                            descripcion: "Exposición participativa del tema central del taller.",
+                                            tiempo: "45 min",
+                                            materiales: ["Presentación", "Proyector"]
+                                        },
+                                        {
+                                            nombre: "Cierre y reflexión",
+                                            descripcion: "Puesta en común y cierre de la sesión.",
+                                            tiempo: "15 min",
+                                            materiales: []
+                                        }
+                                    ]
+                                }
+                            ],
+                            evaluacion: "Se aplicará una encuesta de satisfacción al finalizar cada sesión. Se recogerán testimonios y reflexiones de los participantes.",
+                            recomendaciones: [
+                                "Preparar el espacio con anticipación, asegurando la disposición circular de sillas",
+                                "Tener materiales extras por si se requieren",
+                                "Enviar recordatorio a los participantes un día antes del taller"
+                            ]
+                        }
+                    }
+                }
+
+                // Generar HTML profesional
+                let tallerHTML = `
                 <div class="taller-document theme-${currentColor} formato-${currentFormato}">
                     <div class="taller-header">
                         <h1 class="taller-title">🎯 ${titulo}</h1>
                         <div class="taller-subtitle">
-                            <span>👥 Facilitador: ${facilitador || 'Por definir'}</span>
+                            <span>👥 Facilitador: ${facilitador}</span>
                             <span>📅 ${fechaFormateada}</span>
                             <span>📍 ${lugar || 'Por definir'}</span>
                         </div>
@@ -980,97 +1267,106 @@
                     
                     <div class="info-grid">
                         <div class="info-card">
-                            <div class="label">Duración</div>
-                            <div class="value">${document.getElementById('duracion').value} horas</div>
+                            <div class="label">Duración total</div>
+                            <div class="value">${duracionHoras} horas</div>
+                        </div>
+                        <div class="info-card">
+                            <div class="label">Sesiones</div>
+                            <div class="value">${numSesiones} sesiones</div>
                         </div>
                         <div class="info-card">
                             <div class="label">Participantes</div>
                             <div class="value">20-25 padres</div>
                         </div>
                         <div class="info-card">
-                            <div class="label">Modalidad</div>
-                            <div class="value">Presencial</div>
-                        </div>
-                        <div class="info-card">
                             <div class="label">Interactividad</div>
-                            <div class="value">${document.getElementById('interactividad').value}</div>
+                            <div class="value">${interactividad === 'bajo' ? 'Expositivo' : interactividad === 'medio' ? 'Participativo' : 'Vivencial'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="taller-section">
+                        <h2 class="section-title">📝 Descripción</h2>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            ${resultado.taller.descripcion}
                         </div>
                     </div>
                     
                     <div class="taller-section">
                         <h2 class="section-title">🎯 Objetivos</h2>
                         <div class="bg-slate-50 p-4 rounded-lg whitespace-pre-line">
-                            ${objetivos || 'Objetivos no especificados'}
+                            ${objetivos}
                         </div>
                     </div>
                     
                     <div class="taller-section">
                         <h2 class="section-title">📚 Temas a tratar</h2>
                         <div class="bg-slate-50 p-4 rounded-lg">
-                            ${temas || 'Temas no especificados'}
+                            ${temas}
                         </div>
                     </div>
                     
                     <h2 class="section-title">📅 Agenda del taller</h2>
                     <div class="dias-grid">
-                        <div class="dia-card">
-                            <div class="dia-header" style="background: ${currentColor === 'green' ? '#22C55E' : 
+                `
+                
+                resultado.taller.sesiones.forEach((sesion, index) => {
+                    tallerHTML += `
+                    <div class="dia-card">
+                        <div class="dia-header" style="background: ${currentColor === 'green' ? '#22C55E' : 
                                                                    currentColor === 'purple' ? '#A855F7' :
                                                                    currentColor === 'blue' ? '#3B82F6' :
                                                                    currentColor === 'orange' ? '#F97316' : '#F59E0B'}">
-                                Sesión 1: Introducción
-                            </div>
-                            <div class="dia-content">
-                                <p><strong>⏰ Duración:</strong> 45 min</p>
-                                <p><strong>📝 Actividades:</strong> Presentación, encuadre, expectativas</p>
-                                <p><strong>💡 Dinámica:</strong> Rompehielo grupal</p>
-                            </div>
+                            ${sesion.nombre} (${sesion.duracion})
                         </div>
-                        <div class="dia-card">
-                            <div class="dia-header" style="background: ${currentColor === 'green' ? '#22C55E' : 
-                                                                   currentColor === 'purple' ? '#A855F7' :
-                                                                   currentColor === 'blue' ? '#3B82F6' :
-                                                                   currentColor === 'orange' ? '#F97316' : '#F59E0B'}">
-                                Sesión 2: Desarrollo
-                            </div>
-                            <div class="dia-content">
-                                <p><strong>⏰ Duración:</strong> 60 min</p>
-                                <p><strong>📝 Actividades:</strong> Exposición de conceptos clave</p>
-                                <p><strong>💡 Dinámica:</strong> Trabajo en grupos</p>
-                            </div>
-                        </div>
-                        <div class="dia-card">
-                            <div class="dia-header" style="background: ${currentColor === 'green' ? '#22C55E' : 
-                                                                   currentColor === 'purple' ? '#A855F7' :
-                                                                   currentColor === 'blue' ? '#3B82F6' :
-                                                                   currentColor === 'orange' ? '#F97316' : '#F59E0B'}">
-                                Sesión 3: Práctica
-                            </div>
-                            <div class="dia-content">
-                                <p><strong>⏰ Duración:</strong> 45 min</p>
-                                <p><strong>📝 Actividades:</strong> Ejercicios prácticos</p>
-                                <p><strong>💡 Dinámica:</strong> Role playing</p>
-                            </div>
-                        </div>
-                    </div>
+                        <div class="dia-content">
+                    `
                     
+                    sesion.actividades.forEach(act => {
+                        tallerHTML += `
+                            <div class="mb-4">
+                                <p><strong>${act.nombre}</strong> (${act.tiempo})</p>
+                                <p class="text-sm mt-1">${act.descripcion}</p>
+                                ${act.materiales && act.materiales.length > 0 ? `
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    ${act.materiales.map(mat => `<span class="material-tag">${mat}</span>`).join('')}
+                                </div>
+                                ` : ''}
+                            </div>
+                        `
+                    })
+                    
+                    tallerHTML += `</div></div>`
+                })
+
+                tallerHTML += `</div>`
+                
+                tallerHTML += `
                     <div class="taller-section">
                         <h2 class="section-title">📦 Materiales necesarios</h2>
                         <div class="materiales-list">
                             ${materialesList.map(m => `<span class="material-tag">${m}</span>`).join('')}
+                            ${resultado.taller.sesiones.flatMap(s => s.actividades.flatMap(a => a.materiales || [])).filter((v,i,a)=>a.indexOf(v)===i).map(m => `<span class="material-tag">${m}</span>`).join('')}
                         </div>
                     </div>
                     
                     <div class="taller-section">
                         <h2 class="section-title">📝 Evaluación</h2>
                         <div class="bg-slate-50 p-4 rounded-lg">
-                            <p>Se aplicará una encuesta de satisfacción al finalizar el taller.</p>
-                            <p class="mt-2">Se entregará constancia de participación.</p>
+                            ${resultado.taller.evaluacion}
+                        </div>
+                    </div>
+                    
+                    <div class="taller-section">
+                        <h2 class="section-title">💡 Recomendaciones</h2>
+                        <div class="bg-slate-50 p-4 rounded-lg">
+                            <ul class="list-disc pl-5 space-y-1">
+                                ${resultado.taller.recomendaciones.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
                         </div>
                     </div>
                     
                     <div class="footer-note">
-                        Taller diseñado por TodoProfes IA · ${new Date().toLocaleDateString('es-ES')}
+                        Taller diseñado con IA · ${new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </div>
                 </div>
                 `
@@ -1079,44 +1375,281 @@
                 document.getElementById('result').innerHTML = tallerHTML
                 document.getElementById('resultContainer').classList.remove('hidden')
                 
+                if (data.credits_left !== undefined) {
+                    document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
+                    document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Restantes: ${data.credits_left}`
+                } else {
+                    await loadUserCredits()
+                }
+                
                 await guardarDocumentoEnStorage(tallerHTML, titulo, 'taller')
-                showMessage('✅ Taller diseñado', true)
+                showMessage('✅ Taller diseñado con IA', true)
                 
             } catch (error) {
-                showMessage(error.message === 'Créditos insuficientes' ? '❌ Créditos insuficientes' : '❌ Error')
+                console.error('Error:', error)
+                
+                if (error.message.includes('Créditos insuficientes')) {
+                    showMessage('❌ Créditos insuficientes. Necesitas recargar.', false)
+                } else {
+                    // Fallback con diseño estándar
+                    const fechaFormateada = new Date(fecha).toLocaleDateString('es-ES', { 
+                        year: 'numeric', month: 'long', day: 'numeric' 
+                    })
+                    
+                    const materialesList = materiales.split(',').map(m => m.trim())
+                    
+                    const fallbackHTML = `
+                    <div class="taller-document theme-${currentColor} formato-${currentFormato}">
+                        <div class="taller-header">
+                            <h1 class="taller-title">🎯 ${titulo}</h1>
+                            <div class="taller-subtitle">
+                                <span>👥 Facilitador: ${facilitador}</span>
+                                <span>📅 ${fechaFormateada}</span>
+                                <span>📍 ${lugar || 'Por definir'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <div class="label">Duración total</div>
+                                <div class="value">${duracionHoras} horas</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="label">Sesiones</div>
+                                <div class="value">${numSesiones} sesiones</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="label">Participantes</div>
+                                <div class="value">20-25 padres</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="label">Interactividad</div>
+                                <div class="value">${interactividad === 'bajo' ? 'Expositivo' : interactividad === 'medio' ? 'Participativo' : 'Vivencial'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="taller-section">
+                            <h2 class="section-title">🎯 Objetivos</h2>
+                            <div class="bg-slate-50 p-4 rounded-lg whitespace-pre-line">
+                                ${objetivos}
+                            </div>
+                        </div>
+                        
+                        <div class="taller-section">
+                            <h2 class="section-title">📚 Temas a tratar</h2>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                ${temas}
+                            </div>
+                        </div>
+                        
+                        <h2 class="section-title">📅 Agenda del taller</h2>
+                        <div class="dias-grid">
+                            <div class="dia-card">
+                                <div class="dia-header" style="background: #22C55E">Sesión 1: Introducción</div>
+                                <div class="dia-content">
+                                    <p><strong>⏰ Duración:</strong> 45 min</p>
+                                    <p><strong>📝 Actividades:</strong> Presentación, encuadre, expectativas</p>
+                                    <p><strong>💡 Dinámica:</strong> Rompehielo grupal</p>
+                                </div>
+                            </div>
+                            <div class="dia-card">
+                                <div class="dia-header" style="background: #22C55E">Sesión 2: Desarrollo</div>
+                                <div class="dia-content">
+                                    <p><strong>⏰ Duración:</strong> 60 min</p>
+                                    <p><strong>📝 Actividades:</strong> Exposición de conceptos clave</p>
+                                    <p><strong>💡 Dinámica:</strong> Trabajo en grupos</p>
+                                </div>
+                            </div>
+                            <div class="dia-card">
+                                <div class="dia-header" style="background: #22C55E">Sesión 3: Práctica</div>
+                                <div class="dia-content">
+                                    <p><strong>⏰ Duración:</strong> 45 min</p>
+                                    <p><strong>📝 Actividades:</strong> Ejercicios prácticos</p>
+                                    <p><strong>💡 Dinámica:</strong> Role playing</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="taller-section">
+                            <h2 class="section-title">📦 Materiales necesarios</h2>
+                            <div class="materiales-list">
+                                ${materialesList.map(m => `<span class="material-tag">${m}</span>`).join('')}
+                            </div>
+                        </div>
+                        
+                        <div class="taller-section">
+                            <h2 class="section-title">📝 Evaluación</h2>
+                            <div class="bg-slate-50 p-4 rounded-lg">
+                                <p>Se aplicará una encuesta de satisfacción al finalizar el taller.</p>
+                                <p class="mt-2">Se entregará constancia de participación.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="footer-note">
+                            ⚠️ Modo offline - Taller estándar · ${new Date().toLocaleDateString('es-ES')}
+                        </div>
+                    </div>
+                    `
+                    
+                    document.getElementById('result').innerHTML = fallbackHTML
+                    document.getElementById('resultContainer').classList.remove('hidden')
+                    showMessage('⚠️ Modo offline - Taller estándar', false)
+                }
             } finally {
+                document.getElementById('fullscreenLoader').style.display = 'none'
                 btn.innerHTML = originalText
                 btn.disabled = false
             }
         }
 
-        // Funciones auxiliares
+        // ============================================================
+        // FUNCIÓN PARA DESCARGAR PDF
+        // ============================================================
+        
+        async function downloadPDF() {
+            if (!generatedContent && document.getElementById('result').children.length === 0) {
+                showMessage('❌ No hay contenido para descargar', false)
+                return
+            }
+            
+            showMessage('📄 Generando PDF profesional...', true)
+            
+            try {
+                const resultElement = document.getElementById('result')
+                const originalHTML = resultElement.innerHTML
+                
+                const pdfContainer = document.createElement('div')
+                pdfContainer.innerHTML = originalHTML
+                
+                pdfContainer.style.width = '800px'
+                pdfContainer.style.padding = '30px'
+                pdfContainer.style.backgroundColor = 'white'
+                pdfContainer.style.fontFamily = 'Inter, Arial, sans-serif'
+                pdfContainer.style.margin = '0 auto'
+                pdfContainer.style.position = 'absolute'
+                pdfContainer.style.left = '-9999px'
+                pdfContainer.style.top = '0'
+                
+                const styles = document.querySelectorAll('style')
+                styles.forEach(style => {
+                    const styleClone = style.cloneNode(true)
+                    pdfContainer.appendChild(styleClone)
+                })
+                
+                document.body.appendChild(pdfContainer)
+                
+                await document.fonts.ready
+                
+                const canvas = await html2canvas(pdfContainer, { 
+                    scale: 2.5,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    allowTaint: true,
+                    useCORS: true,
+                    windowWidth: 800,
+                    windowHeight: pdfContainer.scrollHeight
+                })
+                
+                document.body.removeChild(pdfContainer)
+                
+                const { jsPDF } = window.jspdf
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                })
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth()
+                const pdfHeight = pdf.internal.pageSize.getHeight()
+                const imgWidth = canvas.width
+                const imgHeight = canvas.height
+                const ratio = pdfWidth / imgWidth
+                const calculatedHeight = imgHeight * ratio
+                
+                if (calculatedHeight > pdfHeight) {
+                    let heightLeft = calculatedHeight
+                    let position = 0
+                    
+                    pdf.addImage(canvas, 'PNG', 0, position, pdfWidth, calculatedHeight, undefined, 'FAST')
+                    
+                    while (heightLeft > pdfHeight) {
+                        position = position - pdfHeight
+                        pdf.addPage()
+                        pdf.addImage(canvas, 'PNG', 0, position, pdfWidth, calculatedHeight, undefined, 'FAST')
+                        heightLeft -= pdfHeight
+                    }
+                } else {
+                    const yPos = (pdfHeight - calculatedHeight) / 2
+                    pdf.addImage(canvas, 'PNG', 0, yPos, pdfWidth, calculatedHeight, undefined, 'FAST')
+                }
+                
+                const nombre = document.getElementById('titulo').value || 'taller'
+                const fecha = new Date().toISOString().split('T')[0]
+                
+                pdf.save(`taller_${nombre.substring(0, 20)}_${fecha}.pdf`)
+                
+                showMessage('✅ PDF descargado con el diseño original', true)
+                
+            } catch (error) {
+                console.error('Error generando PDF:', error)
+                showMessage('❌ Error al generar el PDF', false)
+            }
+        }
+
         function copyToClipboard() {
             const text = document.getElementById('result').innerText
-            navigator.clipboard.writeText(text).then(() => showMessage('✅ Copiado', true))
+            navigator.clipboard.writeText(text).then(() => showMessage('✅ Copiado al portapapeles', true))
         }
 
         function downloadWord() {
-            if (!generatedContent) return showMessage('❌ No hay contenido')
+            if (!generatedContent) return showMessage('❌ No hay contenido para descargar')
             const text = document.getElementById('result').innerText
             const doc = new docx.Document({
                 sections: [{
-                    children: [new docx.Paragraph({ children: [new docx.TextRun({ text: "Taller para Padres", bold: true, size: 32 })] }),
-                             new docx.Paragraph({ children: [new docx.TextRun({ text: text, size: 22 })] })]
+                    children: [
+                        new docx.Paragraph({ children: [new docx.TextRun({ text: "Taller para Padres", bold: true, size: 32 })] }),
+                        new docx.Paragraph({ text: "" }),
+                        new docx.Paragraph({ children: [new docx.TextRun({ text: text, size: 22 })] })
+                    ]
                 }]
             })
-            docx.Packer.toBlob(doc).then(blob => saveAs(blob, "Taller_TodoProfes.docx"))
+            docx.Packer.toBlob(doc).then(blob => saveAs(blob, `Taller_TodoProfes_${new Date().toISOString().split('T')[0]}.docx`))
         }
 
         function printDocument() {
+            if (!generatedContent) return showMessage('❌ No hay contenido para imprimir')
             const w = window.open('', '_blank')
-            w.document.write(`<html><head><style>body{font-family:Inter;padding:1rem}</style></head><body>${document.getElementById('result').innerHTML}</body></html>`)
+            w.document.write(`
+                <html>
+                    <head>
+                        <title>Taller para Padres - TodoProfes</title>
+                        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+                        <style>
+                            body { font-family: 'Inter', sans-serif; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+                        </style>
+                    </head>
+                    <body>${document.getElementById('result').innerHTML}</body>
+                </html>
+            `)
             w.document.close()
-            w.print()
+            setTimeout(() => {
+                w.print()
+                w.close()
+            }, 500)
         }
 
-        document.addEventListener('DOMContentLoaded', checkSession)
-        lucide.createIcons()
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', async () => {
+            await checkSession()
+            lucide.createIcons()
+            
+            document.querySelectorAll('.format-badge').forEach(el => {
+                const texto = el.textContent.toLowerCase()
+                if (texto.includes('estándar')) el.setAttribute('data-formato', 'estandar')
+                else if (texto.includes('compacto')) el.setAttribute('data-formato', 'compacto')
+                else if (texto.includes('detallado')) el.setAttribute('data-formato', 'detallado')
+            })
+        })
     </script>
 </body>
 </html>
