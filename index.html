@@ -1006,7 +1006,40 @@
         <p class="text-sm text-slate-400">&copy; 2025 TodoProfes - Transformando la educación con IA</p>
     </footer>
 
-   // ============================================================
+    <!-- Chatbot -->
+    <div class="robot-chat-container">
+        <div class="tooltip">¿Necesitas ayuda?</div>
+        <div id="chatBubble" class="chat-bubble" style="display: none;"></div>
+        <div id="robotBtn" class="robot-btn pulse"><img src="https://i.postimg.cc/Kz10ccv3/Imagen-de-Whats-App-2025-05-29-a-las-09-07-24-7803db55-removebg-preview.png" alt="Robot Chat"></div>
+    </div>
+
+    <div id="chatModal" class="chat-modal">
+        <div class="chat-header">
+            <h3><img src="https://i.postimg.cc/Kz10ccv3/Imagen-de-Whats-App-2025-05-29-a-las-09-07-24-7803db55-removebg-preview.png" alt="Robot" style="width: 30px; height: 30px; border-radius: 50%;"> Asistente TodoProfes</h3>
+            <button class="close-chat" onclick="toggleChat(false)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input-container">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Escribe tu pregunta..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <button class="send-btn" onclick="sendMessage()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // CONFIGURACIÓN
+        // ============================================================
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA';
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`;
+
+        let isAuthenticated = false;
+        let userId = null;
+        let token = null;
+        let chatInitialized = false;
+        let mensajesEnviados = 0;
+
+        // ============================================================
         // PROMPT MAESTRO BLINDADO Y DINÁMICO (ADRIAN)
         // ============================================================
         const TODOPROFES_CONTEXT = `
@@ -1344,26 +1377,35 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
             }
         }, 3000);
 
-        window.toggleChat = function(show) {
-            if (show) {
-                chatModal.style.display = 'flex';
-                if (!chatInitialized) {
-                    addBotMessage(formatearMensajeBot(
-                        "🤖 **¡Hola! Soy TodoProfes AI, tu asesor pedagógico personal.**\n\n" +
-                        "Puedo ayudarte a:\n" +
-                        "• Crear planeaciones y documentos educativos\n" +
-                        "• Explicar cómo funcionan las herramientas\n" +
-                        "• Recomendarte la mejor herramienta para tu necesidad\n" +
-                        "• Informarte sobre créditos y planes\n\n" +
-                        "✨ **¿En qué puedo ayudarte hoy?**"
-                    ));
-                    chatInitialized = true;
-                }
-                if (notificationBadge) notificationBadge.style.display = 'none';
-            } else {
-                chatModal.style.display = 'none';
-            }
-        };
+        // ============================================================
+// NUEVA FUNCIÓN TOGGLECHAT (ADRIAN)
+// ============================================================
+window.toggleChat = function(show) {
+    if (show) {
+        chatModal.style.display = 'flex';
+        if (!chatInitialized) {
+            // --- NUEVO MENSAJE DE BIENVENIDA (ADRIAN) ---
+            const welcomeMessage = `
+¡Hola! Soy **adrIAn**, tu asesor de TodoProfes. ⚡
+
+Puedo informarte sobre:
+• ¿Qué hace cada herramienta?
+• ¿Cuántos créditos cuesta cada una?
+• Precios y planes de créditos.
+
+¿Qué duda tienes sobre la plataforma?
+`;
+            // Se usa welcomeMessage en lugar de la cadena original
+            addBotMessage(formatearMensajeBot(welcomeMessage));
+            // --------------------------------------------
+
+            chatInitialized = true;
+        }
+        if (notificationBadge) notificationBadge.style.display = 'none';
+    } else {
+        chatModal.style.display = 'none';
+    }
+};
 
         if (robotBtn) {
             robotBtn.addEventListener('click', () => {
