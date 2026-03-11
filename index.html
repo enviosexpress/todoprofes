@@ -6,8 +6,9 @@
     <title>TodoProfes - Plataforma Inteligente para Educadores</title>
     <link rel="icon" href="https://i.postimg.cc/tCd6mnpB/Imagen-de-Whats-App-2025-05-29-a-las-19-52-44-fe5c1d3f-removebg-preview.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -21,19 +22,25 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
         }
         .feature-card:hover {
             transform: translateY(-5px);
             border-color: #3B82F6;
-            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 20px 30px -5px rgba(59, 130, 246, 0.3);
         }
         .credit-badge {
-            background: rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.4);
             backdrop-filter: blur(5px);
             border: 1px solid rgba(255,255,255,0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
         }
         .header-glass {
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.9);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
@@ -42,24 +49,430 @@
             transform-origin: top right;
             min-width: 180px;
         }
-        .loader {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3B82F6;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
+        
+        /* ============================================================ */
+        /* ESTILOS DEL REGALO SORPRESA (aparece y desaparece) */
+        /* ============================================================ */
+        .gift-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.5s ease forwards;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        .gift-container {
+            text-align: center;
+            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-width: 95%;
+            padding: 1rem;
+            width: 100%;
+        }
+        
+        .gift-box {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .gift-box img {
+            width: min(80vw, 450px);
+            height: auto;
+            max-width: 100%;
+            filter: drop-shadow(0 20px 30px rgba(59, 130, 246, 0.5));
+            animation: float 3s ease-in-out infinite, pulse-gift 2s ease-in-out infinite;
+        }
+        
+        .gift-box:hover img {
+            transform: scale(1.1) rotate(3deg);
+        }
+        
+        .gift-message {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            padding: 1.5rem 2.5rem;
+            border-radius: 60px;
+            color: white;
+            font-weight: 800;
+            font-size: clamp(1.5rem, 8vw, 2.5rem);
+            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4);
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            animation: glow 2s ease-in-out infinite;
+            margin-top: 1rem;
+            letter-spacing: 1px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            white-space: nowrap;
+        }
+        
+        .gift-submessage {
+            color: #FBBF24;
+            font-size: clamp(1rem, 4vw, 1.3rem);
+            font-weight: 600;
+            margin-top: 1rem;
+            text-shadow: 0 2px 10px rgba(251, 191, 36, 0.3);
+        }
+        
+        @media (max-width: 480px) {
+            .gift-message {
+                padding: 1rem 1.5rem;
+                white-space: normal;
+            }
+            .gift-box img {
+                width: min(70vw, 350px);
+            }
+        }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes pulse-gift {
+            0%, 100% { filter: drop-shadow(0 20px 30px rgba(59, 130, 246, 0.5)); }
+            50% { filter: drop-shadow(0 30px 50px rgba(139, 92, 246, 0.8)); }
+        }
+        
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4); }
+            50% { box-shadow: 0 30px 60px rgba(59, 130, 246, 0.7); }
+        }
+        
+        .fade-out {
+            animation: fadeOut 0.8s ease forwards !important;
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
         }
 
         /* ============================================================ */
-        /* ESTILOS DEL CHATBOT - ROBOT CON MOVIMIENTO */
+        /* BANNER DE INCENTIVO - DISEÑO PROFESIONAL CON IMAGEN REGALO */
         /* ============================================================ */
+        .incentive-banner {
+            background: linear-gradient(135deg, #0a0f1c 0%, #1a1f35 50%, #2d1f4a 100%);
+            border-bottom: 2px solid;
+            border-image: linear-gradient(to right, #3B82F6, #8B5CF6, #EC4899) 1;
+            color: white;
+            padding: 0.75rem 1rem;
+            position: relative;
+            z-index: 40;
+            box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+        }
         
+        .incentive-banner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.1) 0px, transparent 50px),
+                radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.1) 0px, transparent 50px),
+                repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 2px, transparent 2px, transparent 6px);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .banner-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            position: relative;
+            z-index: 10;
+            max-width: 1280px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+        }
+        
+        .banner-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .gift-icon-large {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            padding: 0.5rem;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: float-light 3s ease-in-out infinite;
+        }
+        
+        .gift-icon-large img {
+            height: 50px;
+            width: auto;
+            max-width: 100%;
+            filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.7));
+        }
+        
+        @keyframes float-light {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .main-message-professional {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            font-weight: 500;
+            color: #E2E8F0;
+            max-width: 500px;
+        }
+        
+        .main-message-professional strong {
+            color: #FBBF24;
+            font-weight: 800;
+            background: linear-gradient(135deg, #FBBF24, #F59E0B);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .credits-showcase {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            padding: 0.4rem 1.2rem;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+        
+        .credit-chip {
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            border-radius: 30px;
+            padding: 0.2rem 1rem;
+            font-weight: 700;
+            font-size: 1.4rem;
+            color: white;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+            border: 1px solid rgba(255,255,255,0.3);
+            letter-spacing: 1px;
+        }
+        
+        .credit-chip small {
+            font-size: 0.8rem;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+        
+        .ia-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 30px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #C4B5FD;
+            border: 1px solid #8B5CF6;
+        }
+        
+        .ia-chip .dot {
+            width: 8px;
+            height: 8px;
+            background: #8B5CF6;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .banner-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .register-button-professional {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6, #EC4899);
+            background-size: 200% 200%;
+            padding: 0.7rem 2rem;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4);
+            text-decoration: none;
+            color: white;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            animation: gradient-shift 4s ease infinite;
+        }
+        
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .register-button-professional::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.7s ease;
+        }
+        
+        .register-button-professional:hover::before {
+            left: 100%;
+        }
+        
+        .register-button-professional:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(236, 72, 153, 0.6);
+            border-color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .banner-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .banner-left {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .main-message-professional {
+                text-align: center;
+                font-size: 1.1rem;
+            }
+            
+            .credits-showcase {
+                width: 100%;
+                justify-content: center;
+                padding: 0.5rem 1rem;
+            }
+            
+            .banner-right {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .register-button-professional {
+                width: 100%;
+                text-align: center;
+                white-space: normal;
+                padding: 0.8rem 1rem;
+            }
+            
+            .gift-icon-large img {
+                height: 40px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .credit-chip {
+                font-size: 1.2rem;
+                padding: 0.15rem 0.8rem;
+            }
+            
+            .ia-chip {
+                font-size: 0.8rem;
+                padding: 0.15rem 0.6rem;
+            }
+            
+            .main-message-professional {
+                font-size: 1rem;
+            }
+            
+            .gift-icon-large img {
+                height: 35px;
+            }
+        }
+
+        /* ============================================================ */
+        /* ESTILOS DE TARJETAS MEJORADOS (como la imagen) */
+        /* ============================================================ */
+        .stats-container {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+            background: rgba(30, 41, 59, 0.5);
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            border: 1px solid #334155;
+            backdrop-filter: blur(5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1.2;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #94A3B8;
+            font-weight: 500;
+        }
+        
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* ============================================================ */
+        /* ESTILOS DEL CHATBOT - MEJORADOS */
+        /* ============================================================ */
         .robot-chat-container {
             position: fixed;
             bottom: 20px;
@@ -69,341 +482,7 @@
             flex-direction: column;
             align-items: flex-end;
         }
-
-        .chat-bubble {
-            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-            color: white;
-            padding: 10px 16px;
-            border-radius: 20px 20px 4px 20px;
-            margin-bottom: 10px;
-            font-size: 14px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            max-width: 250px;
-            animation: fadeInUp 0.3s ease;
-            position: relative;
-        }
-
-        .chat-bubble::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            right: 10px;
-            width: 0;
-            height: 0;
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-top: 8px solid #8B5CF6;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .robot-btn {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            animation: float 3s ease-in-out infinite;
-        }
-
-        .robot-btn::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .robot-btn:hover::before {
-            opacity: 1;
-        }
-
-        .robot-btn:hover {
-            transform: scale(1.1) rotate(5deg);
-            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
-        }
-
-        .robot-btn img {
-            width: 60px;
-            height: 60px;
-            object-fit: contain;
-            transition: transform 0.3s ease;
-        }
-
-        .robot-btn:hover img {
-            transform: scale(1.1);
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-10px);
-            }
-        }
-
-        .robot-btn.pulse {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 15px rgba(59, 130, 246, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-            }
-        }
-
-        /* Modal del chat */
-        .chat-modal {
-            position: fixed;
-            bottom: 100px;
-            right: 20px;
-            width: 350px;
-            height: 500px;
-            background: #1E293B;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            z-index: 10000;
-            border: 1px solid #334155;
-            animation: slideIn 0.3s ease;
-        }
-
-        @media (max-width: 640px) {
-            .chat-modal {
-                width: 300px;
-                right: 10px;
-                bottom: 90px;
-            }
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        .chat-header {
-            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-            padding: 15px;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .chat-header h3 {
-            font-weight: 600;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .chat-header h3 img {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background: white;
-            padding: 3px;
-        }
-
-        .close-chat {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .close-chat:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
-        }
-
-        .chat-messages {
-            flex: 1;
-            padding: 15px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            background: #0F172A;
-        }
-
-        .message {
-            max-width: 80%;
-            padding: 10px 14px;
-            border-radius: 14px;
-            font-size: 13px;
-            line-height: 1.5;
-            word-wrap: break-word;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .user-message {
-            background: linear-gradient(135deg, #3B82F6, #2563EB);
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 4px;
-        }
-
-        .bot-message {
-            background: #1E293B;
-            color: #E2E8F0;
-            align-self: flex-start;
-            border-bottom-left-radius: 4px;
-            border: 1px solid #334155;
-        }
-
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-            padding: 10px 14px;
-            background: #1E293B;
-            border-radius: 14px;
-            border-bottom-left-radius: 4px;
-            width: fit-content;
-            border: 1px solid #334155;
-        }
-
-        .typing-indicator span {
-            width: 8px;
-            height: 8px;
-            background: #94A3B8;
-            border-radius: 50%;
-            animation: typing 1s infinite ease-in-out;
-        }
-
-        .typing-indicator span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        .typing-indicator span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-
-        @keyframes typing {
-            0%, 60%, 100% {
-                transform: translateY(0);
-            }
-            30% {
-                transform: translateY(-8px);
-            }
-        }
-
-        .chat-input-container {
-            padding: 15px;
-            background: #1E293B;
-            border-top: 1px solid #334155;
-            display: flex;
-            gap: 8px;
-        }
-
-        .chat-input {
-            flex: 1;
-            background: #0F172A;
-            border: 1px solid #334155;
-            border-radius: 20px;
-            padding: 10px 15px;
-            color: white;
-            font-size: 13px;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .chat-input:focus {
-            border-color: #3B82F6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        }
-
-        .send-btn {
-            background: linear-gradient(135deg, #3B82F6, #2563EB);
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .send-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
-        }
-
-        .send-btn svg {
-            width: 18px;
-            height: 18px;
-            color: white;
-        }
-
-        /* Notificaciones */
-        .notification-badge {
-            position: absolute;
-            top: -5px;
-            right: -5px;
-            background: #EF4444;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #0F172A;
-        }
-
-        /* Tooltip */
+        
         .tooltip {
             position: absolute;
             top: -40px;
@@ -419,7 +498,7 @@
             transition: all 0.3s ease;
             border: 1px solid #334155;
         }
-
+        
         .tooltip::after {
             content: '';
             position: absolute;
@@ -431,33 +510,311 @@
             border-right: 6px solid transparent;
             border-top: 6px solid #1E293B;
         }
-
+        
         .robot-chat-container:hover .tooltip {
             opacity: 1;
             visibility: visible;
             top: -50px;
         }
-
-        /* Scrollbar personalizada para el chat */
+        
+        .robot-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .robot-btn img { 
+            width: 60px; 
+            height: 60px; 
+            object-fit: contain; 
+        }
+        
+        .robot-btn.pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        .chat-modal {
+            position: fixed; 
+            bottom: 100px; 
+            right: 20px; 
+            width: 350px; 
+            height: 500px;
+            background: #1E293B; 
+            border-radius: 20px; 
+            display: none; 
+            flex-direction: column;
+            border: 1px solid #334155; 
+            z-index: 10000;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            padding: 15px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+        }
+        
+        .chat-header h3 {
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .close-chat {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .close-chat:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: #0F172A;
+        }
+        
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease;
+            white-space: pre-wrap;
+        }
+        
+        .message strong {
+            color: #FBBF24;
+            font-weight: 700;
+        }
+        
+        .message em {
+            color: #94A3B8;
+            font-style: italic;
+        }
+        
+        .message ul, .message ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .message li {
+            margin: 4px 0;
+        }
+        
+        .user-message {
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .bot-message {
+            background: #1E293B;
+            color: #E2E8F0;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 1px solid #334155;
+        }
+        
+        .bot-message p {
+            margin: 8px 0;
+        }
+        
+        .bot-message p:first-child {
+            margin-top: 0;
+        }
+        
+        .bot-message p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: #1E293B;
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            width: fit-content;
+            border: 1px solid #334155;
+        }
+        
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #94A3B8;
+            border-radius: 50%;
+            animation: typing 1s infinite ease-in-out;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+        
+        .chat-input-container {
+            padding: 15px;
+            background: #1E293B;
+            border-top: 1px solid #334155;
+            display: flex;
+            gap: 8px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            background: #0F172A;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 10px 15px;
+            color: white;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        
+        .chat-input:focus {
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        .send-btn {
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .send-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+        
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            color: white;
+        }
+        
         .chat-messages::-webkit-scrollbar {
             width: 5px;
         }
-
+        
         .chat-messages::-webkit-scrollbar-track {
             background: #1E293B;
         }
-
+        
         .chat-messages::-webkit-scrollbar-thumb {
             background: #475569;
             border-radius: 5px;
         }
-
+        
         .chat-messages::-webkit-scrollbar-thumb:hover {
             background: #64748B;
+        }
+        
+        @media (max-width: 640px) {
+            .chat-modal {
+                width: 300px;
+                right: 10px;
+                bottom: 90px;
+            }
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
+    <!-- ============================================================ -->
+    <!-- REGALO SORPRESA (aparece y luego desaparece) -->
+    <!-- ============================================================ -->
+    <div id="giftOverlay" class="gift-overlay">
+        <div class="gift-container">
+            <div class="gift-box" id="giftBox">
+                <img src="imagenes/regalo.png" alt="15 créditos gratis">
+            </div>
+                        <div class="gift-submessage">
+                ✨ PARA NUEVOS EDUCADORES ✨
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- BANNER DE INCENTIVO - DISEÑO PROFESIONAL CON IMAGEN REGALO -->
+    <!-- ============================================================ -->
+    <div id="incentiveBanner" class="incentive-banner">
+        <div class="banner-content">
+            <div class="banner-left">
+                <span class="gift-icon-large">
+                    <img src="imagenes/regalo.png" alt="Regalo">
+                </span>
+                <span class="main-message-professional">
+                    ¿Quieres probar las herramientas <strong>GRATIS</strong>? Regístrate hoy para recibir tus
+                </span>
+            </div>
+            
+            <div class="credits-showcase">
+                <span class="credit-chip">15 <small>créditos</small></span>
+                <span class="ia-chip">
+                    <span class="dot"></span>
+                    <span>IA</span>
+                    <span class="dot"></span>
+                </span>
+            </div>
+            
+            <div class="banner-right">
+                <a href="register.html" class="register-button-professional" onclick="localStorage.setItem('intendedPage', window.location.pathname); triggerConfetti()">
+                    REGISTRARSE - OBTENER CRÉDITOS 🚀
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Header con navegación condicional -->
     <header class="header-glass p-4 sticky top-0 z-50">
         <div class="container mx-auto flex justify-between items-center">
@@ -466,7 +823,6 @@
                 <span class="text-white">Profes</span>
             </h1>
             
-            <!-- Header para usuario NO autenticado -->
             <div id="headerUnauthenticated" class="flex items-center space-x-4">
                 <button onclick="window.location.href='login.html'" class="text-slate-300 hover:text-white transition">
                     Iniciar Sesión
@@ -476,9 +832,7 @@
                 </button>
             </div>
             
-            <!-- Header para usuario autenticado -->
             <div id="headerAuthenticated" class="items-center space-x-4 hidden">
-                <!-- Créditos -->
                 <div class="flex items-center bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2" class="mr-1">
                         <circle cx="8" cy="8" r="6"/>
@@ -491,8 +845,6 @@
                     </svg>
                     <span id="creditsDisplay" class="text-yellow-400 font-semibold text-sm">Cargando...</span>
                 </div>
-
-                <!-- Menú usuario -->
                 <div class="relative" id="userMenuContainer">
                     <button id="userMenuButton" class="flex items-center space-x-2 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full border border-slate-700 transition">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -501,8 +853,6 @@
                         </svg>
                         <span id="userNameDisplay" class="text-sm hidden md:inline">Usuario</span>
                     </button>
-                    
-                    <!-- Dropdown -->
                     <div id="userDropdown" class="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-xl border border-slate-700 hidden z-50">
                         <a href="perfil.html" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">Mi Perfil</a>
                         <a href="checkout.html" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 hover:text-white">Comprar Créditos</a>
@@ -515,8 +865,7 @@
     </header>
 
     <main class="flex-grow container mx-auto p-6 md:p-8">
-        <!-- Bienvenida -->
-        <section class="text-center mb-12">
+        <section class="text-center mb-8">
             <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
                 <span class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                     Plataforma Inteligente
@@ -525,28 +874,27 @@
             </h2>
             <p class="text-lg md:text-xl text-slate-400">Transformando la educación en la primera infancia con IA</p>
             
-            <!-- Estadísticas rápidas -->
-            <div class="flex justify-center space-x-8 mt-8">
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-blue-400">12+</div>
-                    <div class="text-sm text-slate-400">Herramientas IA</div>
+            <div class="stats-container">
+                <div class="stat-item">
+                    <div class="stat-number">12+</div>
+                    <div class="stat-label">Herramientas IA</div>
                 </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-purple-400">50+</div>
-                    <div class="text-sm text-slate-400">Plantillas</div>
+                <div class="stat-item">
+                    <div class="stat-number">50+</div>
+                    <div class="stat-label">Plantillas</div>
                 </div>
-                <div class="text-center">
-                    <div class="text-3xl font-bold text-pink-400">1000+</div>
-                    <div class="text-sm text-slate-400">Docentes</div>
+                <div class="stat-item">
+                    <div class="stat-number">1000+</div>
+                    <div class="stat-label">Docentes</div>
                 </div>
             </div>
         </section>
 
-        <!-- Grid de funcionalidades principales (12 opciones) -->
+        <!-- Grid de funcionalidades (12 originales) -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- 1. Planeaciones Inteligentes -->
+            <!-- 1. Planeaciones -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('planeaciones.html')">
-                <div class="mb-4 bg-purple-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-purple-500/20">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-purple-400">
                         <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/>
                     </svg>
@@ -554,14 +902,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Planeaciones</h3>
                 <p class="text-sm text-slate-400 mb-4">Crea planeaciones semanales o mensuales con IA</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-purple-300">2 créditos</span>
+                    <span class="credit-badge text-purple-300">2 créditos</span>
                     <span class="text-purple-400 text-sm">→</span>
                 </div>
             </div>
 
-            <!-- 2. Corrección de Textos -->
+            <!-- 2. Corrección -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('correccion.html')">
-                <div class="mb-4 bg-pink-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-pink-500/20">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-pink-400">
                         <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                     </svg>
@@ -569,14 +917,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Corrección</h3>
                 <p class="text-sm text-slate-400 mb-4">Mejora informes, ensayos y textos académicos</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-pink-300">4 créditos</span>
+                    <span class="credit-badge text-pink-300">4 créditos</span>
                     <span class="text-pink-400 text-sm">→</span>
                 </div>
             </div>
 
-            <!-- 3. Observaciones Automatizadas -->
+            <!-- 3. Observaciones -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('observaciones.html')">
-                <div class="mb-4 bg-sky-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-sky-500/20">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-sky-400">
                         <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
                     </svg>
@@ -584,14 +932,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Observaciones</h3>
                 <p class="text-sm text-slate-400 mb-4">Genera observaciones pedagógicas personalizadas</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-sky-300">3 créditos</span>
+                    <span class="credit-badge text-sky-300">3 créditos</span>
                     <span class="text-sky-400 text-sm">→</span>
                 </div>
             </div>
 
             <!-- 4. Ideas PPA -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('generador-ideas.html')">
-                <div class="mb-4 bg-orange-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-orange-500/20">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-orange-400">
                         <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/>
                     </svg>
@@ -599,14 +947,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Ideas PPA</h3>
                 <p class="text-sm text-slate-400 mb-4">Ideas creativas para Proyectos Pedagógicos</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-orange-300">5 créditos</span>
+                    <span class="credit-badge text-orange-300">5 créditos</span>
                     <span class="text-orange-400 text-sm">→</span>
                 </div>
             </div>
 
             <!-- 5. Boletines -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('boletines.html')">
-                <div class="mb-4 bg-teal-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-teal-500/20">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-teal-400">
                         <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
                     </svg>
@@ -614,14 +962,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Boletines</h3>
                 <p class="text-sm text-slate-400 mb-4">Crea boletines informativos atractivos</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-teal-300">6 créditos</span>
+                    <span class="credit-badge text-teal-300">6 créditos</span>
                     <span class="text-teal-400 text-sm">→</span>
                 </div>
             </div>
 
-            <!-- 6. Talleres para Padres -->
+            <!-- 6. Talleres -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('talleres.html')">
-                <div class="mb-4 bg-green-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-green-500/20">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-green-400">
                         <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                     </svg>
@@ -629,14 +977,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Talleres</h3>
                 <p class="text-sm text-slate-400 mb-4">Diseña talleres para padres participativos</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-green-300">7 créditos</span>
+                    <span class="credit-badge text-green-300">7 créditos</span>
                     <span class="text-green-400 text-sm">→</span>
                 </div>
             </div>
 
             <!-- 7. Detector IA -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('detector-ia.html')">
-                <div class="mb-4 bg-indigo-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-indigo-500/20">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-indigo-400">
                         <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
                     </svg>
@@ -644,14 +992,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Detector IA</h3>
                 <p class="text-sm text-slate-400 mb-4">Analiza textos y detecta contenido IA</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-indigo-300">8 créditos</span>
+                    <span class="credit-badge text-indigo-300">8 créditos</span>
                     <span class="text-indigo-400 text-sm">→</span>
                 </div>
             </div>
 
             <!-- 8. Proyectos PEI -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('proyectos-pei.html')">
-                <div class="mb-4 bg-rose-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-rose-500/20">
                     <svg viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-rose-400">
                         <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 2v5l-1-.75L15 9V4h2zm-3 7H9v-2h4v2zm4-3H9V6h8v2z"/>
                     </svg>
@@ -659,14 +1007,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Proyectos PEI</h3>
                 <p class="text-sm text-slate-400 mb-4">Construye o actualiza tu PEI con IA</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-rose-300">5 créditos</span>
+                    <span class="credit-badge text-rose-300">5 créditos</span>
                     <span class="text-rose-400 text-sm">→</span>
                 </div>
             </div>
 
             <!-- 9. DUA -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('dua.html')">
-                <div class="mb-4 bg-amber-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-amber-500/20">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-amber-400">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
                     </svg>
@@ -674,14 +1022,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">DUA</h3>
                 <p class="text-sm text-slate-400 mb-4">Diseño Universal para el Aprendizaje</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-amber-300">4 créditos</span>
+                    <span class="credit-badge text-amber-300">4 créditos</span>
                     <span class="text-amber-400 text-sm">→</span>
                 </div>
             </div>
 
             <!-- 10. PIAR -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('piar.html')">
-                <div class="mb-4 bg-emerald-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-emerald-500/20">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-emerald-400">
                         <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
                     </svg>
@@ -689,14 +1037,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">PIAR</h3>
                 <p class="text-sm text-slate-400 mb-4">Plan Individual de Ajustes Razonables</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-emerald-300">5 créditos</span>
+                    <span class="credit-badge text-emerald-300">5 créditos</span>
                     <span class="text-emerald-400 text-sm">→</span>
                 </div>
             </div>
 
             <!-- 11. Herramientas Didácticas -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('herramientas-didacticas.html')">
-                <div class="mb-4 bg-violet-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-violet-500/20">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-violet-400">
                         <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/>
                     </svg>
@@ -704,14 +1052,14 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Herramientas Didácticas</h3>
                 <p class="text-sm text-slate-400 mb-4">Crucigramas y sopas de letras</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-violet-300">3 créditos</span>
+                    <span class="credit-badge text-violet-300">3 créditos</span>
                     <span class="text-violet-400 text-sm">→</span>
                 </div>
             </div>
 
             <!-- 12. Evaluación Desempeño -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('evaluacion-desempeno.html')">
-                <div class="mb-4 bg-cyan-500/20 w-12 h-12 rounded-lg flex items-center justify-center">
+                <div class="feature-icon bg-cyan-500/20">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-cyan-400">
                         <path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2z"/>
                     </svg>
@@ -719,7 +1067,7 @@
                 <h3 class="text-xl font-semibold text-white mb-2">Evaluación Desempeño</h3>
                 <p class="text-sm text-slate-400 mb-4">Instrumentos de evaluación</p>
                 <div class="flex justify-between items-center">
-                    <span class="credit-badge px-2 py-1 rounded text-xs text-cyan-300">4 créditos</span>
+                    <span class="credit-badge text-cyan-300">4 créditos</span>
                     <span class="text-cyan-400 text-sm">→</span>
                 </div>
             </div>
@@ -731,28 +1079,20 @@
     </footer>
 
     <!-- ============================================================ -->
-    <!-- CHATBOT CON IA - ROBOT FLOTANTE (CONECTADO A SUPABASE) -->
+    <!-- CHATBOT - ASESOR INTELIGENTE (CONECTADO A LA MISMA FUNCIÓN QUE BOLETINES) -->
     <!-- ============================================================ -->
-    
     <div class="robot-chat-container">
-        <div class="tooltip">¿Necesitas ayuda?</div>
-        <div id="chatBubble" class="chat-bubble" style="display: none;"></div>
+        <div class="tooltip">¿Necesitas ayuda? 🤖</div>
         <div id="robotBtn" class="robot-btn pulse">
-            <img src="https://i.postimg.cc/Kz10ccv3/Imagen-de-Whats-App-2025-05-29-a-las-09-07-24-7803db55-removebg-preview.png" 
-                 alt="Robot Chat" 
-                 onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'60\' height=\'60\' viewBox=\'0 0 24 24\' fill=\'%233B82F6\' stroke=\'white\' stroke-width=\'1\'%3E%3Ccircle cx=\'12\' cy=\'12\' r=\'10\'/%3E%3Cpath d=\'M12 8v4M12 16h.01\' stroke=\'white\' stroke-width=\'2\'/%3E%3C/svg%3E';">
-            <span class="notification-badge" id="notificationBadge" style="display: none;">1</span>
+            <img src="https://i.postimg.cc/Kz10ccv3/Imagen-de-Whats-App-2025-05-29-a-las-09-07-24-7803db55-removebg-preview.png" alt="Robot Chat">
         </div>
     </div>
 
-    <!-- Modal del Chat -->
     <div id="chatModal" class="chat-modal">
         <div class="chat-header">
             <h3>
-                <img src="https://i.postimg.cc/Kz10ccv3/Imagen-de-Whats-App-2025-05-29-a-las-09-07-24-7803db55-removebg-preview.png" 
-                     alt="Robot" 
-                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'30\' height=\'30\' viewBox=\'0 0 24 24\' fill=\'white\'%3E%3Ccircle cx=\'12\' cy=\'12\' r=\'10\' fill=\'%233B82F6\'/%3E%3C/svg%3E';">
-                Asistente TodoProfes
+                <img src="https://i.postimg.cc/Kz10ccv3/Imagen-de-Whats-App-2025-05-29-a-las-09-07-24-7803db55-removebg-preview.png" alt="Robot" style="width: 30px; height: 30px; border-radius: 50%;">
+                TodoProfes AI - Asesor Pedagógico
             </h3>
             <button class="close-chat" onclick="toggleChat(false)">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -767,7 +1107,7 @@
         </div>
         
         <div class="chat-input-container">
-            <input type="text" id="chatInput" class="chat-input" placeholder="Escribe tu pregunta..." onkeypress="if(event.key==='Enter') sendMessage()">
+            <input type="text" id="chatInput" class="chat-input" placeholder="Escribe tu pregunta pedagógica..." onkeypress="if(event.key==='Enter') sendMessage()">
             <button class="send-btn" onclick="sendMessage()">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="22" y1="2" x2="11" y2="13"/>
@@ -778,169 +1118,439 @@
     </div>
 
     <script>
-        // Configuración de Supabase
+        // ============================================================
+        // CONFIGURACIÓN - MISMA QUE USA BOLETINES
+        // ============================================================
         const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA';
-        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`;
-
-        let isAuthenticated = false;
-        let hideDropdownTimeout;
+        const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`; // MISMA FUNCIÓN QUE BOLETINES
+        
         let userId = null;
         let token = null;
+        let chatInitialized = false;
+        let mensajesEnviados = 0; // Contador para invitación a registro
 
         // ============================================================
-        // NUEVO: MANEJADOR DE HASH PARA GOOGLE LOGIN
+        // PROMPT MAESTRO - ASESOR PEDAGÓGICO Y DE VENTAS
+        // ============================================================
+        const TODOPROFES_CONTEXT = `
+Eres TodoProfes AI, el asistente inteligente oficial de la plataforma TodoProfes, una herramienta creada para ayudar a docentes a ahorrar tiempo generando documentos pedagógicos con inteligencia artificial.
+
+🎯 **TU OBJETIVO PRINCIPAL**:
+Ayudar a los docentes a:
+- Crear documentos educativos
+- Entender cómo usar las herramientas
+- Resolver dudas pedagógicas
+- Optimizar su tiempo de trabajo
+- Descubrir las herramientas de la plataforma
+- Registrarse y usar los créditos gratuitos
+- Comprar paquetes de créditos cuando lo necesiten
+
+🧠 **TU PERSONALIDAD**:
+- Experto en pedagogía
+- Asesor para docentes
+- Experto en educación inicial y básica
+- Guía de la plataforma
+- Asesor de ventas amable (NUNCA agresivo)
+
+🎭 **TONO DE VOZ**:
+- Amigable
+- Profesional
+- Claro
+- Motivador
+- Educativo
+- NUNCA uses tono comercial agresivo
+
+📚 **INFORMACIÓN DE LA PLATAFORMA**:
+TodoProfes es una plataforma inteligente diseñada para docentes que permite crear documentos pedagógicos en minutos usando inteligencia artificial.
+
+La plataforma incluye:
+- Más de 12 herramientas de IA
+- Más de 50 plantillas educativas
+- Más de 1000 docentes registrados
+- Reduce hasta un 80% el tiempo en planeaciones, informes y documentos
+
+🎁 **REGALO PARA NUEVOS USUARIOS**:
+Los nuevos usuarios reciben 15 créditos gratis al registrarse para probar herramientas.
+Cuando un usuario NO esté registrado, debes invitarlo amablemente: "Puedes registrarte gratis y recibir 15 créditos de IA para probar las herramientas."
+
+💰 **SISTEMA DE CRÉDITOS**:
+Las herramientas funcionan con créditos. Cada herramienta consume una cantidad diferente.
+Los créditos permiten generar documentos con IA.
+Se pueden comprar paquetes de créditos.
+
+🛠️ **HERRAMIENTAS DISPONIBLES**:
+
+1. **Planeaciones** (2 créditos)
+   - Genera planeaciones semanales, mensuales o por proyectos
+   - Incluye objetivos, actividades, recursos, evaluación
+
+2. **Corrección de textos** (4 créditos)
+   - Mejora ortografía, redacción, claridad, coherencia
+   - Ideal para informes, ensayos, documentos académicos
+
+3. **Observaciones pedagógicas** (3 créditos)
+   - Genera observaciones profesionales para informes escolares, reportes de estudiantes, seguimiento académico
+
+4. **Ideas para PPA** (5 créditos)
+   - Crea ideas creativas para Proyectos Pedagógicos de Aula
+   - Incluye tema, objetivo, actividades, enfoque pedagógico
+
+5. **Boletines informativos** (6 créditos)
+   - Crea boletines para padres con resumen de actividades, aprendizajes, mensajes institucionales
+
+6. **Talleres para padres** (7 créditos)
+   - Diseña talleres participativos con objetivo, dinámica, actividad práctica, reflexión
+
+7. **Detector de IA** (8 créditos)
+   - Analiza textos y estima el porcentaje de contenido generado por IA
+
+8. **Proyectos PEI** (5 créditos)
+   - Ayuda a crear o actualizar el Proyecto Educativo Institucional
+   - Genera misión, visión, principios, estructura pedagógica
+
+9. **DUA** (4 créditos)
+   - Crea estrategias basadas en Diseño Universal para el Aprendizaje
+
+10. **PIAR** (5 créditos)
+    - Genera Planes Individuales de Ajustes Razonables para estudiantes con necesidades educativas
+
+11. **Herramientas Didácticas** (3 créditos)
+    - Crea sopas de letras, crucigramas, ejercicios lúdicos
+
+12. **Evaluación de Desempeño** (4 créditos)
+    - Crea rúbricas, listas de chequeo, escalas de evaluación
+
+📊 **PLANES DE CRÉDITOS**:
+- **Plan Básico**: $24.900 - 45 créditos (aprox 22 planeaciones) - Validez 1 año
+- **Plan Estándar** (más popular): $44.900 - 90 créditos (aprox 45 planeaciones) - Incluye 10 créditos extra
+- **Plan Premium**: $54.900 - 180 créditos (aprox 90 planeaciones) - Incluye soporte prioritario
+
+💡 **ESTRATEGIA DE VENTAS (siempre suave)**:
+Cuando el usuario:
+- diga que usa mucho la plataforma
+- diga que se quedó sin créditos
+- pregunte por precios
+- quiera generar muchos documentos
+
+Debes sugerir un plan amablemente:
+"Si utilizas frecuentemente las planeaciones, el Plan Estándar suele ser el favorito de los docentes porque ofrece más créditos y mejor relación costo-beneficio."
+
+Nunca presiones al usuario.
+
+🤝 **CUANDO EL USUARIO NO SEPA QUÉ HACER**:
+Ayúdalo a elegir la herramienta correcta.
+Ej: "Necesito hacer un informe de estudiante." → "Te recomiendo usar la herramienta Observaciones Pedagógicas, que genera textos profesionales para informes escolares."
+
+📝 **CUANDO EL USUARIO QUIERA CREAR CONTENIDO**:
+Haz preguntas como: grado, edad, tema, duración, objetivo. Luego genera el contenido.
+
+🗣️ **FRASES DE AYUDA**:
+- "Puedo ayudarte a crearlo ahora."
+- "Solo dime el grado y el tema."
+- "Te guío paso a paso."
+
+⚠️ **REGLAS IMPORTANTES**:
+- NUNCA inventes herramientas que no existan
+- Siempre promueve el uso de las herramientas de TodoProfes
+- Mantén respuestas claras, cortas, útiles y pedagógicas
+
+🔍 **ANTES DE RESPONDER**:
+Analiza si el usuario necesita:
+- ayuda pedagógica
+- explicación de una herramienta
+- generación de contenido
+- información de créditos
+- recomendación de plan
+`;
+
+        // ============================================================
+        // FUNCIONES DEL CHAT
         // ============================================================
         
-        async function handleAuthHash() {
-            const hash = window.location.hash.substring(1); // quita el #
-            if (!hash) return false;
+        // Elementos del DOM
+        const robotBtn = document.getElementById('robotBtn');
+        const chatModal = document.getElementById('chatModal');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const chatBubble = document.getElementById('chatBubble');
+        const notificationBadge = document.getElementById('notificationBadge');
 
-            const params = new URLSearchParams(hash);
-            const accessToken = params.get('access_token');
-            const refreshToken = params.get('refresh_token');
-            const type = params.get('type');
-            const expiresIn = params.get('expires_in');
-
-            // Si hay token y es de tipo token (login normal) o recovery
-            if (accessToken && (type === 'token' || type === 'recovery' || !type)) {
-                console.log('✅ Token detectado en URL, guardando sesión...');
+        // Inicializar chat
+        setTimeout(() => {
+            if (!chatInitialized && chatBubble) {
+                chatBubble.textContent = '🤖 ¡Hola! Soy tu asesor pedagógico. ¿En qué puedo ayudarte?';
+                chatBubble.style.display = 'block';
                 
-                // Guardar tokens
-                localStorage.setItem('supabase_token', accessToken);
-                if (refreshToken) {
-                    localStorage.setItem('supabase_refresh_token', refreshToken);
-                }
-                
-                try {
-                    // Obtener información del usuario con el token
-                    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-                        headers: {
-                            'Authorization': `Bearer ${accessToken}`,
-                            'apikey': SUPABASE_KEY
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        const user = await response.json();
-                        
-                        // Guardar datos del usuario
-                        localStorage.setItem('user_email', user.email);
-                        localStorage.setItem('user_id', user.id);
-                        
-                        const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
-                        localStorage.setItem('user_name', userName);
-                        
-                        console.log('✅ Sesión guardada para:', user.email);
-                        
-                        // Limpiar el hash de la URL
-                        window.history.replaceState(null, null, window.location.pathname);
-                        
-                        // Recargar la página para actualizar el header
-                        window.location.reload();
-                        return true;
-                    }
-                } catch (error) {
-                    console.error('❌ Error obteniendo usuario del token:', error);
-                }
+                setTimeout(() => {
+                    if (chatBubble) chatBubble.style.display = 'none';
+                }, 5000);
             }
-            return false;
+        }, 3000);
+
+        // Función para alternar chat
+        window.toggleChat = function(show) {
+            if (show) {
+                chatModal.style.display = 'flex';
+                if (!chatInitialized) {
+                    const mensajeBienvenida = formatearMensajeBot(
+                        "🤖 **¡Hola! Soy TodoProfes AI, tu asesor pedagógico personal.**\n\n" +
+                        "Puedo ayudarte a:\n" +
+                        "• Crear planeaciones y documentos educativos\n" +
+                        "• Explicar cómo funcionan las herramientas\n" +
+                        "• Recomendarte la mejor herramienta para tu necesidad\n" +
+                        "• Informarte sobre créditos y planes\n\n" +
+                        "✨ **¿En qué puedo ayudarte hoy?**"
+                    );
+                    addBotMessage(mensajeBienvenida);
+                    chatInitialized = true;
+                }
+                if (notificationBadge) notificationBadge.style.display = 'none';
+            } else {
+                chatModal.style.display = 'none';
+            }
+        };
+
+        // Evento click del robot
+        if (robotBtn) {
+            robotBtn.addEventListener('click', () => {
+                toggleChat(true);
+                robotBtn.classList.add('pulse');
+                setTimeout(() => robotBtn.classList.remove('pulse'), 500);
+            });
+        }
+
+        // Cerrar con ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && chatModal.style.display === 'flex') {
+                toggleChat(false);
+            }
+        });
+
+        // Función para formatear mensajes del bot
+        function formatearMensajeBot(texto) {
+            // Convertir **texto** a <strong>texto</strong>
+            texto = texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convertir *texto* a <em>texto</em>
+            texto = texto.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            
+            // Convertir • en viñetas HTML
+            texto = texto.replace(/• /g, '• ');
+            
+            // Convertir saltos de línea a <br>
+            texto = texto.replace(/\n/g, '<br>');
+            
+            return texto;
+        }
+
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            mensajesEnviados++;
+        }
+
+        function addBotMessage(html) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot-message';
+            messageDiv.innerHTML = html;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.id = 'typingIndicator';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            chatMessages.appendChild(indicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        // Función para detectar si el usuario está autenticado
+        function estaAutenticado() {
+            return !!localStorage.getItem('supabase_token');
         }
 
         // ============================================================
-        // FUNCIONES DE AUTENTICACIÓN (modificadas para usar el hash primero)
+        // FUNCIÓN PRINCIPAL PARA ENVIAR MENSAJES
+        // MISMA CONEXIÓN QUE USA BOLETINES, PERO CON tool: 'chat-gratuito'
+        // ============================================================
+        window.sendMessage = async function() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            // Agregar mensaje del usuario
+            addUserMessage(message);
+            chatInput.value = '';
+            
+            // Mostrar indicador de escritura
+            showTypingIndicator();
+            
+            try {
+                // Detectar si está autenticado (para personalizar mensajes)
+                const autenticado = estaAutenticado();
+                const userId = localStorage.getItem('user_id');
+                
+                // Construir prompt con contexto y mensaje
+                let promptCompleto = TODOPROFES_CONTEXT + "\n\n";
+                
+                // Adaptar según autenticación
+                if (!autenticado) {
+                    promptCompleto += "El usuario NO está registrado. Debes ser amable, resolver su duda, y después de 3 intercambios, invitarlo suavemente a registrarse. Ejemplo: '¿Sabías que al registrarte recibes 15 créditos gratis para probar todas las herramientas?'\n\n";
+                } else {
+                    promptCompleto += "El usuario ESTÁ registrado. Puedes ver sus créditos si es necesario. Si tiene pocos créditos, puedes sugerirle planes amablemente.\n\n";
+                }
+                
+                promptCompleto += `Mensaje del usuario: ${message}\n\nResponde de manera útil, pedagógica y profesional.`;
+                
+                // Llamar a la MISMA función que usa boletines
+                // tool: 'chat-gratuito' para que NO descuente créditos
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY
+                        // 👇 NO enviamos Authorization para que sea gratuito
+                    },
+                    body: JSON.stringify({
+                        prompt: promptCompleto,
+                        tool: 'chat-gratuito',  // ← Tool especial que NO descuenta créditos
+                        user_id: userId || null,
+                        autenticado: autenticado
+                    })
+                });
+                
+                const data = await response.json();
+                hideTypingIndicator();
+                
+                if (!response.ok) {
+                    // Si hay error, mostramos mensaje amigable
+                    addBotMessage(formatearMensajeBot(
+                        "Lo siento, tuve un problema para procesar tu mensaje. ¿Puedes intentarlo de nuevo?"
+                    ));
+                    return;
+                }
+                
+                if (data.content) {
+                    addBotMessage(formatearMensajeBot(data.content));
+                    
+                    // Invitar a registro si no autenticado y ha enviado varios mensajes
+                    if (!autenticado && mensajesEnviados >= 3) {
+                        setTimeout(() => {
+                            addBotMessage(formatearMensajeBot(
+                                "🎁 **¿Sabías que al registrarte recibes 15 créditos gratis?**\n\n" +
+                                "Puedes probar todas las herramientas sin compromiso. ¿Te gustaría que te cuente más?"
+                            ));
+                        }, 2000);
+                    }
+                } else {
+                    addBotMessage(formatearMensajeBot("Lo siento, no pude procesar tu pregunta. ¿Podrías reformularla?"));
+                }
+                
+            } catch (error) {
+                console.error('Error en el chat:', error);
+                hideTypingIndicator();
+                
+                // Mensaje de error amigable
+                addBotMessage(formatearMensajeBot(
+                    "Lo siento, hay un problema de conexión. Por favor, intenta más tarde.\n\n" +
+                    "Mientras tanto, ¿sabías que puedes generar planeaciones por solo 2 créditos?"
+                ));
+            }
+        };
+
+        // ============================================================
+        // FUNCIONES DE AUTENTICACIÓN (igual que antes)
         // ============================================================
         
+        window.addEventListener('load', function() {
+            const giftOverlay = document.getElementById('giftOverlay');
+            const giftBox = document.getElementById('giftBox');
+            
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#3B82F6', '#8B5CF6', '#FBBF24', '#EF4444']
+            });
+            
+            setTimeout(() => {
+                giftOverlay.classList.add('fade-out');
+                setTimeout(() => {
+                    giftOverlay.style.display = 'none';
+                }, 800);
+            }, 3000);
+            
+            giftBox.addEventListener('click', function() {
+                confetti({
+                    particleCount: 150,
+                    spread: 100,
+                    origin: { y: 0.5 }
+                });
+                
+                giftOverlay.classList.add('fade-out');
+                setTimeout(() => {
+                    giftOverlay.style.display = 'none';
+                }, 800);
+            });
+        });
+        
+        window.triggerConfetti = function() {
+            confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { y: 0.5 }
+            });
+        };
+
         async function checkSession() {
-            console.log('🔍 ===== INICIANDO VERIFICACIÓN DE SESIÓN =====');
-            
-            // Primero verificar si hay hash en la URL (viene de Google)
-            const hashProcessed = await handleAuthHash();
-            
-            // Si se procesó el hash, no continuar porque la página se recargará
-            if (hashProcessed) {
-                return;
-            }
-            
-            // Si no hay hash, continuar con la verificación normal
             token = localStorage.getItem('supabase_token');
             const userEmail = localStorage.getItem('user_email');
             userId = localStorage.getItem('user_id');
-            const userName = localStorage.getItem('user_name');
             
-            console.log('📦 localStorage:', {
-                token: token ? '✅ presente' : '❌ ausente',
-                userEmail: userEmail || '❌ ausente',
-                userId: userId || '❌ ausente',
-                userName: userName || '❌ ausente'
-            });
-
             if (!token || !userEmail || !userId) {
-                console.log('⚠️ Faltan datos en localStorage, mostrando header no autenticado');
                 showUnauthenticatedHeader();
                 return;
             }
-
+            
             try {
-                console.log('🔄 Verificando token con Supabase...');
-                
                 const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'apikey': SUPABASE_KEY
                     }
                 });
-
-                console.log('📡 Respuesta de Supabase:', response.status);
-
-                if (!response.ok) {
-                    throw new Error(`Error ${response.status}: ${response.statusText}`);
-                }
-
-                const user = await response.json();
-                console.log('👤 Usuario autenticado:', user.email);
-
-                isAuthenticated = true;
+                
+                if (!response.ok) throw new Error('No autorizado');
                 
                 showAuthenticatedHeader();
-                
-                const displayName = userName || user.email?.split('@')[0] || 'Usuario';
-                document.getElementById('userNameDisplay').textContent = displayName;
-                console.log('👋 Nombre mostrado:', displayName);
-                
                 await loadUserCredits();
                 
             } catch (error) {
-                console.error('❌ Error de sesión:', error);
                 localStorage.clear();
                 showUnauthenticatedHeader();
             }
-            
-            console.log('🔍 ===== FIN VERIFICACIÓN =====');
         }
 
         function showUnauthenticatedHeader() {
-            const headerUnauth = document.getElementById('headerUnauthenticated');
-            const headerAuth = document.getElementById('headerAuthenticated');
-            
-            if (headerUnauth) headerUnauth.classList.remove('hidden');
-            if (headerAuth) {
-                headerAuth.classList.add('hidden');
-                headerAuth.style.display = 'none';
-            }
-            isAuthenticated = false;
+            document.getElementById('headerUnauthenticated').classList.remove('hidden');
+            document.getElementById('headerAuthenticated').classList.add('hidden');
+            document.getElementById('incentiveBanner').style.display = 'block';
         }
 
         function showAuthenticatedHeader() {
-            const headerUnauth = document.getElementById('headerUnauthenticated');
-            const headerAuth = document.getElementById('headerAuthenticated');
-            
-            if (headerUnauth) headerUnauth.classList.add('hidden');
-            if (headerAuth) {
-                headerAuth.classList.remove('hidden');
-                headerAuth.style.display = 'flex';
-            }
-            isAuthenticated = true;
+            document.getElementById('headerUnauthenticated').classList.add('hidden');
+            document.getElementById('headerAuthenticated').classList.remove('hidden');
+            document.getElementById('incentiveBanner').style.display = 'none';
         }
 
         async function loadUserCredits() {
@@ -953,7 +1563,7 @@
                         'apikey': SUPABASE_KEY
                     }
                 });
-
+                
                 if (response.ok) {
                     const users = await response.json();
                     if (users && users.length > 0) {
@@ -961,15 +1571,12 @@
                     }
                 }
             } catch (error) {
-                console.error('Error cargando créditos:', error);
                 document.getElementById('creditsDisplay').textContent = '0 créditos';
             }
         }
 
         function handleFeatureClick(page) {
             const token = localStorage.getItem('supabase_token');
-            console.log('🖱️ Click en:', page, '- Autenticado:', !!token);
-            
             if (token) {
                 window.location.href = page;
             } else {
@@ -979,262 +1586,12 @@
         }
 
         async function handleLogout() {
-            console.log('👋 Cerrando sesión...');
-            
-            if (token) {
-                try {
-                    await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'apikey': SUPABASE_KEY
-                        }
-                    });
-                } catch (error) {
-                    console.error('Error en logout:', error);
-                }
-            }
-            
             localStorage.clear();
             showUnauthenticatedHeader();
         }
 
-        function initDropdownMenu() {
-            const userMenuButton = document.getElementById('userMenuButton');
-            const userDropdown = document.getElementById('userDropdown');
-            const userMenuContainer = document.getElementById('userMenuContainer');
-            let hideTimeout;
-
-            if (userMenuButton && userDropdown && userMenuContainer) {
-                function showMenu() {
-                    clearTimeout(hideTimeout);
-                    userDropdown.classList.remove('hidden');
-                }
-
-                function scheduleHideMenu() {
-                    hideTimeout = setTimeout(() => {
-                        if (!userMenuContainer.matches(':hover') && !userDropdown.matches(':hover')) {
-                            userDropdown.classList.add('hidden');
-                        }
-                    }, 300);
-                }
-
-                userMenuButton.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (userDropdown.classList.contains('hidden')) {
-                        showMenu();
-                    } else {
-                        userDropdown.classList.add('hidden');
-                    }
-                });
-
-                userMenuContainer.addEventListener('mouseenter', showMenu);
-                userDropdown.addEventListener('mouseenter', showMenu);
-                userMenuContainer.addEventListener('mouseleave', scheduleHideMenu);
-                userDropdown.addEventListener('mouseleave', scheduleHideMenu);
-
-                document.addEventListener('click', (e) => {
-                    if (!userMenuContainer.contains(e.target) && !userDropdown.contains(e.target)) {
-                        userDropdown.classList.add('hidden');
-                    }
-                });
-
-                userDropdown.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                });
-            }
-        }
-
-        // ============================================================
-        // CHATBOT CON IA - CONECTADO A SUPABASE (como en boletines.html)
-        // ============================================================
-        
-        let chatInitialized = false;
-        
-        // Elementos del DOM del chat
-        const robotBtn = document.getElementById('robotBtn');
-        const chatModal = document.getElementById('chatModal');
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const chatBubble = document.getElementById('chatBubble');
-        const notificationBadge = document.getElementById('notificationBadge');
-        
-        // Contexto de TodoProfes para la IA (igual que en boletines)
-        const TODOPROFES_CONTEXT = `
-Eres un asistente virtual de TodoProfes, una plataforma educativa con IA para docentes.
-Información clave:
-- Planeaciones: 2 créditos
-- Corrección de textos: 4 créditos
-- Observaciones: 3 créditos
-- Ideas PPA: 5 créditos
-- Boletines: 6 créditos
-- Talleres: 7 créditos
-- Detector IA: 8 créditos
-- Proyectos PEI: 5 créditos
-- DUA: 4 créditos
-- PIAR: 5 créditos
-- Herramientas didácticas: 3 créditos
-- Evaluación desempeño: 4 créditos
-
-Los usuarios pueden comprar créditos en la sección de pagos.
-Responde de forma amigable y útil, en español.
-`;
-        
-        // Mostrar burbuja inicial después de 3 segundos
-        setTimeout(() => {
-            if (!chatInitialized && chatBubble) {
-                chatBubble.textContent = '👋 ¡Hola! ¿Necesitas ayuda con TodoProfes?';
-                chatBubble.style.display = 'block';
-                
-                setTimeout(() => {
-                    if (chatBubble) chatBubble.style.display = 'none';
-                }, 5000);
-            }
-        }, 3000);
-        
-        // Función para alternar el chat
-        window.toggleChat = function(show) {
-            if (show) {
-                chatModal.style.display = 'flex';
-                if (!chatInitialized) {
-                    addBotMessage('¡Hola! Soy el asistente de TodoProfes. ¿En qué puedo ayudarte hoy? Puedes preguntarme sobre créditos, herramientas o cómo usar la plataforma.');
-                    chatInitialized = true;
-                }
-                if (notificationBadge) notificationBadge.style.display = 'none';
-            } else {
-                chatModal.style.display = 'none';
-            }
-        };
-        
-        // Evento click del robot
-        if (robotBtn) {
-            robotBtn.addEventListener('click', () => {
-                toggleChat(true);
-                robotBtn.classList.add('pulse');
-                setTimeout(() => robotBtn.classList.remove('pulse'), 500);
-            });
-        }
-        
-        // Cerrar con ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && chatModal.style.display === 'flex') {
-                toggleChat(false);
-            }
-        });
-        
-        function addUserMessage(text) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message user-message';
-            messageDiv.textContent = text;
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        function addBotMessage(text) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message bot-message';
-            messageDiv.textContent = text;
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        function showTypingIndicator() {
-            const indicator = document.createElement('div');
-            indicator.className = 'typing-indicator';
-            indicator.id = 'typingIndicator';
-            indicator.innerHTML = '<span></span><span></span><span></span>';
-            chatMessages.appendChild(indicator);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-        
-        function hideTypingIndicator() {
-            const indicator = document.getElementById('typingIndicator');
-            if (indicator) indicator.remove();
-        }
-        
-        // Función para enviar mensaje usando Supabase Edge Function (como en boletines)
-        window.sendMessage = async function() {
-            const message = chatInput.value.trim();
-            if (!message) return;
-            
-            // Verificar autenticación
-            token = localStorage.getItem('supabase_token');
-            userId = localStorage.getItem('user_id');
-            
-            if (!token || !userId) {
-                addBotMessage('⚠️ Necesitas iniciar sesión para usar el chat.');
-                return;
-            }
-            
-            // Agregar mensaje del usuario
-            addUserMessage(message);
-            chatInput.value = '';
-            
-            // Mostrar indicador de escritura
-            showTypingIndicator();
-            
-            try {
-                // Llamar a la Edge Function de Supabase (exactamente como en boletines.html)
-                const response = await fetch(FUNCTION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        prompt: `${TODOPROFES_CONTEXT}\n\nPregunta del usuario: ${message}\n\nResponde de manera útil y amigable.`,
-                        tool: 'chat',
-                        user_id: userId
-                    })
-                });
-                
-                const data = await response.json();
-                hideTypingIndicator();
-                
-                if (!response.ok) {
-                    if (data.error === 'insufficient_credits') {
-                        addBotMessage(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}. Puedes comprar más en la sección de pagos.`);
-                    } else {
-                        addBotMessage(`❌ Error: ${data.message || 'No se pudo procesar la solicitud'}`);
-                    }
-                    return;
-                }
-                
-                if (data.content) {
-                    addBotMessage(data.content);
-                    
-                    // Actualizar créditos si vienen en la respuesta
-                    if (data.credits_left !== undefined) {
-                        document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`;
-                    } else {
-                        await loadUserCredits();
-                    }
-                } else {
-                    addBotMessage('Lo siento, no pude procesar tu pregunta. ¿Podrías intentar de nuevo?');
-                }
-                
-            } catch (error) {
-                console.error('Error en el chat:', error);
-                hideTypingIndicator();
-                addBotMessage('Lo siento, hay un problema de conexión. Por favor, intenta más tarde.');
-                
-                // Respuesta de respaldo
-                setTimeout(() => {
-                    addBotMessage('Mientras tanto, ¿sabías que puedes generar planeaciones por solo 2 créditos?');
-                }, 1000);
-            }
-        };
-
         // Inicialización
-        document.addEventListener('DOMContentLoaded', async () => {
-            console.log('🚀 Página cargada, verificando sesión...');
-            await checkSession();
-            setTimeout(initDropdownMenu, 500);
-        });
-        
-        if (typeof lucide !== 'undefined' && lucide.createIcons) {
-            lucide.createIcons();
-        }
+        document.addEventListener('DOMContentLoaded', checkSession);
     </script>
 </body>
 </html>
