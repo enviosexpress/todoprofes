@@ -801,7 +801,7 @@
             <div class="gift-box" id="giftBox">
                 <img src="imagenes/regalo.png" alt="15 créditos gratis">
             </div>
-            
+            <div class="gift-message" id="giftMessage">15 CRÉDITOS GRATIS</div>
             <div class="gift-submessage">✨ PARA NUEVOS EDUCADORES ✨</div>
         </div>
     </div>
@@ -1027,6 +1027,9 @@
     </div>
 
     <script>
+        // ============================================================
+        // CONFIGURACIÓN
+        // ============================================================
         const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA';
         const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/generar-con-ia`;
@@ -1037,9 +1040,195 @@
         let chatInitialized = false;
         let mensajesEnviados = 0;
 
-        const TODOPROFES_CONTEXT = `Eres TodoProfes AI, el asistente inteligente oficial de la plataforma TodoProfes...`; // Mantén tu prompt aquí
+        // ============================================================
+        // PROMPT MAESTRO COMPLETO (ASESOR PEDAGÓGICO Y DE VENTAS)
+        // ============================================================
+        const TODOPROFES_CONTEXT = `
+Eres TodoProfes AI, el asistente inteligente oficial de la plataforma TodoProfes, una herramienta creada para ayudar a docentes a ahorrar tiempo generando documentos pedagógicos con inteligencia artificial.
 
+🎯 **TU OBJETIVO PRINCIPAL**:
+Ayudar a los docentes a:
+- Crear documentos educativos
+- Entender cómo usar las herramientas
+- Resolver dudas pedagógicas
+- Optimizar su tiempo de trabajo
+- Descubrir las herramientas de la plataforma
+- Registrarse y usar los créditos gratuitos
+- Comprar paquetes de créditos cuando lo necesiten
+
+🧠 **TU PERSONALIDAD**:
+- Experto en pedagogía
+- Asesor para docentes
+- Experto en educación inicial y básica
+- Guía de la plataforma
+- Asesor de ventas amable (NUNCA agresivo)
+
+🎭 **TONO DE VOZ**:
+- Amigable
+- Profesional
+- Claro
+- Motivador
+- Educativo
+- NUNCA uses tono comercial agresivo
+
+📚 **INFORMACIÓN DE LA PLATAFORMA**:
+TodoProfes es una plataforma inteligente diseñada para docentes que permite crear documentos pedagógicos en minutos usando inteligencia artificial.
+
+La plataforma incluye:
+- Más de 12 herramientas de IA
+- Más de 50 plantillas educativas
+- Más de 1000 docentes registrados
+- Reduce hasta un 80% el tiempo en planeaciones, informes y documentos
+
+🎁 **REGALO PARA NUEVOS USUARIOS**:
+Los nuevos usuarios reciben 15 créditos gratis al registrarse para probar herramientas.
+Cuando un usuario NO esté registrado, debes invitarlo amablemente: "Puedes registrarte gratis y recibir 15 créditos de IA para probar las herramientas."
+
+💰 **SISTEMA DE CRÉDITOS**:
+Las herramientas funcionan con créditos. Cada herramienta consume una cantidad diferente.
+Los créditos permiten generar documentos con IA.
+Se pueden comprar paquetes de créditos.
+
+🛠️ **HERRAMIENTAS DISPONIBLES**:
+1. **Planeaciones** (2 créditos)
+   - Genera planeaciones semanales, mensuales o por proyectos
+   - Incluye objetivos, actividades, recursos, evaluación
+
+2. **Corrección de textos** (4 créditos)
+   - Mejora ortografía, redacción, claridad, coherencia
+   - Ideal para informes, ensayos, documentos académicos
+
+3. **Observaciones pedagógicas** (3 créditos)
+   - Genera observaciones profesionales para informes escolares, reportes de estudiantes, seguimiento académico
+
+4. **Ideas para PPA** (5 créditos)
+   - Crea ideas creativas para Proyectos Pedagógicos de Aula
+   - Incluye tema, objetivo, actividades, enfoque pedagógico
+
+5. **Boletines informativos** (6 créditos)
+   - Crea boletines para padres con resumen de actividades, aprendizajes, mensajes institucionales
+
+6. **Talleres para padres** (7 créditos)
+   - Diseña talleres participativos con objetivo, dinámica, actividad práctica, reflexión
+
+7. **Detector de IA** (8 créditos)
+   - Analiza textos y estima el porcentaje de contenido generado por IA
+
+8. **Proyectos PEI** (5 créditos)
+   - Ayuda a crear o actualizar el Proyecto Educativo Institucional
+   - Genera misión, visión, principios, estructura pedagógica
+
+9. **DUA** (4 créditos)
+   - Crea estrategias basadas en Diseño Universal para el Aprendizaje
+
+10. **PIAR** (5 créditos)
+    - Genera Planes Individuales de Ajustes Razonables para estudiantes con necesidades educativas
+
+11. **Herramientas Didácticas** (3 créditos)
+    - Crea sopas de letras, crucigramas, ejercicios lúdicos
+
+12. **Evaluación de Desempeño** (4 créditos)
+    - Crea rúbricas, listas de chequeo, escalas de evaluación
+
+📊 **PLANES DE CRÉDITOS**:
+- **Plan Básico**: $24.900 - 45 créditos (aprox 22 planeaciones) - Validez 1 año
+- **Plan Estándar** (más popular): $44.900 - 90 créditos (aprox 45 planeaciones) - Incluye 10 créditos extra
+- **Plan Premium**: $54.900 - 180 créditos (aprox 90 planeaciones) - Incluye soporte prioritario
+
+💡 **ESTRATEGIA DE VENTAS (siempre suave)**:
+Cuando el usuario:
+- diga que usa mucho la plataforma
+- diga que se quedó sin créditos
+- pregunte por precios
+- quiera generar muchos documentos
+
+Debes sugerir un plan amablemente:
+"Si utilizas frecuentemente las planeaciones, el Plan Estándar suele ser el favorito de los docentes porque ofrece más créditos y mejor relación costo-beneficio."
+
+Nunca presiones al usuario.
+
+🤝 **CUANDO EL USUARIO NO SEPA QUÉ HACER**:
+Ayúdalo a elegir la herramienta correcta.
+Ej: "Necesito hacer un informe de estudiante." → "Te recomiendo usar la herramienta Observaciones Pedagógicas, que genera textos profesionales para informes escolares."
+
+📝 **CUANDO EL USUARIO QUIERA CREAR CONTENIDO**:
+Haz preguntas como: grado, edad, tema, duración, objetivo. Luego genera el contenido.
+
+🗣️ **FRASES DE AYUDA**:
+- "Puedo ayudarte a crearlo ahora."
+- "Solo dime el grado y el tema."
+- "Te guío paso a paso."
+
+⚠️ **REGLAS IMPORTANTES**:
+- NUNCA inventes herramientas que no existan
+- Siempre promueve el uso de las herramientas de TodoProfes
+- Mantén respuestas claras, cortas, útiles y pedagógicas
+
+🔍 **ANTES DE RESPONDER**:
+Analiza si el usuario necesita:
+- ayuda pedagógica
+- explicación de una herramienta
+- generación de contenido
+- información de créditos
+- recomendación de plan
+`;
+
+        // ============================================================
+        // MANEJADOR DE HASH PARA GOOGLE LOGIN
+        // ============================================================
+        async function handleAuthHash() {
+            const hash = window.location.hash.substring(1);
+            if (!hash) return false;
+
+            const params = new URLSearchParams(hash);
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+            const type = params.get('type');
+
+            if (accessToken && (type === 'token' || type === 'recovery' || !type)) {
+                console.log('✅ Token detectado en URL, guardando sesión...');
+                
+                localStorage.setItem('supabase_token', accessToken);
+                if (refreshToken) localStorage.setItem('supabase_refresh_token', refreshToken);
+                
+                try {
+                    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'apikey': SUPABASE_KEY
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const user = await response.json();
+                        
+                        localStorage.setItem('user_email', user.email);
+                        localStorage.setItem('user_id', user.id);
+                        
+                        const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
+                        localStorage.setItem('user_name', userName);
+                        
+                        console.log('✅ Sesión guardada para:', user.email);
+                        
+                        window.history.replaceState(null, null, window.location.pathname);
+                        window.location.reload();
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('❌ Error obteniendo usuario del token:', error);
+                }
+            }
+            return false;
+        }
+
+        // ============================================================
+        // FUNCIONES DE AUTENTICACIÓN
+        // ============================================================
         async function checkSession() {
+            // PRIMERO: Verificar si hay hash en la URL (viene de Google)
+            const hashProcessed = await handleAuthHash();
+            if (hashProcessed) return;
+            
             token = localStorage.getItem('supabase_token');
             const userEmail = localStorage.getItem('user_email');
             userId = localStorage.getItem('user_id');
@@ -1052,13 +1241,23 @@
 
             try {
                 const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
                 });
+
                 if (!response.ok) throw new Error('No autorizado');
+
                 showAuthenticatedHeader();
-                document.getElementById('userNameDisplay').textContent = userName || userEmail.split('@')[0] || 'Usuario';
+                
+                const displayName = userName || userEmail.split('@')[0] || 'Usuario';
+                document.getElementById('userNameDisplay').textContent = displayName;
+                
                 await loadUserCredits();
+                
             } catch (error) {
+                console.error('❌ Error de sesión:', error);
                 localStorage.clear();
                 showUnauthenticatedHeader();
             }
@@ -1069,9 +1268,17 @@
             const headerAuth = document.getElementById('headerAuthenticated');
             const incentiveBanner = document.getElementById('incentiveBanner');
             
-            if (headerUnauth) { headerUnauth.classList.remove('hidden'); headerUnauth.style.display = 'flex'; }
-            if (headerAuth) { headerAuth.classList.add('hidden'); headerAuth.style.display = 'none'; }
-            if (incentiveBanner) incentiveBanner.style.display = 'block';
+            if (headerUnauth) {
+                headerUnauth.classList.remove('hidden');
+                headerUnauth.style.display = 'flex';
+            }
+            if (headerAuth) {
+                headerAuth.classList.add('hidden');
+                headerAuth.style.display = 'none';
+            }
+            if (incentiveBanner) {
+                incentiveBanner.style.display = 'block';
+            }
             
             const creditsDisplay = document.getElementById('creditsDisplay');
             if (creditsDisplay) creditsDisplay.textContent = '';
@@ -1085,34 +1292,75 @@
             const headerAuth = document.getElementById('headerAuthenticated');
             const incentiveBanner = document.getElementById('incentiveBanner');
             
-            if (headerUnauth) { headerUnauth.classList.add('hidden'); headerUnauth.style.display = 'none'; }
-            if (headerAuth) { headerAuth.classList.remove('hidden'); headerAuth.style.display = 'flex'; }
-            if (incentiveBanner) incentiveBanner.style.display = 'none';
+            if (headerUnauth) {
+                headerUnauth.classList.add('hidden');
+                headerUnauth.style.display = 'none';
+            }
+            if (headerAuth) {
+                headerAuth.classList.remove('hidden');
+                headerAuth.style.display = 'flex';
+            }
+            if (incentiveBanner) {
+                incentiveBanner.style.display = 'none';
+            }
             
-            setTimeout(() => initDropdownMenu(), 100);
+            setTimeout(() => {
+                initDropdownMenu();
+            }, 100);
         }
 
         async function loadUserCredits() {
             const creditsDisplay = document.getElementById('creditsDisplay');
-            if (!userId || !token) { if (creditsDisplay) creditsDisplay.textContent = ''; return; }
+            
+            if (!userId || !token) {
+                if (creditsDisplay) creditsDisplay.textContent = '';
+                return;
+            }
+            
             try {
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-                    headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY }
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
                 });
+
                 if (response.ok) {
                     const users = await response.json();
-                    creditsDisplay.textContent = users?.[0]?.credits ? `${users[0].credits} créditos` : '0 créditos';
-                } else creditsDisplay.textContent = '0 créditos';
-            } catch { creditsDisplay.textContent = '0 créditos'; }
+                    if (users && users.length > 0) {
+                        creditsDisplay.textContent = `${users[0].credits || 0} créditos`;
+                    } else {
+                        creditsDisplay.textContent = '0 créditos';
+                    }
+                } else {
+                    creditsDisplay.textContent = '0 créditos';
+                }
+            } catch (error) {
+                creditsDisplay.textContent = '0 créditos';
+            }
         }
 
         function handleFeatureClick(page) {
-            if (localStorage.getItem('supabase_token')) window.location.href = page;
-            else { localStorage.setItem('intendedPage', page); window.location.href = 'login.html'; }
+            if (localStorage.getItem('supabase_token')) {
+                window.location.href = page;
+            } else {
+                localStorage.setItem('intendedPage', page);
+                window.location.href = 'login.html';
+            }
         }
 
         async function handleLogout() {
-            if (token) try { await fetch(`${SUPABASE_URL}/auth/v1/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'apikey': SUPABASE_KEY } }); } catch {}
+            if (token) {
+                try {
+                    await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'apikey': SUPABASE_KEY
+                        }
+                    });
+                } catch (error) {}
+            }
             localStorage.clear();
             showUnauthenticatedHeader();
         }
@@ -1122,25 +1370,66 @@
             const userDropdown = document.getElementById('userDropdown');
             const userMenuContainer = document.getElementById('userMenuContainer');
             let hideTimeout;
+
             if (!userMenuButton || !userDropdown || !userMenuContainer) return;
 
-            function showMenu() { clearTimeout(hideTimeout); userDropdown.classList.remove('hidden'); setTimeout(() => userDropdown.classList.add('show'), 10); }
-            function scheduleHideMenu() { hideTimeout = setTimeout(() => { if (!userMenuContainer.matches(':hover') && !userDropdown.matches(':hover')) { userDropdown.classList.remove('show'); setTimeout(() => { if (!userDropdown.classList.contains('show')) userDropdown.classList.add('hidden'); }, 200); } }, 300); }
+            function showMenu() {
+                clearTimeout(hideTimeout);
+                userDropdown.classList.remove('hidden');
+                setTimeout(() => userDropdown.classList.add('show'), 10);
+            }
+
+            function scheduleHideMenu() {
+                hideTimeout = setTimeout(() => {
+                    if (!userMenuContainer.matches(':hover') && !userDropdown.matches(':hover')) {
+                        userDropdown.classList.remove('show');
+                        setTimeout(() => {
+                            if (!userDropdown.classList.contains('show')) {
+                                userDropdown.classList.add('hidden');
+                            }
+                        }, 200);
+                    }
+                }, 300);
+            }
 
             userMenuButton.addEventListener('click', (e) => {
                 e.stopPropagation();
-                if (userDropdown.classList.contains('show')) { userDropdown.classList.remove('show'); setTimeout(() => { if (!userDropdown.classList.contains('show')) userDropdown.classList.add('hidden'); }, 200); }
-                else { userDropdown.classList.remove('hidden'); setTimeout(() => userDropdown.classList.add('show'), 10); }
+                if (userDropdown.classList.contains('show')) {
+                    userDropdown.classList.remove('show');
+                    setTimeout(() => {
+                        if (!userDropdown.classList.contains('show')) {
+                            userDropdown.classList.add('hidden');
+                        }
+                    }, 200);
+                } else {
+                    userDropdown.classList.remove('hidden');
+                    setTimeout(() => userDropdown.classList.add('show'), 10);
+                }
             });
+
             userMenuContainer.addEventListener('mouseenter', showMenu);
             userDropdown.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
             userMenuContainer.addEventListener('mouseleave', scheduleHideMenu);
             userDropdown.addEventListener('mouseleave', scheduleHideMenu);
-            document.addEventListener('click', (e) => { if (!userMenuContainer.contains(e.target) && !userDropdown.contains(e.target)) { userDropdown.classList.remove('show'); setTimeout(() => { if (!userDropdown.classList.contains('show')) userDropdown.classList.add('hidden'); }, 200); } });
+
+            document.addEventListener('click', (e) => {
+                if (!userMenuContainer.contains(e.target) && !userDropdown.contains(e.target)) {
+                    userDropdown.classList.remove('show');
+                    setTimeout(() => {
+                        if (!userDropdown.classList.contains('show')) {
+                            userDropdown.classList.add('hidden');
+                        }
+                    }, 200);
+                }
+            });
+
             userDropdown.addEventListener('click', (e) => e.stopPropagation());
         }
 
-        // Chat functions
+        // ============================================================
+        // FUNCIONES DEL CHAT
+        // ============================================================
+        
         const robotBtn = document.getElementById('robotBtn');
         const chatModal = document.getElementById('chatModal');
         const chatMessages = document.getElementById('chatMessages');
@@ -1152,7 +1441,9 @@
             if (!chatInitialized && chatBubble) {
                 chatBubble.textContent = '👋 ¡Hola! Soy tu asesor pedagógico. ¿En qué puedo ayudarte?';
                 chatBubble.style.display = 'block';
-                setTimeout(() => { if (chatBubble) chatBubble.style.display = 'none'; }, 5000);
+                setTimeout(() => {
+                    if (chatBubble) chatBubble.style.display = 'none';
+                }, 5000);
             }
         }, 3000);
 
@@ -1160,15 +1451,36 @@
             if (show) {
                 chatModal.style.display = 'flex';
                 if (!chatInitialized) {
-                    addBotMessage(formatearMensajeBot("🤖 **¡Hola! Soy TodoProfes AI, tu asesor pedagógico.**\n\nPuedo ayudarte a:\n• Crear planeaciones y documentos\n• Explicar herramientas\n• Recomendarte la mejor opción\n• Informarte sobre créditos\n\n✨ **¿En qué puedo ayudarte hoy?**"));
+                    addBotMessage(formatearMensajeBot(
+                        "🤖 **¡Hola! Soy TodoProfes AI, tu asesor pedagógico personal.**\n\n" +
+                        "Puedo ayudarte a:\n" +
+                        "• Crear planeaciones y documentos educativos\n" +
+                        "• Explicar cómo funcionan las herramientas\n" +
+                        "• Recomendarte la mejor herramienta para tu necesidad\n" +
+                        "• Informarte sobre créditos y planes\n\n" +
+                        "✨ **¿En qué puedo ayudarte hoy?**"
+                    ));
                     chatInitialized = true;
                 }
                 if (notificationBadge) notificationBadge.style.display = 'none';
-            } else chatModal.style.display = 'none';
+            } else {
+                chatModal.style.display = 'none';
+            }
         };
 
-        if (robotBtn) robotBtn.addEventListener('click', () => { toggleChat(true); robotBtn.classList.add('pulse'); setTimeout(() => robotBtn.classList.remove('pulse'), 500); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && chatModal.style.display === 'flex') toggleChat(false); });
+        if (robotBtn) {
+            robotBtn.addEventListener('click', () => {
+                toggleChat(true);
+                robotBtn.classList.add('pulse');
+                setTimeout(() => robotBtn.classList.remove('pulse'), 500);
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && chatModal.style.display === 'flex') {
+                toggleChat(false);
+            }
+        });
 
         function formatearMensajeBot(texto) {
             texto = texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -1178,46 +1490,150 @@
             return texto;
         }
 
-        function addUserMessage(text) { const messageDiv = document.createElement('div'); messageDiv.className = 'message user-message'; messageDiv.textContent = text; chatMessages.appendChild(messageDiv); chatMessages.scrollTop = chatMessages.scrollHeight; mensajesEnviados++; }
-        function addBotMessage(html) { const messageDiv = document.createElement('div'); messageDiv.className = 'message bot-message'; messageDiv.innerHTML = html; chatMessages.appendChild(messageDiv); chatMessages.scrollTop = chatMessages.scrollHeight; }
-        function showTypingIndicator() { const indicator = document.createElement('div'); indicator.className = 'typing-indicator'; indicator.id = 'typingIndicator'; indicator.innerHTML = '<span></span><span></span><span></span>'; chatMessages.appendChild(indicator); chatMessages.scrollTop = chatMessages.scrollHeight; }
-        function hideTypingIndicator() { const indicator = document.getElementById('typingIndicator'); if (indicator) indicator.remove(); }
-        function estaAutenticado() { return !!localStorage.getItem('supabase_token'); }
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            mensajesEnviados++;
+        }
+
+        function addBotMessage(html) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot-message';
+            messageDiv.innerHTML = html;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const indicator = document.createElement('div');
+            indicator.className = 'typing-indicator';
+            indicator.id = 'typingIndicator';
+            indicator.innerHTML = '<span></span><span></span><span></span>';
+            chatMessages.appendChild(indicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function estaAutenticado() {
+            return !!localStorage.getItem('supabase_token');
+        }
 
         window.sendMessage = async function() {
             const message = chatInput.value.trim();
             if (!message) return;
-            addUserMessage(message); chatInput.value = ''; showTypingIndicator();
+            
+            addUserMessage(message);
+            chatInput.value = '';
+            showTypingIndicator();
+            
             try {
                 const autenticado = estaAutenticado();
                 const userId = localStorage.getItem('user_id');
+                
                 let promptCompleto = TODOPROFES_CONTEXT + "\n\n";
-                if (!autenticado) promptCompleto += "El usuario NO está registrado. Sé amable, resuelve su duda, y si han hecho varias preguntas, invítalo suavemente a registrarse.\n\n";
+                
+                if (!autenticado) {
+                    promptCompleto += "El usuario NO está registrado. Sé amable, resuelve su duda, y si han hecho varias preguntas, invítalo suavemente a registrarse.\n\n";
+                }
+                
                 promptCompleto += `Mensaje del usuario: ${message}\n\nResponde de manera útil, pedagógica y profesional.`;
+                
                 const response = await fetch(FUNCTION_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
-                    body: JSON.stringify({ prompt: promptCompleto, tool: 'chat-gratuito', user_id: userId || null, autenticado })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({
+                        prompt: promptCompleto,
+                        tool: 'chat-gratuito',
+                        user_id: userId || null,
+                        autenticado: autenticado
+                    })
                 });
-                const data = await response.json(); hideTypingIndicator();
+                
+                const data = await response.json();
+                hideTypingIndicator();
+                
                 if (data.content) {
                     addBotMessage(formatearMensajeBot(data.content));
-                    if (!autenticado && mensajesEnviados >= 3) setTimeout(() => addBotMessage(formatearMensajeBot("🎁 **¿Sabías que al registrarte recibes 15 créditos gratis?** Puedes probar todas las herramientas sin compromiso.")), 2000);
-                } else addBotMessage("Lo siento, no pude procesar tu pregunta.");
-            } catch { hideTypingIndicator(); addBotMessage("Lo siento, hay un problema de conexión. Intenta más tarde."); }
+                    
+                    if (!autenticado && mensajesEnviados >= 3) {
+                        setTimeout(() => {
+                            addBotMessage(formatearMensajeBot(
+                                "🎁 **¿Sabías que al registrarte recibes 15 créditos gratis?** Puedes probar todas las herramientas sin compromiso."
+                            ));
+                        }, 2000);
+                    }
+                } else {
+                    addBotMessage("Lo siento, no pude procesar tu pregunta.");
+                }
+                
+            } catch (error) {
+                hideTypingIndicator();
+                addBotMessage("Lo siento, hay un problema de conexión. Intenta más tarde.");
+            }
         };
 
-        // Gift
+        // ============================================================
+        // REGALO SORPRESA
+        // ============================================================
         window.addEventListener('load', function() {
             const giftOverlay = document.getElementById('giftOverlay');
             const giftBox = document.getElementById('giftBox');
-            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#3B82F6', '#8B5CF6', '#FBBF24', '#EF4444'] });
-            setTimeout(() => { giftOverlay.classList.add('fade-out'); setTimeout(() => { giftOverlay.style.display = 'none'; }, 800); }, 3000);
-            if (giftBox) giftBox.addEventListener('click', function() { confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } }); giftOverlay.classList.add('fade-out'); setTimeout(() => { giftOverlay.style.display = 'none'; }, 800); });
+            
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#3B82F6', '#8B5CF6', '#FBBF24', '#EF4444']
+            });
+            
+            setTimeout(() => {
+                giftOverlay.classList.add('fade-out');
+                setTimeout(() => {
+                    giftOverlay.style.display = 'none';
+                }, 800);
+            }, 3000);
+            
+            if (giftBox) {
+                giftBox.addEventListener('click', function() {
+                    confetti({
+                        particleCount: 150,
+                        spread: 100,
+                        origin: { y: 0.5 }
+                    });
+                    
+                    giftOverlay.classList.add('fade-out');
+                    setTimeout(() => {
+                        giftOverlay.style.display = 'none';
+                    }, 800);
+                });
+            }
         });
-        window.triggerConfetti = function() { confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 } }); };
+        
+        window.triggerConfetti = function() {
+            confetti({
+                particleCount: 120,
+                spread: 80,
+                origin: { y: 0.5 }
+            });
+        };
 
-        document.addEventListener('DOMContentLoaded', () => { checkSession(); if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons(); });
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession();
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        });
     </script>
 </body>
 </html>
