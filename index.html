@@ -789,12 +789,80 @@
         let token = null;
 
         // ============================================================
-        // FUNCIONES DE AUTENTICACIÓN (sin cambios)
+        // NUEVO: MANEJADOR DE HASH PARA GOOGLE LOGIN
+        // ============================================================
+        
+        async function handleAuthHash() {
+            const hash = window.location.hash.substring(1); // quita el #
+            if (!hash) return false;
+
+            const params = new URLSearchParams(hash);
+            const accessToken = params.get('access_token');
+            const refreshToken = params.get('refresh_token');
+            const type = params.get('type');
+            const expiresIn = params.get('expires_in');
+
+            // Si hay token y es de tipo token (login normal) o recovery
+            if (accessToken && (type === 'token' || type === 'recovery' || !type)) {
+                console.log('✅ Token detectado en URL, guardando sesión...');
+                
+                // Guardar tokens
+                localStorage.setItem('supabase_token', accessToken);
+                if (refreshToken) {
+                    localStorage.setItem('supabase_refresh_token', refreshToken);
+                }
+                
+                try {
+                    // Obtener información del usuario con el token
+                    const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'apikey': SUPABASE_KEY
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const user = await response.json();
+                        
+                        // Guardar datos del usuario
+                        localStorage.setItem('user_email', user.email);
+                        localStorage.setItem('user_id', user.id);
+                        
+                        const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'Usuario';
+                        localStorage.setItem('user_name', userName);
+                        
+                        console.log('✅ Sesión guardada para:', user.email);
+                        
+                        // Limpiar el hash de la URL
+                        window.history.replaceState(null, null, window.location.pathname);
+                        
+                        // Recargar la página para actualizar el header
+                        window.location.reload();
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('❌ Error obteniendo usuario del token:', error);
+                }
+            }
+            return false;
+        }
+
+        // ============================================================
+        // FUNCIONES DE AUTENTICACIÓN (modificadas para usar el hash primero)
         // ============================================================
         
         async function checkSession() {
             console.log('🔍 ===== INICIANDO VERIFICACIÓN DE SESIÓN =====');
             
+            // Primero verificar si hay hash en la URL (viene de Google)
+            const hashProcessed = await handleAuthHash();
+            
+            // Si se procesó el hash, no continuar porque la página se recargará
+            if (hashProcessed) {
+                return;
+            }
+            
+            // Si no hay hash, continuar con la verificación normal
             token = localStorage.getItem('supabase_token');
             const userEmail = localStorage.getItem('user_email');
             userId = localStorage.getItem('user_id');
