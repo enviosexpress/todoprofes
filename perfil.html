@@ -22,7 +22,6 @@
             overflow-x: hidden;
         }
         
-        /* Glassmorphism mejorado */
         .glass-card {
             background: rgba(30, 41, 59, 0.7);
             backdrop-filter: blur(10px);
@@ -36,7 +35,6 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
         }
         
-        /* Avatar con efecto */
         .avatar-container {
             position: relative;
             width: 120px;
@@ -83,8 +81,11 @@
             background: #2563EB;
             transform: scale(1.1);
         }
+
+        .avatar-upload:active {
+            transform: scale(0.95);
+        }
         
-        /* Tarjetas de estadísticas */
         .stat-card {
             background: linear-gradient(145deg, #1E293B, #0F172A);
             border: 1px solid #334155;
@@ -127,7 +128,6 @@
             font-size: 1.5rem;
         }
         
-        /* Tabla de historial responsive */
         .history-table {
             width: 100%;
             border-collapse: separate;
@@ -163,7 +163,6 @@
             border-bottom-right-radius: 0.75rem;
         }
         
-        /* Modal de documentos */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -204,7 +203,6 @@
             transform: scale(1);
         }
         
-        /* Tarjetas de documentos */
         .document-card {
             background: #0F172A;
             border: 1px solid #334155;
@@ -235,7 +233,6 @@
         .document-icon.observacion { background: rgba(14, 165, 233, 0.2); color: #0EA5E9; }
         .document-icon.herramienta { background: rgba(139, 92, 246, 0.2); color: #8B5CF6; }
         
-        /* Scroll personalizado */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -254,7 +251,6 @@
             background: #64748B;
         }
         
-        /* Badges */
         .badge {
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
@@ -283,7 +279,6 @@
             border: 1px solid rgba(59, 130, 246, 0.2);
         }
         
-        /* Selector de fecha */
         .date-picker {
             background: #0F172A;
             border: 1px solid #334155;
@@ -297,7 +292,6 @@
             outline: none;
         }
         
-        /* Skeleton loading */
         .skeleton {
             background: linear-gradient(90deg, #1E293B 25%, #2D3A4F 50%, #1E293B 75%);
             background-size: 200% 100%;
@@ -310,7 +304,6 @@
             100% { background-position: -200% 0; }
         }
         
-        /* Responsive */
         @media (max-width: 640px) {
             .avatar-container {
                 width: 100px;
@@ -326,7 +319,6 @@
             }
         }
         
-        /* Tooltips */
         [data-tooltip] {
             position: relative;
             cursor: help;
@@ -355,7 +347,6 @@
             opacity: 1;
         }
         
-        /* Loader */
         .loader {
             border: 2px solid #1E293B;
             border-top: 2px solid #3B82F6;
@@ -365,14 +356,50 @@
             animation: spin 0.8s linear infinite;
             display: inline-block;
         }
+
+        .loader-small {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #1E293B;
+            border-top: 2px solid #3B82F6;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1E293B;
+            border-left: 4px solid #3B82F6;
+            border-radius: 8px;
+            padding: 12px 20px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast-success {
+            border-left-color: #10B981;
+        }
+
+        .toast-error {
+            border-left-color: #EF4444;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-    <!-- Header mejorado -->
     <header class="bg-slate-950/95 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-slate-800">
         <div class="container mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-4">
@@ -399,10 +426,8 @@
 
     <main class="flex-grow container mx-auto px-4 py-6 md:px-6 md:py-8 lg:px-8">
         <div class="max-w-6xl mx-auto space-y-6 md:space-y-8">
-            <!-- Cabecera del perfil con foto -->
             <div class="glass-card p-6 md:p-8">
                 <div class="flex flex-col md:flex-row items-center md:items-start gap-6 md:gap-8">
-                    <!-- Avatar con upload -->
                     <div class="avatar-container">
                         <img id="avatarImage" src="https://ui-avatars.com/api/?name=Usuario&background=3B82F6&color=fff&size=200" alt="Avatar" class="avatar-image">
                         <div class="avatar-upload" onclick="triggerFileUpload()" data-tooltip="Cambiar foto">
@@ -414,7 +439,6 @@
                         <input type="file" id="avatarUpload" class="hidden" accept="image/*" onchange="handleAvatarUpload(event)">
                     </div>
                     
-                    <!-- Información del usuario -->
                     <div class="flex-1 text-center md:text-left">
                         <h2 class="text-3xl md:text-4xl font-bold text-white mb-2" id="userFullName">
                             <span class="skeleton inline-block w-48 h-8"></span>
@@ -427,7 +451,6 @@
                             <span class="skeleton inline-block w-48 h-4"></span>
                         </p>
                         
-                        <!-- Badges de estado -->
                         <div class="flex flex-wrap gap-2 justify-center md:justify-start">
                             <span class="badge badge-success">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
@@ -440,7 +463,6 @@
                         </div>
                     </div>
                     
-                    <!-- Créditos destacado -->
                     <div class="bg-gradient-to-br from-yellow-500/20 to-yellow-600/10 border border-yellow-500/30 rounded-2xl p-6 text-center min-w-[160px]">
                         <p class="text-sm text-yellow-400 mb-1">Créditos disponibles</p>
                         <p class="text-4xl md:text-5xl font-bold text-yellow-400" id="userCredits">0</p>
@@ -449,9 +471,7 @@
                 </div>
             </div>
 
-            <!-- Estadísticas en grid responsive -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                <!-- Créditos comprados -->
                 <div class="stat-card">
                     <div class="flex items-center justify-between mb-3">
                         <div class="stat-icon bg-green-500/20 text-green-400">
@@ -465,7 +485,6 @@
                     <h3 class="text-slate-400 text-sm">Créditos Comprados</h3>
                 </div>
 
-                <!-- Créditos usados -->
                 <div class="stat-card">
                     <div class="flex items-center justify-between mb-3">
                         <div class="stat-icon bg-blue-500/20 text-blue-400">
@@ -479,7 +498,6 @@
                     <h3 class="text-slate-400 text-sm">Créditos Usados</h3>
                 </div>
 
-                <!-- Contenidos generados (clic para abrir modal) -->
                 <div class="stat-card" onclick="abrirModalDocumentos()">
                     <div class="flex items-center justify-between mb-3">
                         <div class="stat-icon bg-purple-500/20 text-purple-400">
@@ -494,7 +512,6 @@
                     <p class="text-xs text-blue-400 mt-1">Ver todos →</p>
                 </div>
 
-                <!-- Días activo -->
                 <div class="stat-card">
                     <div class="flex items-center justify-between mb-3">
                         <div class="stat-icon bg-amber-500/20 text-amber-400">
@@ -509,7 +526,6 @@
                 </div>
             </div>
 
-            <!-- Historial de transacciones -->
             <div class="glass-card p-6 md:p-8">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                     <h3 class="text-xl font-bold text-white flex items-center gap-2">
@@ -520,7 +536,6 @@
                         Historial de Transacciones
                     </h3>
                     
-                    <!-- Filtros -->
                     <select id="filterType" class="bg-slate-800 border border-slate-700 text-sm rounded-lg px-3 py-2 text-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="all">Todos</option>
                         <option value="purchase">Compras</option>
@@ -529,7 +544,6 @@
                     </select>
                 </div>
 
-                <!-- Contenedor del historial con scroll horizontal -->
                 <div class="overflow-x-auto">
                     <table class="history-table">
                         <thead>
@@ -559,7 +573,6 @@
                 </div>
             </div>
 
-            <!-- Acciones rápidas -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button onclick="window.location.href='checkout.html'" class="group relative bg-gradient-to-r from-green-500 to-emerald-500 text-white p-6 rounded-2xl font-semibold hover:from-green-600 hover:to-emerald-600 transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden">
                     <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform"></div>
@@ -586,10 +599,8 @@
         </div>
     </main>
 
-    <!-- Modal de Documentos Generados -->
     <div id="documentsModal" class="modal-overlay" onclick="cerrarModalDocumentos(event)">
         <div class="modal-container" onclick="event.stopPropagation()">
-            <!-- Cabecera del modal -->
             <div class="p-6 border-b border-slate-800">
                 <div class="flex justify-between items-center">
                     <h2 class="text-2xl font-bold text-white flex items-center gap-3">
@@ -610,7 +621,6 @@
                     </button>
                 </div>
                 
-                <!-- Filtros del modal -->
                 <div class="flex flex-col sm:flex-row gap-4 mt-6">
                     <div class="flex-1">
                         <label class="block text-sm text-slate-400 mb-2">Filtrar por fecha</label>
@@ -629,10 +639,8 @@
                 </div>
             </div>
             
-            <!-- Grid de documentos (DESDE STORAGE) -->
             <div class="p-6 max-h-[60vh] overflow-y-auto">
                 <div id="documentsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Los documentos se cargarán aquí dinámicamente -->
                     <div class="col-span-full text-center text-slate-500 py-12">
                         <div class="loader mx-auto"></div>
                         <p class="mt-4">Cargando documentos...</p>
@@ -640,7 +648,6 @@
                 </div>
             </div>
             
-            <!-- Pie del modal con estadísticas -->
             <div class="p-6 border-t border-slate-800 bg-slate-900/50">
                 <div class="flex justify-between items-center text-sm">
                     <span class="text-slate-400">Total documentos: <span id="totalDocsCount" class="text-white font-bold">0</span></span>
@@ -658,6 +665,8 @@
         </div>
     </div>
 
+    <div id="toastContainer"></div>
+
     <script>
         const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
@@ -667,7 +676,23 @@
         let userData = null
         let documentos = []
 
-        // Verificar sesión
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast-message ${type === 'success' ? 'toast-success' : 'toast-error'}`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span>${type === 'success' ? '✅' : '❌'}</span>
+                    <span>${message}</span>
+                </div>
+            `;
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
         async function checkSession() {
             token = localStorage.getItem('supabase_token')
             userId = localStorage.getItem('user_id')
@@ -689,7 +714,6 @@
 
                 userData = await response.json()
                 
-                // Mostrar datos del usuario
                 const fullName = userData.user_metadata?.full_name || userData.email?.split('@')[0] || 'Usuario'
                 const email = userData.email || 'Email no disponible'
                 
@@ -702,28 +726,22 @@
                     ${email}
                 `
                 
-                // Actualizar avatar con iniciales
-                document.getElementById('avatarImage').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=3B82F6&color=fff&size=200&bold=true`
-                
-                // Calcular fecha de membresía
                 const joinDate = new Date(userData.created_at)
                 document.getElementById('memberSince').textContent = `Miembro desde ${joinDate.getFullYear()}`
                 
-                // Cargar créditos y documentos
                 await cargarCreditos()
+                await cargarFotoPerfil()
                 await cargarEstadisticas()
                 await cargarHistorialCreditos()
                 await cargarDocumentosDesdeStorage()
                 
             } catch (error) {
                 console.error('Error de sesión:', error)
-                localStorage.removeItem('supabase_token')
-                localStorage.removeItem('user_id')
+                localStorage.clear()
                 window.location.href = 'login.html'
             }
         }
 
-        // Cargar créditos
         async function cargarCreditos() {
             try {
                 const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
@@ -746,10 +764,148 @@
             }
         }
 
-        // Cargar estadísticas
+        // ============================================================
+        // FUNCIÓN PARA CARGAR FOTO DE PERFIL
+        // ============================================================
+        async function cargarFotoPerfil() {
+            try {
+                console.log('📸 Cargando foto de perfil');
+                
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    if (users && users.length > 0 && users[0].avatar_url) {
+                        console.log('✅ Foto encontrada en BD:', users[0].avatar_url);
+                        document.getElementById('avatarImage').src = users[0].avatar_url;
+                    } else {
+                        const fullName = document.getElementById('userFullName').textContent || 'Usuario';
+                        document.getElementById('avatarImage').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=3B82F6&color=fff&size=200&bold=true`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando foto:', error);
+                const fullName = document.getElementById('userFullName').textContent || 'Usuario';
+                document.getElementById('avatarImage').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName)}&background=3B82F6&color=fff&size=200&bold=true`;
+            }
+        }
+
+        // ============================================================
+        // FUNCIÓN PARA SUBIR FOTO DE PERFIL (CORREGIDA)
+        // ============================================================
+        async function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('La imagen no puede ser mayor a 2MB', 'error');
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                showToast('Solo se permiten imágenes', 'error');
+                return;
+            }
+
+            const uploadBtn = document.querySelector('.avatar-upload');
+            const originalHTML = uploadBtn.innerHTML;
+            uploadBtn.innerHTML = '<div class="loader-small"></div>';
+            uploadBtn.style.pointerEvents = 'none';
+
+            try {
+                const timestamp = Date.now();
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${userId}/profile_${timestamp}.${fileExt}`;
+                
+                console.log('📤 Subiendo imagen:', fileName);
+
+                const uploadResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/avatars/${fileName}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: file
+                });
+
+                if (!uploadResponse.ok) {
+                    throw new Error('Error al subir la imagen');
+                }
+
+                const imageUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}`;
+
+                const updateResponse = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        avatar_url: imageUrl
+                    })
+                });
+
+                if (!updateResponse.ok) {
+                    throw new Error('Error al guardar en base de datos');
+                }
+
+                document.getElementById('avatarImage').src = imageUrl;
+                
+                // Limpiar archivos antiguos (ignorar errores 400)
+                try {
+                    const listResponse = await fetch(`${SUPABASE_URL}/storage/v1/object/list/avatars`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'apikey': SUPABASE_KEY,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            prefix: `${userId}/`,
+                            limit: 100
+                        })
+                    });
+
+                    if (listResponse.ok) {
+                        const files = await listResponse.json();
+                        for (const oldFile of files) {
+                            if (oldFile.name && oldFile.name !== fileName) {
+                                // Intentar eliminar, ignorar errores
+                                fetch(`${SUPABASE_URL}/storage/v1/object/avatars/${oldFile.name}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                        'apikey': SUPABASE_KEY
+                                    }
+                                }).catch(() => {});
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.log('Error en limpieza (no crítico):', e);
+                }
+
+                showToast('¡Foto actualizada correctamente!', 'success');
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error al subir la imagen', 'error');
+                await cargarFotoPerfil();
+            } finally {
+                uploadBtn.innerHTML = originalHTML;
+                uploadBtn.style.pointerEvents = 'auto';
+                event.target.value = '';
+            }
+        }
+
         async function cargarEstadisticas() {
             try {
-                // Estadísticas de créditos
                 const historyResponse = await fetch(`${SUPABASE_URL}/rest/v1/credit_history?user_id=eq.${userId}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -775,7 +931,6 @@
                     document.getElementById('totalUsage').textContent = used
                 }
 
-                // Calcular días como miembro
                 const joinDate = new Date(userData.created_at)
                 const today = new Date()
                 const diffTime = Math.abs(today - joinDate)
@@ -787,14 +942,10 @@
             }
         }
 
-        // ============================================================
-        // FUNCIÓN CORREGIDA: Cargar documentos DIRECTAMENTE del STORAGE
-        // ============================================================
         async function cargarDocumentosDesdeStorage() {
             try {
                 console.log('📂 Cargando documentos del bucket para usuario:', userId)
                 
-                // Listar archivos en la carpeta del usuario
                 const response = await fetch(`${SUPABASE_URL}/storage/v1/object/list/pdf_generados`, {
                     method: 'POST',
                     headers: {
@@ -816,12 +967,9 @@
                 const files = await response.json()
                 console.log('📄 Archivos encontrados:', files.length)
                 
-                // Transformar los archivos al formato que usa el modal
                 documentos = files.map(file => {
-                    // Extraer el nombre del archivo sin la carpeta
                     const fileName = file.name.split('/').pop() || file.name
                     
-                    // Determinar el tipo por el prefijo del nombre
                     let tipo = 'documento'
                     if (fileName.includes('planeacion')) tipo = 'planeacion'
                     else if (fileName.includes('correccion')) tipo = 'correccion'
@@ -848,20 +996,17 @@
             }
         }
 
-        // Abrir modal de documentos
         function abrirModalDocumentos() {
             document.getElementById('documentsModal').classList.add('active')
-            cargarDocumentosDesdeStorage() // Recargar cada vez que se abre
+            cargarDocumentosDesdeStorage()
         }
 
-        // Cerrar modal
         function cerrarModalDocumentos(event) {
             if (!event || event.target.classList.contains('modal-overlay')) {
                 document.getElementById('documentsModal').classList.remove('active')
             }
         }
 
-        // Filtrar documentos por fecha y tipo
         function filtrarDocumentos() {
             const filterDate = document.getElementById('filterDate').value
             const filterType = document.getElementById('filterDocType').value
@@ -882,7 +1027,6 @@
             renderizarDocumentos(filtrados)
         }
 
-        // Renderizar documentos en el grid
         function renderizarDocumentos(docs) {
             const grid = document.getElementById('documentsGrid')
             
@@ -959,12 +1103,10 @@
             grid.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${html}</div>`
             document.getElementById('totalDocsCount').textContent = docs.length
             
-            // Calcular espacio usado
             const totalSize = docs.reduce((acc, doc) => acc + (doc.size || 0), 0)
             document.getElementById('storageUsed').textContent = (totalSize / (1024 * 1024)).toFixed(2) + ' MB'
         }
 
-        // Descargar documento individual
         function descargarDocumento(url, filename) {
             fetch(url)
                 .then(response => response.blob())
@@ -981,12 +1123,10 @@
                 })
         }
 
-        // Descargar todos los documentos (simulado)
         function descargarTodosDocumentos() {
             alert('Función de descarga múltiple próximamente disponible')
         }
 
-        // Cargar historial de créditos
         async function cargarHistorialCreditos() {
             try {
                 const filter = document.getElementById('filterType').value
@@ -1079,39 +1219,14 @@
             }
         }
 
-        // Manejar upload de avatar
         function triggerFileUpload() {
             document.getElementById('avatarUpload').click()
         }
 
-        async function handleAvatarUpload(event) {
-            const file = event.target.files[0]
-            if (!file) return
-
-            if (file.size > 2 * 1024 * 1024) {
-                alert('La imagen no puede ser mayor a 2MB')
-                return
-            }
-
-            if (!file.type.startsWith('image/')) {
-                alert('Solo se permiten imágenes')
-                return
-            }
-
-            const reader = new FileReader()
-            reader.onload = function(e) {
-                document.getElementById('avatarImage').src = e.target.result
-                console.log('Avatar actualizado (simulado)')
-            }
-            reader.readAsDataURL(file)
-        }
-
-        // Event listeners
         document.getElementById('filterType').addEventListener('change', cargarHistorialCreditos)
         document.getElementById('filterDate').addEventListener('change', filtrarDocumentos)
         document.getElementById('filterDocType').addEventListener('change', filtrarDocumentos)
 
-        // Cerrar sesión
         async function cerrarSesion() {
             if (token) {
                 await fetch(`${SUPABASE_URL}/auth/v1/logout`, {
@@ -1127,11 +1242,9 @@
             window.location.href = 'login.html'
         }
 
-        // Inicializar
         document.addEventListener('DOMContentLoaded', () => {
             checkSession()
             
-            // Agregar botón de logout
             const header = document.querySelector('header .container .flex:last-child')
             if (header) {
                 const logoutBtn = document.createElement('button')
