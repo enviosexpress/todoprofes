@@ -983,7 +983,7 @@
         }
 
         // ============================================================
-        // FUNCIONES DE AUTENTICACIÓN Y CRÉDITOS
+        // FUNCIONES DE AUTENTICACIÓN Y CRÉDITOS - CORREGIDO
         // ============================================================
         
         async function checkSession() {
@@ -1007,7 +1007,7 @@
 
                 isAuthenticated = true
                 await loadUserCredits()
-                await checkIAFunction()
+                // ✅ ELIMINADO: await checkIAFunction()
                 await loadToolCost()
                 
             } catch (error) {
@@ -1046,21 +1046,7 @@
             }
         }
 
-        async function checkIAFunction() {
-            try {
-                await fetch(FUNCTION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ prompt: "test", tool: "planeacion" })
-                })
-                console.log('✅ IA disponible')
-            } catch (error) {
-                console.warn('⚠️ IA no disponible:', error)
-            }
-        }
+        // ✅ FUNCIÓN ELIMINADA - checkIAFunction ya no existe
 
         async function loadToolCost() {
             try {

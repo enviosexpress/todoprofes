@@ -905,7 +905,7 @@
 
                 isAuthenticated = true
                 await loadUserCredits()
-                await checkIAFunction()
+                
                 
             } catch (error) {
                 console.error('Error verificando sesión:', error)
@@ -943,24 +943,7 @@
             }
         }
 
-        async function checkIAFunction() {
-            try {
-                const response = await fetch(FUNCTION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        prompt: "test",
-                        tool: "observaciones"
-                    })
-                })
-                console.log('✅ IA disponible:', response.ok)
-            } catch (error) {
-                console.warn('⚠️ IA no disponible:', error)
-            }
-        }
+        
 
         async function deductCredits(amount) {
             try {

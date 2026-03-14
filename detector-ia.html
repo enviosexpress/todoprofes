@@ -856,7 +856,7 @@
                 }).then(res => { if (!res.ok) throw new Error() })
                 isAuthenticated = true
                 await loadUserCredits()
-                await checkIAFunction()
+             
             } catch {
                 localStorage.clear()
                 window.location.href = 'login.html'
@@ -873,21 +873,7 @@
             }
         }
 
-        async function checkIAFunction() {
-            try {
-                await fetch(FUNCTION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ prompt: "test", tool: "detector" })
-                })
-                console.log('✅ IA disponible')
-            } catch (error) {
-                console.warn('⚠️ IA no disponible:', error)
-            }
-        }
+       
 
         async function deductCredits(amount) {
             const getRes = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {

@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TodoProfes - Plataforma Inteligente para Educadores</title>
     <link rel="icon" href="imagenes/logo.png" type="image/png">
+    <!-- 🚨 EVITAR CACHÉ -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
     <style>
-        /* Mismos estilos que tenías - sin cambios */
         body {
             font-family: 'Inter', sans-serif;
             background: #0F172A;
@@ -47,7 +51,7 @@
         }
         
         /* ============================================================ */
-        /* ESTILOS DEL MENÚ DE USUARIO - HORIZONTAL */
+        /* ESTILOS DEL MENÚ DE USUARIO */
         /* ============================================================ */
         #headerAuthenticated {
             display: flex !important;
@@ -71,7 +75,6 @@
             opacity: 0;
             visibility: hidden;
             transform: scale(0.95);
-            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
         }
         
         #userDropdown.show {
@@ -82,10 +85,6 @@
         
         #userMenuContainer {
             position: relative;
-        }
-        
-        #userMenuButton {
-            transition: all 0.2s ease;
         }
 
         /* ============================================================ */
@@ -381,20 +380,9 @@
             color: #94A3B8;
             font-weight: 500;
         }
-        
-        .feature-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1rem;
-            background: rgba(59, 130, 246, 0.1);
-        }
 
         /* ============================================================ */
-        /* ESTILOS DEL CHATBOT - CORREGIDO */
+        /* ESTILOS DEL CHATBOT */
         /* ============================================================ */
         .robot-chat-container {
             position: fixed;
@@ -459,10 +447,6 @@
             width: 60px; 
             height: 60px; 
             object-fit: contain; 
-        }
-        
-        .robot-btn.pulse {
-            animation: pulse 2s infinite;
         }
         
         @keyframes float {
@@ -547,16 +531,6 @@
         .message strong {
             color: #FBBF24;
             font-weight: 700;
-        }
-        
-        .message em {
-            color: #94A3B8;
-            font-style: italic;
-        }
-        
-        .message ul, .message ol {
-            margin: 8px 0;
-            padding-left: 20px;
         }
         
         .user-message {
@@ -669,10 +643,6 @@
             border-radius: 5px;
         }
         
-        .chat-messages::-webkit-scrollbar-thumb:hover {
-            background: #64748B;
-        }
-        
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -692,7 +662,7 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-    <!-- BANNER DE INCENTIVO (único elemento visual) -->
+    <!-- BANNER DE INCENTIVO -->
     <div id="incentiveBanner" class="incentive-banner">
         <div class="banner-content">
             <div class="banner-left">
@@ -754,12 +724,12 @@
     </header>
 
     <main class="flex-grow container mx-auto p-6 md:p-8">
-        <!-- Bienvenida 
+        <!-- Bienvenida -->
         <section class="text-center mb-12">
             <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
                 <span class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Plataforma Inteligente</span><br>para Educadores
             </h2>
-            <p class="text-lg md:text-xl text-slate-400">Transformando la educación en la primera infancia con IA</p> -->
+            <p class="text-lg md:text-xl text-slate-400">Transformando la educación en la primera infancia con IA</p>
             
             <!-- Estadísticas -->
             <div class="stats-container">
@@ -769,7 +739,7 @@
             </div>
         </section>
 
-        <!-- Grid de funcionalidades (igual que antes) -->
+        <!-- Grid de funcionalidades -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <!-- Planeaciones -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('planeaciones.html')">
@@ -995,7 +965,7 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
 `;
 
         // ============================================================
-        // FUNCIONES DE AUTENTICACIÓN
+        // FUNCIONES DE AUTENTICACIÓN - CORREGIDAS (SIN DESCUENTO)
         // ============================================================
         async function handleAuthHash() {
             const hash = window.location.hash.substring(1);
@@ -1071,6 +1041,7 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
                 const displayName = userName || userEmail.split('@')[0] || 'Usuario';
                 document.getElementById('userNameDisplay').textContent = displayName;
                 
+                // ✅ SOLO carga créditos, NO llama a IA
                 await loadUserCredits();
                 
             } catch (error) {
@@ -1153,6 +1124,7 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
                     creditsDisplay.textContent = '0 créditos';
                 }
             } catch (error) {
+                console.error('Error cargando créditos:', error);
                 creditsDisplay.textContent = '0 créditos';
             }
         }
@@ -1263,12 +1235,10 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
             }
         }, 3000);
 
-        // ✅ FUNCIÓN CORREGIDA - SOLO MUESTRA MENSAJE LOCAL, NO LLAMA A IA
         window.toggleChat = function(show) {
             if (show) {
                 chatModal.style.display = 'flex';
                 if (!chatInitialized) {
-                    // ✅ MENSAJE ESTÁTICO - NO HACE LLAMADA A IA
                     const welcomeMessage = `
 ¡Hola! Soy **adrIAn**, tu asesor de TodoProfes. ⚡
 
@@ -1344,7 +1314,6 @@ Puedo informarte sobre:
             return !!localStorage.getItem('supabase_token');
         }
 
-        // ✅ FUNCIÓN CORREGIDA - tool SIEMPRE 'chat-gratuito'
         window.sendMessage = async function() {
             const message = chatInput.value.trim();
             if (!message) return;
@@ -1365,7 +1334,6 @@ Puedo informarte sobre:
                 
                 promptCompleto += `Mensaje del usuario: ${message}\n\nResponde de manera útil, pedagógica y profesional.`;
                 
-                // ✅ tool: 'chat-gratuito' (costo 0)
                 const response = await fetch(FUNCTION_URL, {
                     method: 'POST',
                     headers: {
@@ -1374,7 +1342,7 @@ Puedo informarte sobre:
                     },
                     body: JSON.stringify({
                         prompt: promptCompleto,
-                        tool: 'chat-gratuito',  // ✅ ESTO ES CRÍTICO
+                        tool: 'chat-gratuito',
                         user_id: userId || null,
                         autenticado: autenticado
                     })
@@ -1404,7 +1372,7 @@ Puedo informarte sobre:
         };
 
         // ============================================================
-        // CONFETTI PARA REGISTRO (solo decorativo)
+        // CONFETTI PARA REGISTRO
         // ============================================================
         
         window.triggerConfetti = function() {

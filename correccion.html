@@ -926,7 +926,7 @@
 
                 isAuthenticated = true
                 await loadUserCredits()
-                await checkIAFunction()
+               
                 
             } catch (error) {
                 console.error('Error verificando sesión:', error)
@@ -969,25 +969,7 @@
             console.log('IA Status:', available ? 'Activa' : 'No disponible');
         }
 
-        async function checkIAFunction() {
-            try {
-                const response = await fetch(FUNCTION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        prompt: "test",
-                        tool: "correccion"
-                    })
-                })
-                updateIAStatus(response.ok)
-            } catch (error) {
-                console.warn('No se puede conectar a la función de IA:', error)
-                updateIAStatus(false)
-            }
-        }
+        
 
         async function deductCredits(amount) {
             try {

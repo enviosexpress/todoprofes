@@ -800,7 +800,7 @@
                 }).then(res => { if (!res.ok) throw new Error() })
                 isAuthenticated = true
                 await loadUserCredits()
-                await checkIAFunction()
+                
             } catch {
                 localStorage.clear()
                 window.location.href = 'login.html'
@@ -826,22 +826,6 @@
                 }
             } catch (error) {
                 console.error('Error cargando créditos:', error)
-            }
-        }
-
-        async function checkIAFunction() {
-            try {
-                await fetch(FUNCTION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ prompt: "test", tool: "evaluacion" })
-                })
-                console.log('✅ IA disponible')
-            } catch (error) {
-                console.warn('⚠️ IA no disponible:', error)
             }
         }
 
