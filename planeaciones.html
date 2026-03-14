@@ -1067,62 +1067,8 @@
             }
         }
 
-        async function deductCredits(amount) {
-            try {
-                const getResponse = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'apikey': SUPABASE_KEY
-                    }
-                })
-
-                if (!getResponse.ok) throw new Error('No se pudo obtener créditos actuales')
-
-                const users = await getResponse.json()
-                if (!users || users.length === 0) throw new Error('Usuario no encontrado')
-
-                const currentCredits = users[0].credits || 0
-                
-                if (currentCredits < amount) throw new Error('Créditos insuficientes')
-
-                const newCredits = currentCredits - amount
-
-                const updateResponse = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                        'apikey': SUPABASE_KEY
-                    },
-                    body: JSON.stringify({ credits: newCredits })
-                })
-
-                if (!updateResponse.ok) throw new Error('No se pudieron actualizar los créditos')
-
-                await fetch(`${SUPABASE_URL}/rest/v1/credit_history`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,
-                        'apikey': SUPABASE_KEY
-                    },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        amount: -amount,
-                        balance_after: newCredits,
-                        type: 'usage',
-                        description: 'Uso de Planeaciones Inteligentes',
-                        feature_used: 'planeacion'
-                    })
-                }).catch(err => console.log('Error registrando historial:', err))
-
-                return newCredits
-
-            } catch (error) {
-                console.error('Error descontando créditos:', error)
-                throw error
-            }
-        }
+        // ✅ FUNCIÓN ELIMINADA - deductCredits ya no se usa en handleGenerate
+        // La mantenemos por si se necesita en otro lado, pero no se llama
 
         function showMessage(text, isSuccess = false) {
             const msgEl = document.getElementById('message')
@@ -1290,7 +1236,7 @@
         }
 
         // ============================================================
-        // FUNCIÓN PRINCIPAL DE GENERACIÓN CON IA
+        // FUNCIÓN PRINCIPAL DE GENERACIÓN CON IA - CORREGIDA (SIN DOBLE DESCUENTO)
         // ============================================================
         
         async function handleGenerate() {
@@ -1323,8 +1269,8 @@
             btn.disabled = true
 
             try {
-                const newCredits = await deductCredits(currentToolCost)
-                document.getElementById('creditsDisplay').textContent = `${newCredits} créditos`
+                // ❌ ELIMINADO: const newCredits = await deductCredits(currentToolCost)
+                // ❌ ELIMINADO: document.getElementById('creditsDisplay').textContent = `${newCredits} créditos`
 
                 const prompt = `Actúa como un experto en educación infantil y diseño de planeaciones pedagógicas.
 
@@ -1383,7 +1329,7 @@ RESPUESTA EN FORMATO JSON:
                     },
                     body: JSON.stringify({
                         prompt: prompt,
-                        tool: 'planeacion',
+                        tool: 'planeacion',  // ← LA EDGE FUNCTION DESCUENTA AQUÍ (2 créditos)
                         format: 'json'
                     })
                 })
@@ -1393,9 +1339,18 @@ RESPUESTA EN FORMATO JSON:
 
                 if (!response.ok) {
                     if (data.error === 'insufficient_credits') {
-                        throw new Error(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}`)
+                        throw new Error(`❌ Créditos insuficientes.`)
                     }
                     throw new Error(data.message || 'Error al generar la planeación')
+                }
+
+                // ✅ ACTUALIZAR créditos desde la respuesta (NO descontar otra vez)
+                if (data.credits_left !== undefined) {
+                    document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
+                    document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Restantes: ${data.credits_left}`
+                } else {
+                    // Si la Edge Function no devuelve credits_left, recargamos manualmente
+                    await loadUserCredits()
                 }
 
                 // Procesar la respuesta JSON
@@ -1578,13 +1533,6 @@ RESPUESTA EN FORMATO JSON:
                 generatedContent = planeacionHTML
                 document.getElementById('result').innerHTML = planeacionHTML
                 document.getElementById('resultContainer').classList.remove('hidden')
-                
-                if (data.credits_left !== undefined) {
-                    document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
-                    document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Restantes: ${data.credits_left}`
-                } else {
-                    await loadUserCredits()
-                }
                 
                 await guardarDocumentoEnStorage(planeacionHTML, objetivo, 'planeacion')
                 showMessage('✅ Planeación generada con IA', true)
