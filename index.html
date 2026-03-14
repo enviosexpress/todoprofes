@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1"></script>
     <style>
+        /* Mismos estilos que tenías - sin cambios */
         body {
             font-family: 'Inter', sans-serif;
             background: #0F172A;
@@ -86,122 +87,6 @@
         #userMenuButton {
             transition: all 0.2s ease;
         }
-        
-        /* ============================================================ */
-        /* ESTILOS DEL REGALO SORPRESA */
-        /* ============================================================ */
-        .gift-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(8px);
-            z-index: 99999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.5s ease forwards;
-        }
-        
-        .gift-container {
-            text-align: center;
-            animation: popIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-width: 95%;
-            padding: 1rem;
-            width: 100%;
-        }
-        
-        .gift-box {
-            cursor: pointer;
-            transition: transform 0.3s ease;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: center;
-        }
-        
-        .gift-box img {
-            width: min(80vw, 450px);
-            height: auto;
-            max-width: 100%;
-            filter: drop-shadow(0 20px 30px rgba(59, 130, 246, 0.5));
-            animation: float 3s ease-in-out infinite, pulse-gift 2s ease-in-out infinite;
-        }
-        
-        .gift-box:hover img {
-            transform: scale(1.1) rotate(3deg);
-        }
-        
-        .gift-message {
-            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-            padding: 1.5rem 2.5rem;
-            border-radius: 60px;
-            color: white;
-            font-weight: 800;
-            font-size: clamp(1.5rem, 8vw, 2.5rem);
-            box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4);
-            border: 3px solid rgba(255, 255, 255, 0.2);
-            animation: glow 2s ease-in-out infinite;
-            margin-top: 1rem;
-            letter-spacing: 1px;
-            width: fit-content;
-            margin-left: auto;
-            margin-right: auto;
-            white-space: nowrap;
-        }
-        
-        .gift-submessage {
-            color: #FBBF24;
-            font-size: clamp(1rem, 4vw, 1.3rem);
-            font-weight: 600;
-            margin-top: 1rem;
-            text-shadow: 0 2px 10px rgba(251, 191, 36, 0.3);
-        }
-        
-        @media (max-width: 480px) {
-            .gift-message {
-                padding: 1rem 1.5rem;
-                white-space: normal;
-            }
-            .gift-box img {
-                width: min(70vw, 350px);
-            }
-        }
-        
-        @keyframes popIn {
-            0% { transform: scale(0.3); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-        
-        @keyframes pulse-gift {
-            0%, 100% { filter: drop-shadow(0 20px 30px rgba(59, 130, 246, 0.5)); }
-            50% { filter: drop-shadow(0 30px 50px rgba(139, 92, 246, 0.8)); }
-        }
-        
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4); }
-            50% { box-shadow: 0 30px 60px rgba(59, 130, 246, 0.7); }
-        }
-        
-        .fade-out {
-            animation: fadeOut 0.8s ease forwards !important;
-        }
-        
-        @keyframes fadeOut {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
 
         /* ============================================================ */
         /* BANNER DE INCENTIVO */
@@ -264,11 +149,10 @@
             animation: float-light 3s ease-in-out infinite;
         }
         
-        .gift-icon-large img {
-            height: 50px;
-            width: auto;
-            max-width: 100%;
-            filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.7));
+        .gift-icon-large svg {
+            height: 30px;
+            width: 30px;
+            color: #FBBF24;
         }
         
         @keyframes float-light {
@@ -436,8 +320,9 @@
                 padding: 0.8rem 1rem;
             }
             
-            .gift-icon-large img {
-                height: 40px;
+            .gift-icon-large svg {
+                height: 30px;
+                width: 30px;
             }
         }
         
@@ -456,8 +341,9 @@
                 font-size: 1rem;
             }
             
-            .gift-icon-large img {
-                height: 35px;
+            .gift-icon-large svg {
+                height: 25px;
+                width: 25px;
             }
         }
 
@@ -508,7 +394,7 @@
         }
 
         /* ============================================================ */
-        /* ESTILOS DEL CHATBOT */
+        /* ESTILOS DEL CHATBOT - CORREGIDO */
         /* ============================================================ */
         .robot-chat-container {
             position: fixed;
@@ -579,6 +465,11 @@
             animation: pulse 2s infinite;
         }
         
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
         .chat-modal {
             position: fixed; 
             bottom: 100px; 
@@ -591,6 +482,7 @@
             flex-direction: column;
             border: 1px solid #334155; 
             z-index: 10000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
         
         .chat-header {
@@ -781,6 +673,11 @@
             background: #64748B;
         }
         
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         @media (max-width: 640px) {
             .chat-modal {
                 width: 300px;
@@ -795,21 +692,15 @@
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
-    <!-- REGALO SORPRESA -->
-    <div id="giftOverlay" class="gift-overlay">
-        <div class="gift-container">
-            <div class="gift-box" id="giftBox">
-                <img src="imagenes/regalo.png" alt="15 créditos gratis">
-            </div>
-                        <div class="gift-submessage">✨ PARA NUEVOS EDUCADORES ✨</div>
-        </div>
-    </div>
-
-    <!-- BANNER DE INCENTIVO -->
+    <!-- BANNER DE INCENTIVO (único elemento visual) -->
     <div id="incentiveBanner" class="incentive-banner">
         <div class="banner-content">
             <div class="banner-left">
-                <span class="gift-icon-large"><img src="imagenes/regalo.png" alt="Regalo"></span>
+                <span class="gift-icon-large">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 8V4"/><rect x="8" y="4" width="8" height="4"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="16" r="1"/><circle cx="12" cy="20" r="1"/>
+                    </svg>
+                </span>
                 <span class="main-message-professional">¿Quieres probar las herramientas <strong>GRATIS</strong>? Regístrate hoy para recibir tus</span>
             </div>
             <div class="credits-showcase">
@@ -830,13 +721,13 @@
                 <span class="text-white">Profes</span>
             </h1>
             
-            <!-- Header NO autenticado (visible por defecto) -->
+            <!-- Header NO autenticado -->
             <div id="headerUnauthenticated" class="flex items-center space-x-4">
                 <button onclick="window.location.href='login.html'" class="text-slate-300 hover:text-white transition">Iniciar Sesión</button>
                 <button onclick="window.location.href='register.html'" class="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-2 px-4 rounded-lg transition">Registrarse</button>
             </div>
             
-            <!-- Header autenticado (oculto por defecto) -->
+            <!-- Header autenticado -->
             <div id="headerAuthenticated" class="items-center hidden" style="display: none !important;">
                 <div class="flex items-center bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2" class="mr-1">
@@ -863,12 +754,12 @@
     </header>
 
     <main class="flex-grow container mx-auto p-6 md:p-8">
-        <!-- Bienvenida -->
+        <!-- Bienvenida 
         <section class="text-center mb-12">
             <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
                 <span class="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">Plataforma Inteligente</span><br>para Educadores
             </h2>
-            <p class="text-lg md:text-xl text-slate-400">Transformando la educación en la primera infancia con IA</p>
+            <p class="text-lg md:text-xl text-slate-400">Transformando la educación en la primera infancia con IA</p> -->
             
             <!-- Estadísticas -->
             <div class="stats-container">
@@ -878,7 +769,7 @@
             </div>
         </section>
 
-        <!-- Grid de funcionalidades -->
+        <!-- Grid de funcionalidades (igual que antes) -->
         <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <!-- Planeaciones -->
             <div class="feature-card p-6 rounded-xl" onclick="handleFeatureClick('planeaciones.html')">
@@ -1040,7 +931,7 @@
         let mensajesEnviados = 0;
 
         // ============================================================
-        // PROMPT MAESTRO BLINDADO Y DINÁMICO (ADRIAN)
+        // PROMPT MAESTRO
         // ============================================================
         const TODOPROFES_CONTEXT = `
 Eres **adrIAn**, el asistente virtual oficial de la plataforma TodoProfes. Tu función es puramente informativa y de soporte técnico.
@@ -1104,7 +995,7 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
 `;
 
         // ============================================================
-        // MANEJADOR DE HASH PARA GOOGLE LOGIN
+        // FUNCIONES DE AUTENTICACIÓN
         // ============================================================
         async function handleAuthHash() {
             const hash = window.location.hash.substring(1);
@@ -1151,11 +1042,7 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
             return false;
         }
 
-        // ============================================================
-        // FUNCIONES DE AUTENTICACIÓN
-        // ============================================================
         async function checkSession() {
-            // PRIMERO: Verificar si hay hash en la URL (viene de Google)
             const hashProcessed = await handleAuthHash();
             if (hashProcessed) return;
             
@@ -1357,7 +1244,7 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
         }
 
         // ============================================================
-        // FUNCIONES DEL CHAT
+        // FUNCIONES DEL CHAT - CORREGIDAS
         // ============================================================
         
         const robotBtn = document.getElementById('robotBtn');
@@ -1365,7 +1252,6 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
         const chatMessages = document.getElementById('chatMessages');
         const chatInput = document.getElementById('chatInput');
         const chatBubble = document.getElementById('chatBubble');
-        const notificationBadge = document.getElementById('notificationBadge');
 
         setTimeout(() => {
             if (!chatInitialized && chatBubble) {
@@ -1377,15 +1263,13 @@ Informa qué hacen y su costo. NUNCA ejecutes la tarea.
             }
         }, 3000);
 
-        // ============================================================
-// NUEVA FUNCIÓN TOGGLECHAT (ADRIAN)
-// ============================================================
-window.toggleChat = function(show) {
-    if (show) {
-        chatModal.style.display = 'flex';
-        if (!chatInitialized) {
-            // --- NUEVO MENSAJE DE BIENVENIDA (ADRIAN) ---
-            const welcomeMessage = `
+        // ✅ FUNCIÓN CORREGIDA - SOLO MUESTRA MENSAJE LOCAL, NO LLAMA A IA
+        window.toggleChat = function(show) {
+            if (show) {
+                chatModal.style.display = 'flex';
+                if (!chatInitialized) {
+                    // ✅ MENSAJE ESTÁTICO - NO HACE LLAMADA A IA
+                    const welcomeMessage = `
 ¡Hola! Soy **adrIAn**, tu asesor de TodoProfes. ⚡
 
 Puedo informarte sobre:
@@ -1395,17 +1279,13 @@ Puedo informarte sobre:
 
 ¿Qué duda tienes sobre la plataforma?
 `;
-            // Se usa welcomeMessage en lugar de la cadena original
-            addBotMessage(formatearMensajeBot(welcomeMessage));
-            // --------------------------------------------
-
-            chatInitialized = true;
-        }
-        if (notificationBadge) notificationBadge.style.display = 'none';
-    } else {
-        chatModal.style.display = 'none';
-    }
-};
+                    addBotMessage(formatearMensajeBot(welcomeMessage));
+                    chatInitialized = true;
+                }
+            } else {
+                chatModal.style.display = 'none';
+            }
+        };
 
         if (robotBtn) {
             robotBtn.addEventListener('click', () => {
@@ -1464,6 +1344,7 @@ Puedo informarte sobre:
             return !!localStorage.getItem('supabase_token');
         }
 
+        // ✅ FUNCIÓN CORREGIDA - tool SIEMPRE 'chat-gratuito'
         window.sendMessage = async function() {
             const message = chatInput.value.trim();
             if (!message) return;
@@ -1484,6 +1365,7 @@ Puedo informarte sobre:
                 
                 promptCompleto += `Mensaje del usuario: ${message}\n\nResponde de manera útil, pedagógica y profesional.`;
                 
+                // ✅ tool: 'chat-gratuito' (costo 0)
                 const response = await fetch(FUNCTION_URL, {
                     method: 'POST',
                     headers: {
@@ -1492,7 +1374,7 @@ Puedo informarte sobre:
                     },
                     body: JSON.stringify({
                         prompt: promptCompleto,
-                        tool: 'chat-gratuito',
+                        tool: 'chat-gratuito',  // ✅ ESTO ES CRÍTICO
                         user_id: userId || null,
                         autenticado: autenticado
                     })
@@ -1522,41 +1404,8 @@ Puedo informarte sobre:
         };
 
         // ============================================================
-        // REGALO SORPRESA
+        // CONFETTI PARA REGISTRO (solo decorativo)
         // ============================================================
-        window.addEventListener('load', function() {
-            const giftOverlay = document.getElementById('giftOverlay');
-            const giftBox = document.getElementById('giftBox');
-            
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#3B82F6', '#8B5CF6', '#FBBF24', '#EF4444']
-            });
-            
-            setTimeout(() => {
-                giftOverlay.classList.add('fade-out');
-                setTimeout(() => {
-                    giftOverlay.style.display = 'none';
-                }, 800);
-            }, 3000);
-            
-            if (giftBox) {
-                giftBox.addEventListener('click', function() {
-                    confetti({
-                        particleCount: 150,
-                        spread: 100,
-                        origin: { y: 0.5 }
-                    });
-                    
-                    giftOverlay.classList.add('fade-out');
-                    setTimeout(() => {
-                        giftOverlay.style.display = 'none';
-                    }, 800);
-                });
-            }
-        });
         
         window.triggerConfetti = function() {
             confetti({
