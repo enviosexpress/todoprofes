@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TodoProfes - Crear Cuenta</title>
-    <!-- Solo cambio esta línea: -->
-<link rel="icon" href="imagenes/logo.png" type="image/png">
+    <link rel="icon" href="imagenes/logo.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -64,6 +63,17 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .terms-link {
+            color: #8B5CF6;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            border-bottom: 1px dotted #8B5CF6;
+        }
+        .terms-link:hover {
+            color: #A78BFA;
+            border-bottom-color: #A78BFA;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center p-4">
@@ -111,7 +121,13 @@
                 <div class="flex items-start">
                     <input type="checkbox" id="terms" class="mt-1 mr-2">
                     <label for="terms" class="text-sm text-slate-300">
-                        Acepto los Términos y Condiciones
+                        Acepto los 
+                        <a href="terminos.html" 
+                           target="_blank" 
+                           class="terms-link"
+                           onclick="event.stopPropagation()">
+                            Términos y Condiciones
+                        </a>
                     </label>
                 </div>
 

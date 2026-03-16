@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Términos y Condiciones - TodoProfes</title>
+    <link rel="icon" href="imagenes/logo.png" type="image/png">
+    
+    <!-- 🚨 EVITAR CACHÉ -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+        }
+        
+        /* Header Glass */
+        .header-glass {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        /* Estilos para términos */
+        .terms-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 32px;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .terms-container {
+                padding: 1.5rem;
+                border-radius: 24px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .terms-container {
+                padding: 1.25rem;
+                border-radius: 20px;
+            }
+        }
+        
+        .terms-section {
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            padding-bottom: 2rem;
+        }
+        
+        .terms-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .section-title span {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: white;
+        }
+        
+        @media (max-width: 640px) {
+            .section-title {
+                font-size: 1.5rem;
+            }
+            .section-title span {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+        }
+        
+        .section-subtitle {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #FBBF24;
+            margin: 1.5rem 0 1rem 0;
+        }
+        
+        .terms-text {
+            color: #CBD5E1;
+            line-height: 1.7;
+            font-size: 1rem;
+            margin-bottom: 1.25rem;
+        }
+        
+        .terms-list {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        
+        .terms-list li {
+            padding: 0.5rem 0 0.5rem 2rem;
+            position: relative;
+            color: #CBD5E1;
+        }
+        
+        .terms-list li::before {
+            content: "•";
+            color: #3B82F6;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0.5rem;
+        }
+        
+        .check-list {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+        
+        .check-list li {
+            padding: 0.5rem 0 0.5rem 2rem;
+            position: relative;
+            color: #CBD5E1;
+        }
+        
+        .check-list li.yes::before {
+            content: "✓";
+            color: #10B981;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0;
+        }
+        
+        .check-list li.no::before {
+            content: "✗";
+            color: #EF4444;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: absolute;
+            left: 0;
+        }
+        
+        /* Tabla de créditos */
+        .credits-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #334155;
+        }
+        
+        .credits-table th {
+            background: linear-gradient(135deg, #3B82F6, #2563EB);
+            color: white;
+            font-weight: 600;
+            padding: 1rem;
+            text-align: left;
+            font-size: 1rem;
+        }
+        
+        .credits-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #334155;
+            color: #CBD5E1;
+        }
+        
+        .credits-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .credits-table tr:hover td {
+            background: rgba(51, 65, 85, 0.3);
+        }
+        
+        @media (max-width: 640px) {
+            .credits-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            
+            .credits-table th, 
+            .credits-table td {
+                padding: 0.75rem;
+            }
+        }
+        
+        /* Cards de precios */
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .pricing-card {
+            background: linear-gradient(145deg, #1E293B, #0F172A);
+            border: 1px solid #334155;
+            border-radius: 24px;
+            padding: 1.8rem 1.5rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            border-color: #3B82F6;
+            box-shadow: 0 20px 30px -5px rgba(59, 130, 246, 0.3);
+        }
+        
+        .pricing-card.popular {
+            border: 2px solid #8B5CF6;
+            transform: scale(1.05);
+        }
+        
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: linear-gradient(135deg, #8B5CF6, #EC4899);
+            color: white;
+            padding: 0.3rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .plan-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .plan-price {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #FBBF24;
+            margin-bottom: 1rem;
+        }
+        
+        .plan-price small {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #94A3B8;
+        }
+        
+        .plan-credits {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3B82F6;
+            border-radius: 40px;
+            padding: 0.5rem 1rem;
+            display: inline-block;
+            color: #3B82F6;
+            font-weight: 600;
+            margin: 1rem 0;
+        }
+        
+        .plan-features {
+            list-style: none;
+            padding: 0;
+            margin: 1.5rem 0;
+        }
+        
+        .plan-features li {
+            padding: 0.5rem 0;
+            color: #CBD5E1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .plan-features li::before {
+            content: "✓";
+            color: #10B981;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 900px) {
+            .pricing-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .pricing-cards {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .pricing-card.popular {
+                transform: scale(1);
+            }
+        }
+        
+        .highlight {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+        
+        .legal-note {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #EF4444;
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin: 2rem 0;
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+            padding: 0.7rem 1.5rem;
+            border-radius: 40px;
+            color: #E2E8F0;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin-bottom: 2rem;
+        }
+        
+        .back-button:hover {
+            background: #1E293B;
+            border-color: #3B82F6;
+            transform: translateX(-5px);
+        }
+        
+        .last-updated {
+            text-align: right;
+            color: #64748B;
+            font-size: 0.9rem;
+            margin-top: 2rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="header-glass p-4 sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white flex items-center cursor-pointer" onclick="window.location.href='index.html'">
+                <span class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Todo</span>
+                <span class="text-white">Profes</span>
+            </h1>
+            
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='login.html'" class="text-slate-300 hover:text-white transition text-sm md:text-base">Iniciar Sesión</button>
+                <button onclick="window.location.href='register.html'" class="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-semibold py-2 px-3 md:px-4 rounded-lg transition text-sm md:text-base">Registrarse</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 md:p-8">
+        
+        <!-- Botón volver -->
+        <button onclick="window.location.href='index.html'" class="back-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Volver al inicio
+        </button>
+        
+        <!-- Contenido principal -->
+        <div class="terms-container">
+            
+            <h1 class="text-3xl md:text-4xl font-bold text-white mb-6 text-center">
+                <span class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Términos y Condiciones</span>
+            </h1>
+            
+            <p class="text-center text-slate-400 mb-8">Última actualización: Marzo 2026</p>
+            
+            <!-- 1. DEFINICIÓN DEL SERVICIO -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>1</span>
+                    <h2>DEFINICIÓN DEL SERVICIO</h2>
+                </div>
+                <p class="terms-text">
+                    <strong>TodoProfes</strong> es una plataforma digital que ofrece herramientas basadas en inteligencia artificial para apoyar a docentes en la creación de contenido educativo para la primera infancia y educación básica, incluyendo:
+                </p>
+                <ul class="terms-list">
+                    <li>Planeaciones pedagógicas</li>
+                    <li>Observaciones educativas</li>
+                    <li>Informes académicos</li>
+                    <li>Proyectos pedagógicos</li>
+                    <li>Boletines informativos</li>
+                    <li>Talleres para padres</li>
+                    <li>Instrumentos de evaluación</li>
+                    <li>Diseño Universal para el Aprendizaje (DUA)</li>
+                    <li>PIAR (Plan Individual de Ajustes Razonables)</li>
+                    <li>Herramientas didácticas</li>
+                    <li>Análisis de textos mediante IA</li>
+                </ul>
+                <p class="terms-text">
+                    El acceso a las herramientas se realiza mediante un sistema de créditos digitales.
+                </p>
+            </section>
+            
+            <!-- 2. REGISTRO Y CUENTA -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>2</span>
+                    <h2>REGISTRO Y CUENTA DE USUARIO</h2>
+                </div>
+                <p class="terms-text">
+                    Para utilizar la plataforma el usuario deberá:
+                </p>
+                <ul class="terms-list">
+                    <li>Crear una cuenta con información veraz y actualizada.</li>
+                    <li>Mantener la confidencialidad de su contraseña.</li>
+                    <li>Ser responsable de toda actividad realizada desde su cuenta.</li>
+                </ul>
+                <p class="terms-text">
+                    <strong>TodoProfes</strong> podrá suspender o cancelar cuentas que:
+                </p>
+                <ul class="terms-list">
+                    <li>Presenten información falsa</li>
+                    <li>Realicen uso indebido de la plataforma</li>
+                    <li>Intenten manipular o vulnerar el sistema</li>
+                </ul>
+            </section>
+            
+            <!-- 3. SISTEMA DE CRÉDITOS -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>3</span>
+                    <h2>SISTEMA DE CRÉDITOS</h2>
+                </div>
+                <p class="terms-text">
+                    Las herramientas de la plataforma funcionan mediante créditos de uso.
+                    Cada herramienta consume una cantidad determinada de créditos:
+                </p>
+                
+                <table class="credits-table">
+                    <thead>
+                        <tr>
+                            <th>Herramienta</th>
+                            <th>Créditos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Planeaciones</td><td>2 créditos</td></tr>
+                        <tr><td>Corrección de textos</td><td>4 créditos</td></tr>
+                        <tr><td>Observaciones pedagógicas</td><td>3 créditos</td></tr>
+                        <tr><td>Ideas PPA</td><td>5 créditos</td></tr>
+                        <tr><td>Boletines</td><td>6 créditos</td></tr>
+                        <tr><td>Talleres para padres</td><td>7 créditos</td></tr>
+                        <tr><td>Detector de IA</td><td>8 créditos</td></tr>
+                        <tr><td>Proyectos PEI</td><td>5 créditos</td></tr>
+                        <tr><td>DUA</td><td>4 créditos</td></tr>
+                        <tr><td>PIAR</td><td>5 créditos</td></tr>
+                        <tr><td>Herramientas didácticas</td><td>3 créditos</td></tr>
+                        <tr><td>Evaluación de desempeño</td><td>4 créditos</td></tr>
+                    </tbody>
+                </table>
+                
+                <p class="terms-text">
+                    Los créditos se descuentan automáticamente al generar contenido.
+                    <strong>TodoProfes</strong> se reserva el derecho de ajustar el costo en créditos de las herramientas según mejoras o actualizaciones de la plataforma.
+                </p>
+            </section>
+            
+            <!-- 4. PLANES Y COMPRA DE CRÉDITOS -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>4</span>
+                    <h2>PLANES Y COMPRA DE CRÉDITOS</h2>
+                </div>
+                <p class="terms-text">
+                    Los usuarios pueden adquirir paquetes de créditos dentro de la plataforma:
+                </p>
+                
+                <div class="pricing-cards">
+                    <!-- Plan Básico -->
+                    <div class="pricing-card">
+                        <div class="plan-name">Plan Básico</div>
+                        <div class="plan-price">$24.900 <small>COP</small></div>
+                        <div class="plan-credits">45 créditos</div>
+                        <ul class="plan-features">
+                            <li>Aproximadamente 22 planeaciones</li>
+                            <li>Vigencia de 1 año</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Plan Estándar (Popular) -->
+                    <div class="pricing-card popular">
+                        <div class="popular-badge">MÁS VENDIDO</div>
+                        <div class="plan-name">Plan Estándar</div>
+                        <div class="plan-price">$44.900 <small>COP</small></div>
+                        <div class="plan-credits">90 créditos <span style="color:#10B981; font-size:0.8rem;"></span></div>
+                        <ul class="plan-features">
+                            <li>Aproximadamente 45 planeaciones</li>
+                            <li>Vigencia de 1 año</li>
+                            <li>soporte</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Plan Premium -->
+                    <div class="pricing-card">
+                        <div class="plan-name">Plan Premium</div>
+                        <div class="plan-price">$54.900 <small>COP</small></div>
+                        <div class="plan-credits">180 créditos</div>
+                        <ul class="plan-features">
+                            <li>Aproximadamente 90 planeaciones</li>
+                            <li>Vigencia de 1 año</li>
+                            <li>Soporte prioritario</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <p class="terms-text">
+                    Los créditos adquiridos no son transferibles entre cuentas.
+                </p>
+            </section>
+            
+            <!-- 5. PROCESAMIENTO DE PAGOS -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>5</span>
+                    <h2>PROCESAMIENTO DE PAGOS</h2>
+                </div>
+                <p class="terms-text">
+                    Los pagos realizados dentro de la plataforma son procesados por <strong>ePayco</strong>, pasarela de pago certificada.
+                </p>
+                <p class="terms-text">
+                    TodoProfes no almacena directamente información financiera sensible como:
+                </p>
+                <ul class="terms-list">
+                    <li>Números de tarjetas</li>
+                    <li>Datos bancarios</li>
+                </ul>
+                <p class="terms-text">
+                    Las transacciones están sujetas a los términos y políticas de la pasarela de pago correspondiente.
+                </p>
+            </section>
+            
+            <!-- 6. POLÍTICA DE REEMBOLSOS -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>6</span>
+                    <h2>POLÍTICA DE REEMBOLSOS</h2>
+                </div>
+                <div class="legal-note">
+                    <p class="terms-text" style="margin-bottom: 0;">
+                        <strong>Importante:</strong> Debido a la naturaleza digital del servicio, los créditos comprados no son reembolsables una vez acreditados en la cuenta del usuario.
+                    </p>
+                </div>
+                <p class="terms-text">
+                    En caso de error técnico comprobado que afecte el uso de créditos, TodoProfes podrá reintegrar créditos a la cuenta del usuario.
+                </p>
+            </section>
+            
+            <!-- 7. USO RESPONSABLE DE IA -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>7</span>
+                    <h2>USO RESPONSABLE DE LA INTELIGENCIA ARTIFICIAL</h2>
+                </div>
+                <p class="terms-text">
+                    Las herramientas de IA generan contenido automáticamente con base en la información proporcionada por el usuario.
+                </p>
+                <p class="terms-text">
+                    El usuario entiende que:
+                </p>
+                <ul class="terms-list">
+                    <li>Los resultados son asistencias educativas, no sustituyen el criterio profesional docente.</li>
+                    <li>Debe revisar, adaptar y validar el contenido generado antes de utilizarlo en contextos educativos.</li>
+                    <li>TodoProfes no garantiza que el contenido generado sea completamente exacto o libre de errores.</li>
+                </ul>
+            </section>
+            
+            <!-- 8. PROPIEDAD INTELECTUAL -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>8</span>
+                    <h2>PROPIEDAD INTELECTUAL</h2>
+                </div>
+                <p class="terms-text">
+                    Todo el software, diseño, marca, estructura y funcionamiento de la plataforma TodoProfes es propiedad de sus creadores.
+                </p>
+                
+                <h3 class="section-subtitle">El usuario:</h3>
+                <ul class="check-list">
+                    <li class="yes">✔ Puede utilizar los contenidos generados para fines educativos.</li>
+                    <li class="no">✖ No puede revender el acceso a la plataforma.</li>
+                    <li class="no">✖ No puede copiar, replicar o redistribuir el sistema.</li>
+                </ul>
+            </section>
+            
+            <!-- 9. USO PROHIBIDO -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>9</span>
+                    <h2>USO PROHIBIDO</h2>
+                </div>
+                <p class="terms-text">
+                    Está prohibido utilizar la plataforma para:
+                </p>
+                <ul class="terms-list">
+                    <li>Generar contenido ilegal</li>
+                    <li>Generar contenido ofensivo o discriminatorio</li>
+                    <li>Realizar ingeniería inversa del sistema</li>
+                    <li>Automatizar el uso de la plataforma mediante bots</li>
+                </ul>
+                <p class="terms-text">
+                    Las cuentas que incumplan estas normas podrán ser suspendidas sin reembolso.
+                </p>
+            </section>
+            
+            <!-- 10. DISPONIBILIDAD -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>10</span>
+                    <h2>DISPONIBILIDAD DEL SERVICIO</h2>
+                </div>
+                <p class="terms-text">
+                    TodoProfes busca mantener la plataforma disponible permanentemente, sin embargo:
+                </p>
+                <ul class="terms-list">
+                    <li>Puede haber interrupciones por mantenimiento.</li>
+                    <li>Pueden existir fallos técnicos temporales.</li>
+                    <li>La plataforma no garantiza disponibilidad continua del 100%.</li>
+                </ul>
+            </section>
+            
+            <!-- 11. PROTECCIÓN DE DATOS -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>11</span>
+                    <h2>PROTECCIÓN DE DATOS</h2>
+                </div>
+                <p class="terms-text">
+                    TodoProfes se compromete a proteger la información personal de los usuarios conforme a la legislación vigente en Colombia sobre protección de datos personales.
+                </p>
+                <p class="terms-text">
+                    Los datos se utilizarán únicamente para:
+                </p>
+                <ul class="terms-list">
+                    <li>Gestión de cuentas</li>
+                    <li>Mejora del servicio</li>
+                    <li>Soporte al usuario</li>
+                </ul>
+            </section>
+            
+            <!-- 12. MODIFICACIONES -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>12</span>
+                    <h2>MODIFICACIONES DE LOS TÉRMINOS</h2>
+                </div>
+                <p class="terms-text">
+                    TodoProfes podrá modificar estos términos en cualquier momento.
+                    Las modificaciones serán notificadas en la plataforma y entrarán en vigor una vez publicadas.
+                </p>
+            </section>
+            
+            <!-- 13. LIMITACIÓN DE RESPONSABILIDAD -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>13</span>
+                    <h2>LIMITACIÓN DE RESPONSABILIDAD</h2>
+                </div>
+                <p class="terms-text">
+                    TodoProfes no será responsable por:
+                </p>
+                <ul class="terms-list">
+                    <li>Decisiones pedagógicas tomadas por el usuario</li>
+                    <li>Uso indebido del contenido generado</li>
+                    <li>Interrupciones temporales del servicio</li>
+                    <li>Pérdidas indirectas derivadas del uso de la plataforma</li>
+                </ul>
+            </section>
+            
+            <!-- 14. CONTACTO Y SOPORTE -->
+            <section class="terms-section">
+                <div class="section-title">
+                    <span>14</span>
+                    <h2>CONTACTO Y SOPORTE</h2>
+                </div>
+                <p class="terms-text">
+                    Para soporte o consultas sobre la plataforma, el usuario puede contactar a:
+                </p>
+                <div style="background: linear-gradient(135deg, #1E293B, #0F172A); border: 1px solid #334155; border-radius: 40px; padding: 1.5rem 2rem; margin-top: 1rem;">
+                    <p style="font-size: 1.2rem; font-weight: 600; color: white; margin-bottom: 0.5rem;">Equipo TodoProfes</p>
+                    <a href="mailto:soporte@todoprofes.com" style="color: #3B82F6; font-size: 1.1rem; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                            <polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        soporte@todoprofes.com
+                    </a>
+                </div>
+            </section>
+            
+            <div class="last-updated">
+                Estos términos y condiciones están vigentes a partir de Marzo 2026
+            </div>
+            
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 text-center p-6 mt-auto border-t border-slate-800">
+        <div class="container mx-auto">
+            <p class="text-sm text-slate-400">&copy; 2026 TodoProfes - Transformando la educación con IA</p>
+            <p class="text-xs text-slate-600 mt-2">
+                <a href="terminos.html" class="hover:text-slate-400 transition">Términos y Condiciones</a> · 
+                <a href="privacidad.html" class="hover:text-slate-400 transition">Política de Privacidad</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Inicializar iconos de Lucide si existen
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+
+</body>
+</html>

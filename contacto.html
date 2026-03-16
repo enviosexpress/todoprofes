@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TodoProfes - Contacto</title>
+    <link rel="icon" href="imagenes/logo.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #E2E8F0;
+        }
+        .glass-card {
+            background: linear-gradient(145deg, #1E293B, #0F172A);
+            border: 1px solid #334155;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .input-field {
+            background-color: #1E293B;
+            border: 1px solid #334155;
+            color: #E2E8F0;
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 1rem 1.5rem;
+            font-size: 1rem;
+        }
+        .input-field:focus {
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+        .input-field:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            transition: all 0.3s ease;
+            color: white;
+            font-weight: 600;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            width: 100%;
+            font-size: 1.1rem;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #3B82F6;
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .success-message {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10B981;
+            color: #10B981;
+        }
+        .user-badge {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #3B82F6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-slate-950/95 p-4 shadow-lg sticky top-0 z-50 border-b border-slate-800 backdrop-blur-md">
+        <div class="container mx-auto flex justify-between items-center px-4">
+            <h1 class="text-2xl md:text-3xl font-bold text-white cursor-pointer hover:opacity-80 transition" onclick="window.location.href='index.html'">
+                <span class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Todo</span>Profes
+            </h1>
+            <div class="flex items-center space-x-4">
+                <span class="text-yellow-400 flex items-center bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700 text-sm" id="creditsContainer" style="display: none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mr-1">
+                        <circle cx="8" cy="8" r="6"/><path d="M18.09 10.72A6 6 0 0 0 12 8h-1"/><path d="m12 12 4 4"/><path d="M12 12v4h4"/><path d="M16.18 21.04A6 6 0 0 0 22 16h-1"/><path d="m16 16-4-4"/><path d="M16 16v-4h-4"/>
+                    </svg>
+                    <span id="creditsDisplay"></span>
+                </span>
+                <div id="authButtons"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 md:p-8">
+        <div class="max-w-2xl mx-auto">
+            <!-- Título -->
+            <div class="text-center mb-8">
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Contacta con <span class="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">soporte</span></h2>
+                <p class="text-lg text-slate-400">¿Tienes alguna duda o problema? Estamos aquí para ayudarte</p>
+            </div>
+
+            <!-- Formulario de contacto -->
+            <div class="glass-card p-6 md:p-8">
+                <!-- Badge de usuario autenticado -->
+                <div id="userInfo" class="user-badge p-3 rounded-lg mb-6 text-sm hidden">
+                    <span id="userEmailDisplay"></span>
+                </div>
+
+                <form id="contactForm" onsubmit="handleSubmit(event)" class="space-y-6">
+                    <!-- Nombre -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Nombre completo</label>
+                        <input type="text" id="nombre" required class="input-field" placeholder="Tu nombre">
+                    </div>
+
+                    <!-- Email -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Correo electrónico</label>
+                        <input type="email" id="email" required class="input-field" placeholder="tucorreo@ejemplo.com">
+                        <p id="emailNote" class="text-xs text-slate-500 mt-1 hidden">Este correo se usará para responder tu consulta</p>
+                    </div>
+
+                    <!-- Asunto -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Asunto</label>
+                        <select id="asunto" required class="input-field">
+                            <option value="" disabled selected>Selecciona un asunto</option>
+                            <option value="Problema con pago">Problema con pago</option>
+                            <option value="Problema con créditos">Problema con créditos</option>
+                            <option value="Error en la plataforma">Error en la plataforma</option>
+                            <option value="Sugerencia">Sugerencia</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+
+                    <!-- Mensaje -->
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Mensaje</label>
+                        <textarea id="mensaje" rows="5" required class="input-field" placeholder="Describe tu problema o consulta en detalle..."></textarea>
+                    </div>
+
+                    <!-- Botón de envío -->
+                    <button type="submit" id="submitBtn" class="btn-primary">
+                        Enviar mensaje
+                    </button>
+
+                    <!-- Mensaje de confirmación -->
+                    <div id="message" class="text-center text-sm p-4 rounded-lg hidden"></div>
+                </form>
+
+                <!-- Información de contacto adicional -->
+                <div class="mt-8 pt-6 border-t border-slate-700">
+                    <p class="text-center text-slate-400 text-sm">
+                        También puedes escribirnos directamente a: 
+                        <a href="mailto:soporte@todoprofes.com" class="text-blue-400 hover:text-blue-300 font-semibold">
+                            soporte@todoprofes.com
+                        </a>
+                    </p>
+                    <p class="text-center text-slate-500 text-xs mt-2">
+                        Te responderemos en un máximo de 24 horas hábiles
+                    </p>
+                </div>
+            </div>
+
+            <!-- Botón de volver -->
+            <div class="text-center mt-6">
+                <button onclick="window.location.href='index.html'" class="text-slate-400 hover:text-white transition">
+                    ← Volver al inicio
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-950 text-center p-4 mt-auto border-t border-slate-800">
+        <p class="text-xs text-slate-400">✨ TodoProfes - Contacto</p>
+    </footer>
+
+    <script>
+        const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA';
+
+        let isAuthenticated = false;
+        let userEmail = '';
+        let userId = null;
+        let token = null;
+
+        async function checkSession() {
+            token = localStorage.getItem('supabase_token');
+            userId = localStorage.getItem('user_id');
+
+            const authButtons = document.getElementById('authButtons');
+            
+            if (!token || !userId) {
+                // Usuario no autenticado
+                authButtons.innerHTML = `
+                    <button onclick="window.location.href='login.html'" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-semibold transition">
+                        Iniciar Sesión
+                    </button>
+                `;
+                document.getElementById('creditsContainer').style.display = 'none';
+                document.getElementById('userInfo').classList.add('hidden');
+                document.getElementById('emailNote').classList.remove('hidden');
+                return;
+            }
+
+            try {
+                // Verificar token
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                });
+
+                if (!response.ok) throw new Error('Token inválido');
+
+                const userData = await response.json();
+                userEmail = userData.email || '';
+
+                isAuthenticated = true;
+                
+                // Actualizar UI para usuario autenticado
+                authButtons.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span class="text-slate-300 text-sm hidden md:inline">${userEmail}</span>
+                        <button onclick="window.location.href='perfil.html'" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-full text-sm font-semibold transition">
+                            Mi Perfil
+                        </button>
+                    </div>
+                `;
+
+                // Mostrar créditos
+                document.getElementById('creditsContainer').style.display = 'flex';
+                await loadUserCredits();
+
+                // AUTOLLENAR EL CAMPO DE EMAIL
+                const emailField = document.getElementById('email');
+                emailField.value = userEmail;
+                emailField.disabled = true; // Opcional: deshabilitar para que no lo cambie
+                
+                // Mostrar badge de usuario autenticado
+                document.getElementById('userEmailDisplay').textContent = `📧 Enviaremos la respuesta a: ${userEmail}`;
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('emailNote').classList.add('hidden');
+
+            } catch (error) {
+                console.error('Error verificando sesión:', error);
+                localStorage.removeItem('supabase_token');
+                localStorage.removeItem('user_id');
+                
+                authButtons.innerHTML = `
+                    <button onclick="window.location.href='login.html'" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-semibold transition">
+                        Iniciar Sesión
+                    </button>
+                `;
+                document.getElementById('creditsContainer').style.display = 'none';
+                document.getElementById('userInfo').classList.add('hidden');
+                document.getElementById('emailNote').classList.remove('hidden');
+            }
+        }
+
+        async function loadUserCredits() {
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/usuarios?id=eq.${userId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    if (users && users.length > 0) {
+                        document.getElementById('creditsDisplay').textContent = `${users[0].credits || 0} créditos`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error cargando créditos:', error);
+            }
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            
+            const btn = document.getElementById('submitBtn');
+            const originalText = btn.textContent;
+            
+            // Obtener valores del formulario
+            const nombre = document.getElementById('nombre').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const asunto = document.getElementById('asunto').value;
+            const mensaje = document.getElementById('mensaje').value.trim();
+            
+            // Validaciones básicas
+            if (!nombre || !email || !asunto || !mensaje) {
+                showMessage('Por favor completa todos los campos', false);
+                return;
+            }
+            
+            if (!email.includes('@') || !email.includes('.')) {
+                showMessage('Por favor ingresa un correo electrónico válido', false);
+                return;
+            }
+            
+            // Mostrar loading
+            btn.innerHTML = 'Enviando...';
+            btn.disabled = true;
+            
+            // Crear el cuerpo del correo con formato
+            const cuerpo = `
+Nombre: ${nombre}
+Email: ${email}
+Usuario ID: ${userId || 'No autenticado'}
+Estado: ${isAuthenticated ? 'Usuario autenticado' : 'Visitante'}
+
+Mensaje:
+${mensaje}
+
+---
+Este mensaje fue enviado desde el formulario de contacto de TodoProfes
+            `;
+            
+            // Crear el enlace mailto
+            const mailtoLink = `mailto:soporte@todoprofes.com?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+            
+            // Simular un pequeño delay para mejor experiencia
+            setTimeout(() => {
+                // Abrir el cliente de correo
+                window.location.href = mailtoLink;
+                
+                // Restaurar botón
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                // Mostrar mensaje de éxito
+                showMessage('✅ ¡Gracias por contactarnos! Se abrirá tu cliente de correo para enviar el mensaje.', true);
+                
+                // Limpiar solo nombre y mensaje (el email se mantiene si está autenticado)
+                document.getElementById('nombre').value = '';
+                document.getElementById('mensaje').value = '';
+                document.getElementById('asunto').value = '';
+            }, 800);
+        }
+        
+        function showMessage(text, isSuccess = false) {
+            const msgEl = document.getElementById('message');
+            msgEl.textContent = text;
+            msgEl.className = `text-center text-sm p-4 rounded-lg ${isSuccess ? 'success-message' : 'error-message'}`;
+            msgEl.classList.remove('hidden');
+            
+            setTimeout(() => {
+                msgEl.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', checkSession);
+    </script>
+</body>
+</html>

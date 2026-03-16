@@ -941,6 +941,7 @@
                 isAuthenticated = true
                 await loadUserCredits()
                 
+                // ✅ ELIMINADA: await checkIAFunction()
                 
             } catch (error) {
                 console.error('Error de autenticación:', error)
@@ -987,8 +988,6 @@
             // Función mantenida pero sin mostrar indicador visual
             console.log('IA Status:', available ? 'Activa' : 'Inactiva');
         }
-
-   
 
         async function handleGenerate() {
             if (!isAuthenticated) {
@@ -1058,7 +1057,7 @@ Genera el contenido en español, con lenguaje profesional pero cálido.`
                     },
                     body: JSON.stringify({
                         prompt: prompt,
-                        tool: 'boletin',
+                        tool: 'boletin',  // ← LA EDGE FUNCTION DESCUENTA AQUÍ (6 créditos)
                         format: 'html'
                     })
                 })
@@ -1068,7 +1067,7 @@ Genera el contenido en español, con lenguaje profesional pero cálido.`
 
                 if (!response.ok) {
                     if (data.error === 'insufficient_credits') {
-                        throw new Error(`❌ Créditos insuficientes. Necesitas ${data.credits_needed} créditos y tienes ${data.credits_current}`)
+                        throw new Error(`❌ Créditos insuficientes.`)
                     }
                     throw new Error(data.message || 'Error al generar el boletín')
                 }
@@ -1096,6 +1095,7 @@ Genera el contenido en español, con lenguaje profesional pero cálido.`
                 document.getElementById('result').innerHTML = boletinHTML
                 document.getElementById('resultContainer').classList.remove('hidden')
                 
+                // ✅ ACTUALIZAR créditos desde la respuesta (NO descontar otra vez)
                 if (data.credits_left !== undefined) {
                     document.getElementById('creditsDisplay').textContent = `${data.credits_left} créditos`
                     document.getElementById('creditsInfo').textContent = `Créditos utilizados: ${data.credits_used} | Créditos restantes: ${data.credits_left}`
@@ -1276,13 +1276,11 @@ Genera el contenido en español, con lenguaje profesional pero cálido.`
                     break
             }
             
-            // Mantener el foco
             document.getElementById('result').focus()
         }
         
         function handleContentClick() {
             if (!isEditMode && generatedContent) {
-                // Si no está en modo edición pero hay contenido, mostrar opción
                 if (confirm('¿Quieres activar el modo edición para modificar el texto?')) {
                     toggleEditMode()
                 }
@@ -1290,237 +1288,212 @@ Genera el contenido en español, con lenguaje profesional pero cálido.`
         }
 
         async function downloadPDF() {
-    if (!generatedContent && document.getElementById('result').children.length === 0) {
-        showMessage('❌ No hay contenido para descargar', false)
-        return
-    }
-    
-    showMessage('📄 Generando PDF con normas APA 7ª edición...', true)
-    
-    try {
-        const { jsPDF } = window.jspdf
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4'
-        })
-        
-        // Configuración APA 7
-        const pageWidth = 210 // mm
-        const pageHeight = 297 // mm
-        const margin = 25.4 // 1 pulgada = 25.4mm (margen APA)
-        const contentWidth = pageWidth - (margin * 2)
-        
-        // Fuente Times New Roman (simulada con helvetica)
-        pdf.setFont('helvetica', 'normal')
-        
-        // Obtener el contenido del boletín
-        const resultElement = document.getElementById('result')
-        const boletinDoc = resultElement.querySelector('.boletin-document')
-        
-        if (!boletinDoc) {
-            throw new Error('No se encontró el contenido del boletín')
-        }
-        
-        // Extraer texto manteniendo estructura
-        const titulo = boletinDoc.querySelector('.boletin-title')?.textContent || 'Boletín Informativo'
-        const subtitulo = boletinDoc.querySelector('.boletin-subtitle')?.textContent || ''
-        const mensajeSection = boletinDoc.querySelector('.boletin-section p')?.textContent || ''
-        
-        // Obtener todas las secciones
-        const secciones = []
-        boletinDoc.querySelectorAll('.boletin-section').forEach(section => {
-            const tituloSection = section.querySelector('.section-title')?.textContent || ''
-            const parrafos = []
-            section.querySelectorAll('p').forEach(p => parrafos.push(p.textContent))
-            
-            // Para la sección de alumnos
-            const alumnos = []
-            section.querySelectorAll('.alumno-card').forEach(card => {
-                const nombre = card.querySelector('h4')?.textContent || ''
-                const logros = card.querySelector('p .label')?.parentElement?.textContent?.replace('Logros:', '').trim() || ''
-                const mejoras = card.querySelectorAll('p')[1]?.textContent?.replace('Mejoras:', '').trim() || ''
-                alumnos.push({ nombre, logros, mejoras })
-            })
-            
-            secciones.push({
-                titulo: tituloSection,
-                parrafos: parrafos,
-                alumnos: alumnos
-            })
-        })
-        
-        // Función para agregar texto con formato APA
-        let yPos = margin + 15 // Posición vertical inicial
-        
-        function addNewPageIfNeeded(spaceNeeded) {
-            if (yPos + spaceNeeded > pageHeight - margin - 10) {
-                pdf.addPage()
-                yPos = margin + 15
-                return true
-            }
-            return false
-        }
-        
-        // Portada (si aplica)
-        pdf.setFontSize(16)
-        pdf.setFont('helvetica', 'bold')
-        pdf.text('Boletín Informativo', margin, yPos, { align: 'left' })
-        yPos += 10
-        
-        // Título principal (centrado, negrita, tamaño 14)
-        addNewPageIfNeeded(20)
-        pdf.setFontSize(14)
-        pdf.setFont('helvetica', 'bold')
-        const tituloLines = pdf.splitTextToSize(titulo, contentWidth)
-        pdf.text(tituloLines, margin, yPos)
-        yPos += (tituloLines.length * 7) + 5
-        
-        // Subtítulo/Periodo
-        if (subtitulo) {
-            addNewPageIfNeeded(10)
-            pdf.setFontSize(12)
-            pdf.setFont('helvetica', 'italic')
-            pdf.text(subtitulo, margin, yPos)
-            yPos += 10
-        }
-        
-        // Línea decorativa (opcional)
-        pdf.setDrawColor(200, 200, 200)
-        pdf.line(margin, yPos - 2, margin + contentWidth, yPos - 2)
-        yPos += 5
-        
-        // Procesar cada sección
-        secciones.forEach((seccion, index) => {
-            // Título de sección (negrita, tamaño 12)
-            if (seccion.titulo) {
-                addNewPageIfNeeded(10)
-                pdf.setFontSize(12)
-                pdf.setFont('helvetica', 'bold')
-                pdf.text(seccion.titulo, margin, yPos)
-                yPos += 8
+            if (!generatedContent && document.getElementById('result').children.length === 0) {
+                showMessage('❌ No hay contenido para descargar', false)
+                return
             }
             
-            // Párrafos de la sección
-            seccion.parrafos.forEach(parrafo => {
-                if (parrafo.trim()) {
-                    pdf.setFontSize(11)
-                    pdf.setFont('helvetica', 'normal')
-                    
-                    const parrafoLines = pdf.splitTextToSize(parrafo, contentWidth)
-                    const spaceNeeded = parrafoLines.length * 6 + 2
-                    
-                    addNewPageIfNeeded(spaceNeeded)
-                    
-                    pdf.text(parrafoLines, margin, yPos)
-                    yPos += spaceNeeded
-                }
-            })
+            showMessage('📄 Generando PDF con normas APA 7ª edición...', true)
             
-            // Tarjetas de alumnos (formato APA)
-            if (seccion.alumnos && seccion.alumnos.length > 0) {
-                seccion.alumnos.forEach(alumno => {
-                    const spaceNeeded = 25 // Espacio estimado por alumno
-                    addNewPageIfNeeded(spaceNeeded)
-                    
-                    // Nombre del alumno (negrita, sangría francesa estilo APA)
-                    pdf.setFontSize(11)
-                    pdf.setFont('helvetica', 'bold')
-                    pdf.text(alumno.nombre, margin, yPos)
-                    yPos += 6
-                    
-                    // Logros (con sangría)
-                    if (alumno.logros) {
-                        pdf.setFont('helvetica', 'normal')
-                        pdf.setFontSize(10)
-                        const logrosText = `Logros: ${alumno.logros}`
-                        const logrosLines = pdf.splitTextToSize(logrosText, contentWidth - 5)
-                        pdf.text(logrosLines, margin + 5, yPos)
-                        yPos += logrosLines.length * 5 + 2
-                    }
-                    
-                    // Áreas de mejora (con sangría)
-                    if (alumno.mejoras) {
-                        pdf.setFont('helvetica', 'normal')
-                        pdf.setFontSize(10)
-                        const mejorasText = `Áreas de mejora: ${alumno.mejoras}`
-                        const mejorasLines = pdf.splitTextToSize(mejorasText, contentWidth - 5)
-                        pdf.text(mejorasLines, margin + 5, yPos)
-                        yPos += mejorasLines.length * 5 + 4
-                    }
+            try {
+                const { jsPDF } = window.jspdf
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
                 })
-            }
-            
-            yPos += 5 // Espacio entre secciones
-        })
-        
-        // Agregar pie de página en todas las páginas (normas APA)
-        const totalPages = pdf.getNumberOfPages()
-        for (let i = 1; i <= totalPages; i++) {
-            pdf.setPage(i)
-            pdf.setFontSize(9)
-            pdf.setFont('helvetica', 'normal')
-            pdf.setTextColor(100, 100, 100)
-            
-            // Número de página (esquina superior derecha, como APA)
-            pdf.text(`${i}`, pageWidth - margin - 5, margin - 5, { align: 'right' })
-            
-            // Fecha de generación (esquina inferior izquierda)
-            const fecha = new Date().toLocaleDateString('es-ES', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            })
-            pdf.text(`Generado: ${fecha}`, margin, pageHeight - margin + 5)
-            
-            // Institución (esquina inferior derecha)
-            pdf.text('TodoProfes', pageWidth - margin - 5, pageHeight - margin + 5, { align: 'right' })
-        }
-        
-        // Guardar PDF
-        const nombreArchivo = document.getElementById('titulo').value || 'Boletin'
-        const fecha = new Date().toISOString().split('T')[0]
-        pdf.save(`Boletin_APA_${nombreArchivo.replace(/\s+/g, '_')}_${fecha}.pdf`)
-        
-        showMessage('✅ PDF generado con normas APA 7ª edición', true)
-        
-    } catch (error) {
-        console.error('Error al generar PDF:', error)
-        showMessage('❌ Error al generar el PDF con formato APA', false)
-        
-        // Fallback: método simple
-        try {
-            const { jsPDF } = window.jspdf
-            const pdf = new jsPDF()
-            const text = document.getElementById('result').innerText
-            
-            pdf.setFont('helvetica', 'normal')
-            pdf.setFontSize(12)
-            pdf.text('Boletín Informativo', 20, 20)
-            pdf.setFontSize(11)
-            
-            const lines = pdf.splitTextToSize(text, 170)
-            let y = 30
-            
-            for (let i = 0; i < lines.length; i++) {
-                if (y > 280) {
-                    pdf.addPage()
-                    y = 20
+                
+                // Configuración APA 7
+                const pageWidth = 210
+                const pageHeight = 297
+                const margin = 25.4
+                const contentWidth = pageWidth - (margin * 2)
+                
+                pdf.setFont('helvetica', 'normal')
+                
+                const resultElement = document.getElementById('result')
+                const boletinDoc = resultElement.querySelector('.boletin-document')
+                
+                if (!boletinDoc) {
+                    throw new Error('No se encontró el contenido del boletín')
                 }
-                pdf.text(lines[i], 20, y)
-                y += 7
+                
+                const titulo = boletinDoc.querySelector('.boletin-title')?.textContent || 'Boletín Informativo'
+                const subtitulo = boletinDoc.querySelector('.boletin-subtitle')?.textContent || ''
+                
+                const secciones = []
+                boletinDoc.querySelectorAll('.boletin-section').forEach(section => {
+                    const tituloSection = section.querySelector('.section-title')?.textContent || ''
+                    const parrafos = []
+                    section.querySelectorAll('p').forEach(p => parrafos.push(p.textContent))
+                    
+                    const alumnos = []
+                    section.querySelectorAll('.alumno-card').forEach(card => {
+                        const nombre = card.querySelector('h4')?.textContent || ''
+                        const logros = card.querySelector('p .label')?.parentElement?.textContent?.replace('Logros:', '').trim() || ''
+                        const mejoras = card.querySelectorAll('p')[1]?.textContent?.replace('Mejoras:', '').trim() || ''
+                        alumnos.push({ nombre, logros, mejoras })
+                    })
+                    
+                    secciones.push({
+                        titulo: tituloSection,
+                        parrafos: parrafos,
+                        alumnos: alumnos
+                    })
+                })
+                
+                let yPos = margin + 15
+                
+                function addNewPageIfNeeded(spaceNeeded) {
+                    if (yPos + spaceNeeded > pageHeight - margin - 10) {
+                        pdf.addPage()
+                        yPos = margin + 15
+                        return true
+                    }
+                    return false
+                }
+                
+                pdf.setFontSize(16)
+                pdf.setFont('helvetica', 'bold')
+                pdf.text('Boletín Informativo', margin, yPos, { align: 'left' })
+                yPos += 10
+                
+                addNewPageIfNeeded(20)
+                pdf.setFontSize(14)
+                pdf.setFont('helvetica', 'bold')
+                const tituloLines = pdf.splitTextToSize(titulo, contentWidth)
+                pdf.text(tituloLines, margin, yPos)
+                yPos += (tituloLines.length * 7) + 5
+                
+                if (subtitulo) {
+                    addNewPageIfNeeded(10)
+                    pdf.setFontSize(12)
+                    pdf.setFont('helvetica', 'italic')
+                    pdf.text(subtitulo, margin, yPos)
+                    yPos += 10
+                }
+                
+                pdf.setDrawColor(200, 200, 200)
+                pdf.line(margin, yPos - 2, margin + contentWidth, yPos - 2)
+                yPos += 5
+                
+                secciones.forEach((seccion, index) => {
+                    if (seccion.titulo) {
+                        addNewPageIfNeeded(10)
+                        pdf.setFontSize(12)
+                        pdf.setFont('helvetica', 'bold')
+                        pdf.text(seccion.titulo, margin, yPos)
+                        yPos += 8
+                    }
+                    
+                    seccion.parrafos.forEach(parrafo => {
+                        if (parrafo.trim()) {
+                            pdf.setFontSize(11)
+                            pdf.setFont('helvetica', 'normal')
+                            
+                            const parrafoLines = pdf.splitTextToSize(parrafo, contentWidth)
+                            const spaceNeeded = parrafoLines.length * 6 + 2
+                            
+                            addNewPageIfNeeded(spaceNeeded)
+                            
+                            pdf.text(parrafoLines, margin, yPos)
+                            yPos += spaceNeeded
+                        }
+                    })
+                    
+                    if (seccion.alumnos && seccion.alumnos.length > 0) {
+                        seccion.alumnos.forEach(alumno => {
+                            const spaceNeeded = 25
+                            addNewPageIfNeeded(spaceNeeded)
+                            
+                            pdf.setFontSize(11)
+                            pdf.setFont('helvetica', 'bold')
+                            pdf.text(alumno.nombre, margin, yPos)
+                            yPos += 6
+                            
+                            if (alumno.logros) {
+                                pdf.setFont('helvetica', 'normal')
+                                pdf.setFontSize(10)
+                                const logrosText = `Logros: ${alumno.logros}`
+                                const logrosLines = pdf.splitTextToSize(logrosText, contentWidth - 5)
+                                pdf.text(logrosLines, margin + 5, yPos)
+                                yPos += logrosLines.length * 5 + 2
+                            }
+                            
+                            if (alumno.mejoras) {
+                                pdf.setFont('helvetica', 'normal')
+                                pdf.setFontSize(10)
+                                const mejorasText = `Áreas de mejora: ${alumno.mejoras}`
+                                const mejorasLines = pdf.splitTextToSize(mejorasText, contentWidth - 5)
+                                pdf.text(mejorasLines, margin + 5, yPos)
+                                yPos += mejorasLines.length * 5 + 4
+                            }
+                        })
+                    }
+                    
+                    yPos += 5
+                })
+                
+                const totalPages = pdf.getNumberOfPages()
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.setPage(i)
+                    pdf.setFontSize(9)
+                    pdf.setFont('helvetica', 'normal')
+                    pdf.setTextColor(100, 100, 100)
+                    
+                    pdf.text(`${i}`, pageWidth - margin - 5, margin - 5, { align: 'right' })
+                    
+                    const fecha = new Date().toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    })
+                    pdf.text(`Generado: ${fecha}`, margin, pageHeight - margin + 5)
+                    pdf.text('TodoProfes', pageWidth - margin - 5, pageHeight - margin + 5, { align: 'right' })
+                }
+                
+                const nombreArchivo = document.getElementById('titulo').value || 'Boletin'
+                const fecha = new Date().toISOString().split('T')[0]
+                pdf.save(`Boletin_APA_${nombreArchivo.replace(/\s+/g, '_')}_${fecha}.pdf`)
+                
+                showMessage('✅ PDF generado con normas APA 7ª edición', true)
+                
+            } catch (error) {
+                console.error('Error al generar PDF:', error)
+                showMessage('❌ Error al generar el PDF con formato APA', false)
+                
+                try {
+                    const { jsPDF } = window.jspdf
+                    const pdf = new jsPDF()
+                    const text = document.getElementById('result').innerText
+                    
+                    pdf.setFont('helvetica', 'normal')
+                    pdf.setFontSize(12)
+                    pdf.text('Boletín Informativo', 20, 20)
+                    pdf.setFontSize(11)
+                    
+                    const lines = pdf.splitTextToSize(text, 170)
+                    let y = 30
+                    
+                    for (let i = 0; i < lines.length; i++) {
+                        if (y > 280) {
+                            pdf.addPage()
+                            y = 20
+                        }
+                        pdf.text(lines[i], 20, y)
+                        y += 7
+                    }
+                    
+                    const nombreArchivo = document.getElementById('titulo').value || 'Boletin'
+                    const fecha = new Date().toISOString().split('T')[0]
+                    pdf.save(`Boletin_${nombreArchivo.replace(/\s+/g, '_')}_${fecha}.pdf`)
+                    
+                    showMessage('✅ PDF descargado (formato básico)', true)
+                } catch (fallbackError) {
+                    showMessage('❌ Error en la descarga del PDF', false)
+                }
             }
-            
-            const nombreArchivo = document.getElementById('titulo').value || 'Boletin'
-            const fecha = new Date().toISOString().split('T')[0]
-            pdf.save(`Boletin_${nombreArchivo.replace(/\s+/g, '_')}_${fecha}.pdf`)
-            
-            showMessage('✅ PDF descargado (formato básico)', true)
-        } catch (fallbackError) {
-            showMessage('❌ Error en la descarga del PDF', false)
         }
-    }
-}
 
         function printDocument() {
             if (!generatedContent && document.getElementById('result').children.length === 0) {
@@ -1567,7 +1540,6 @@ Genera el contenido en español, con lenguaje profesional pero cálido.`
                 else if (texto.includes('detallado')) el.setAttribute('data-formato', 'detallado')
             })
             
-            // Deshabilitar el pegado con formato por defecto
             document.getElementById('result').addEventListener('paste', function(e) {
                 if (isEditMode) {
                     e.preventDefault()
