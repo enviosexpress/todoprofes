@@ -131,6 +131,22 @@
             font-weight: 600;
             transition: all 0.3s ease;
         }
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: #3B82F6;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .payment-image-container {
+            background: white;
+            border-radius: 1rem;
+            padding: 1rem;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -180,7 +196,7 @@
                     <p class="text-xl text-slate-400">Elige el paquete que mejor se adapte a tus necesidades</p>
                 </div>
 
-                <!-- CONTENEDORES VACÍOS QUE SE LLENARÁN CON JAVASCRIPT -->
+                <!-- CONTENEDORES QUE SE LLENARÁN CON JAVASCRIPT -->
                 <div id="packagesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-12">
                     <!-- Los botones se generarán dinámicamente aquí -->
                 </div>
@@ -323,7 +339,7 @@
             }
         }
 
-        // GENERAR BOTONES DINÁMICAMENTE CON EL USERID INCLUIDO
+        // GENERAR BOTONES DINÁMICAMENTE CON EL USERID INCLUIDO - AHORA EN MODO PRODUCCIÓN
         function generatePaymentButtons(userId) {
             console.log('🎯 Generando botones con userId:', userId);
             
@@ -363,7 +379,7 @@
                     </div>
                 `;
                 
-                // Crear el SCRIPT de ePayco con el userId ya incluido
+                // Crear el SCRIPT de ePayco con el userId ya incluido - MODO PRODUCCIÓN
                 const script = document.createElement('script');
                 script.src = 'https://checkout.epayco.co/checkout.js';
                 script.className = 'epayco-button';
@@ -375,11 +391,11 @@
                 script.setAttribute('data-epayco-description', `Paquete ${pkg.name} (${pkg.credits} créditos)`);
                 script.setAttribute('data-epayco-currency', 'cop');
                 script.setAttribute('data-epayco-country', 'CO');
-                script.setAttribute('data-epayco-test', 'true');
+                script.setAttribute('data-epayco-test', 'false'); // 👈 CAMBIADO A FALSE PARA PRODUCCIÓN
                 script.setAttribute('data-epayco-external', 'true');
                 script.setAttribute('data-epayco-response', 'https://todoprofes.com/confirmacion.html');
                 script.setAttribute('data-epayco-confirmation', 'https://todoprofes.com/.netlify/functions/epayco-confirmation');
-                script.setAttribute('data-epayco-extra1', userId); // ¡USERID YA INCLUIDO!
+                script.setAttribute('data-epayco-extra1', userId); // USERID YA INCLUIDO
                 script.setAttribute('data-epayco-extra2', pkg.id);
                 script.setAttribute('data-epayco-extra3', pkg.credits);
                 
@@ -396,7 +412,7 @@
                 container.appendChild(card);
             });
             
-            console.log('✅ Botones generados con userId incluido');
+            console.log('✅ Botones generados en MODO PRODUCCIÓN con userId incluido');
             
             // Seleccionar paquete estándar por defecto
             setTimeout(() => selectPackage('estandar'), 100);
@@ -415,7 +431,7 @@
         // Mostrar modal al hacer clic
         document.addEventListener('click', function(e) {
             if (e.target.closest('.epayco-button') || e.target.closest('.epayco-button-container')) {
-                console.log('💰 Iniciando pago...');
+                console.log('💰 Iniciando pago en PRODUCCIÓN...');
                 const modal = document.getElementById('paymentModal');
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
