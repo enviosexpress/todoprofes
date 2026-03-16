@@ -8,8 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.292.0/dist/umd/lucide.min.js"></script>
-    <!-- IMPORTANTE: Agregar la librería de Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -106,8 +104,9 @@
                     </div>
                     <input type="password" 
                            id="password" 
-                           class="input-field w-full p-3 pl-10" 
+                           class="input-field w-full p-3 pl-10 bg-slate-800/50 border border-slate-700 rounded-lg text-white outline-none focus:ring-2 focus:ring-blue-500" 
                            placeholder="••••••••" 
+                           autocomplete="new-password" 
                            required>
                 </div>
             </div>
@@ -165,9 +164,6 @@
         const SUPABASE_URL = 'https://zicowjlhaopgamhesqcz.supabase.co'
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY293amxoYW9wZ2FtaGVzcWN6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEwMDI2MDYsImV4cCI6MjA4NjU3ODYwNn0.3r8kYbgjmEzj2zADZOHL3V0kH05_I8gi0hdVMu_odzA'
 
-        // Inicializar cliente de Supabase (CORREGIDO)
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-
         // Función para mostrar mensajes
         function showMessage(text, isError = true) {
             const msgEl = document.getElementById('message')
@@ -186,31 +182,18 @@
             window.location.href = 'recuperar-password.html';
         }
 
-        // Función para login con Google (CORREGIDA)
-        async function handleGoogleLogin() {
-            try {
-                showMessage('Conectando con Google...', false);
-                
-                // Usar el cliente de Supabase correctamente
-                const { data, error } = await supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: {
-                        redirectTo: 'https://todoprofes.com/login.html' // Debe estar en Redirect URLs de Supabase
-                    }
-                });
-                
-                if (error) {
-                    console.error('Error:', error);
-                    showMessage('Error al conectar con Google: ' + error.message);
-                }
-                
-                // Supabase automáticamente redirige a Google
-                // No necesitas window.location.href manual
-                
-            } catch (error) {
-                console.error('Error:', error);
-                showMessage('Error al conectar con Google');
-            }
+        // Función para login con Google
+        function handleGoogleLogin() {
+            // Construir URL de autorización de Supabase
+            const redirectUrl = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${window.location.origin}/index.html`;
+            
+            // Mostrar mensaje de redirección
+            showMessage('Redirigiendo a Google...', false);
+            
+            // Redirigir después de un breve momento
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 500);
         }
 
         // Función para iniciar sesión con email/contraseña
@@ -239,31 +222,34 @@
             btn.disabled = true
 
             try {
-                // Usar el cliente de Supabase para login con email
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password
+                // Intentar login con Supabase
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
                 })
 
-                if (error) {
-                    console.error('❌ Error en login:', error)
-                    showMessage('Correo o contraseña incorrectos')
-                    btn.innerHTML = originalText
-                    btn.disabled = false
-                    return
-                }
+                const data = await response.json()
 
-                if (data.user) {
+                if (response.ok && data.access_token) {
                     console.log('✅ Login exitoso, guardando datos...')
                     
-                    // Guardar datos del usuario
-                    localStorage.setItem('supabase_token', data.session.access_token)
-                    localStorage.setItem('supabase_refresh_token', data.session.refresh_token)
-                    localStorage.setItem('user_email', data.user.email)
+                    // Guardar el token
+                    localStorage.setItem('supabase_token', data.access_token)
+                    localStorage.setItem('supabase_refresh_token', data.refresh_token)
+                    
+                    // Guardar datos básicos del usuario
+                    localStorage.setItem('user_email', email)
                     localStorage.setItem('user_id', data.user.id)
                     
                     // Guardar nombre del usuario (si existe)
-                    const userName = data.user.user_metadata?.full_name || data.user.email.split('@')[0]
+                    const userName = data.user.user_metadata?.full_name || email.split('@')[0]
                     localStorage.setItem('user_name', userName)
                     
                     console.log('💾 Datos guardados')
@@ -281,6 +267,12 @@
                             window.location.href = 'index.html'
                         }
                     }, 1500)
+                    
+                } else {
+                    console.error('❌ Error en login:', data)
+                    showMessage('Correo o contraseña incorrectos')
+                    btn.innerHTML = originalText
+                    btn.disabled = false
                 }
 
             } catch (error) {
@@ -292,17 +284,17 @@
         }
 
         // Verificar si ya hay sesión activa y redirigir
-        async function checkExistingSession() {
-            const { data: { user } } = await supabase.auth.getUser()
-            console.log('🔍 Verificando sesión existente:', user ? '✅ Sí' : '❌ No')
-            if (user) {
+        function checkExistingSession() {
+            const token = localStorage.getItem('supabase_token')
+            console.log('🔍 Verificando sesión existente:', token ? '✅ Sí' : '❌ No')
+            if (token) {
                 window.location.href = 'index.html'
             }
         }
 
         // Ejecutar al cargar la página
-        document.addEventListener('DOMContentLoaded', async () => {
-            await checkExistingSession()
+        document.addEventListener('DOMContentLoaded', () => {
+            checkExistingSession()
             
             // Verificar si hay parámetros en la URL (para mensajes de éxito/error)
             const urlParams = new URLSearchParams(window.location.search)
